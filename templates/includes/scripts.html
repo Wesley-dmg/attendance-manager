@@ -79,218 +79,73 @@
     });
     });
 </script>
-{% comment %} 
+
 <script>
-    setInterval(function(){
-        window.location.reload();
-      }, 60000);
-</script> {% endcomment %}
+    document.addEventListener('DOMContentLoaded', function() {
+        // Action lorsque le bouton "Disponible" est cliqué
+        document.querySelector('#accept-request').addEventListener('click', function(e) {
+            e.preventDefault();
+            var requestId = this.getAttribute('data-id');
+            
+            // Requête fetch pour accepter la demande
+            fetch("{% url 'availability:accept_availability_request' 0 %}".replace('0', requestId), {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'  // Permet d'identifier une requête AJAX
+                }
+            })
+            .then(response => response.json())  // On attend la réponse en JSON
+            .then(data => {
+                if (data.status === 'success') {
+                    // Mise à jour du message de succès
+                    document.querySelector('#message').innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
 
+                    // Recharger la page après un délai (par exemple, 1 seconde)
+                    setTimeout(function() {
+                        location.reload(); // Recharger la page pour afficher les données mises à jour
+                    }, 1000);  // Délai d'1 seconde
+                } else {
+                    // Si la réponse est une erreur
+                    document.querySelector('#message').innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                // Gestion des erreurs
+                document.querySelector('#message').innerHTML = '<div class="alert alert-danger">Erreur lors du traitement de la demande.</div>';
+            });
+        });
 
-{% comment %}
- Oui, tu peux ajouter de nombreuses autres fonctionnalités et options aux **DataTables** pour personnaliser l'expérience utilisateur et améliorer l'interaction avec tes tableaux. Voici quelques fonctionnalités supplémentaires que tu peux intégrer, avec des explications et des exemples :
+        // Action lorsque le bouton "Indisponible" est cliqué
+        document.querySelector('#reject-request').addEventListener('click', function(e) {
+            e.preventDefault();
+            var requestId = this.getAttribute('data-id');
+            
+            // Requête fetch pour rejeter la demande
+            fetch("{% url 'availability:reject_availability_request' 0 %}".replace('0', requestId), {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'  // Permet d'identifier une requête AJAX
+                }
+            })
+            .then(response => response.json())  // On attend la réponse en JSON
+            .then(data => {
+                if (data.status === 'success') {
+                    // Mise à jour du message de succès
+                    document.querySelector('#message').innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
 
-### 1. **Filtrage avancé (searchable)**
-   - Par défaut, DataTables permet de filtrer les lignes du tableau, mais tu peux personnaliser les filtres ou ajouter des filtres avancés pour certaines colonnes spécifiques.
-
-   **Exemple** : Filtrer des colonnes spécifiques :
-   ```javascript
-   $('#example').DataTable({
-       columnDefs: [
-           { targets: [0, 1], searchable: true }, // Active la recherche uniquement pour les colonnes 0 et 1
-           { targets: [2], searchable: false }   // Désactive la recherche pour la colonne 2
-       ]
-   });
-   ```
-
-   **Fonctionnalité avancée :** Ajouter un champ de recherche personnalisé pour chaque colonne :
-   ```javascript
-   $('#example').DataTable({
-       initComplete: function() {
-           this.api().columns().every(function() {
-               var column = this;
-               var input = $('<input type="text" placeholder="Recherche...">')
-                   .appendTo($(column.footer()).empty())
-                   .on('keyup change', function() {
-                       column.search($(this).val()).draw();
-                   });
-           });
-       }
-   });
-   ```
-
-### 2. **Pagination personnalisée**
-   - Si tu as beaucoup de données, tu peux personnaliser la pagination (par exemple, en modifiant le style, les boutons, ou le nombre d'éléments par page).
-
-   **Exemple** : Utiliser des boutons personnalisés pour la pagination.
-   ```javascript
-   $('#example').DataTable({
-       pagingType: 'full_numbers', // Affiche les numéros de page + premiers et derniers boutons
-       pageLength: 20,             // Affiche 20 éléments par page
-       lengthMenu: [10, 25, 50, 100], // Choix du nombre d'éléments par page
-       language: {
-           paginate: {
-               first: "Premier",
-               previous: "Précédent",
-               next: "Suivant",
-               last: "Dernier"
-           }
-       }
-   });
-   ```
-
-   **Fonctionnalité avancée** : Pagination infinie (scroll horizontal sans pagination traditionnelle).
-   ```javascript
-   $('#example').DataTable({
-       paging: false,       // Désactive la pagination
-       scrollY: '400px',    // Fixe la hauteur du tableau
-       scrollCollapse: true // Permet de réduire la hauteur du tableau quand il y a moins de données
-   });
-   ```
-
-### 3. **Affichage dynamique avec un nombre de lignes variable (scroll dynamique)**
-   - Afficher un nombre fixe de lignes avec un défilement dynamique pour améliorer les performances.
-
-   **Exemple** : Utiliser `scrollY` et `scrollCollapse` pour gérer les grandes tables.
-   ```javascript
-   $('#example').DataTable({
-       scrollY: 400,         // Hauteur du tableau avec un défilement vertical
-       scrollCollapse: true, // Permet de réduire la hauteur du tableau lorsque les données sont peu nombreuses
-       paging: false         // Désactive la pagination
-   });
-   ```
-
-### 4. **Colonnes réordonnables (Drag & Drop)**
-   - Permettre aux utilisateurs de réorganiser les colonnes via glisser-déposer.
-
-   **Exemple** : Ajouter la fonctionnalité de réordonnancement des colonnes.
-   ```javascript
-   $('#example').DataTable({
-       colReorder: true  // Permet de réorganiser les colonnes
-   });
-   ```
-
-### 5. **Affichage des lignes sélectionnées (Multi-sélection)**
-   - Permettre à l'utilisateur de sélectionner plusieurs lignes dans le tableau et d'effectuer une action sur ces lignes.
-
-   **Exemple** : Ajouter la sélection multiple avec un bouton d'action sur les lignes sélectionnées.
-   ```javascript
-   var table = $('#example').DataTable({
-       select: {
-           style: 'multi'   // Sélection multiple
-       }
-   });
-
-   // Bouton pour supprimer les lignes sélectionnées
-   $('#deleteSelected').click(function() {
-       var selectedData = table.rows({ selected: true }).data();
-       // Traite les lignes sélectionnées (par exemple, les supprimer)
-   });
-   ```
-
-### 6. **Tri multiple (multi-column sorting)**
-   - Permettre de trier par plusieurs colonnes simultanément.
-
-   **Exemple** : Tri multi-colonnes.
-   ```javascript
-   $('#example').DataTable({
-       order: [[0, 'asc'], [1, 'desc']] // Trie d'abord par la colonne 0 puis par la colonne 1
-   });
-   ```
-
-### 7. **Charger des données à la volée avec Ajax**
-   - Charger les données dynamiquement avec **Ajax** au lieu de les charger statiquement dans le HTML.
-
-   **Exemple** : Charger les données depuis une source externe (API, serveur, etc.).
-   ```javascript
-   $('#example').DataTable({
-       ajax: {
-           url: 'data/serverside',
-           dataSrc: ''
-       },
-       columns: [
-           { data: 'id' },
-           { data: 'name' },
-           { data: 'age' }
-       ]
-   });
-   ```
-
-### 8. **Ajout de boutons personnalisés**
-   - Tu peux ajouter des boutons personnalisés pour des actions spécifiques, comme l'ajout, l'édition, ou la suppression de lignes.
-
-   **Exemple** : Ajouter un bouton pour ajouter une nouvelle ligne.
-   ```javascript
-   $('#example').DataTable({
-       dom: 'Bfrtip',
-       buttons: [
-           {
-               text: 'Ajouter',
-               action: function (e, dt, node, config) {
-                   // Code pour ajouter une nouvelle ligne
-                   var rowNode = dt.row.add([0, 'Nouvelle ligne', 'Aucune action']).draw().node();
-                   $(rowNode).addClass('new');
-               }
-           }
-       ]
-   });
-   ```
-
-### 9. **Gestion des erreurs et affichage des messages d'erreur**
-   - Tu peux afficher un message d'erreur personnalisé si les données ne peuvent pas être chargées ou si un autre problème survient.
-
-   **Exemple** : Ajouter un message d'erreur si le tableau échoue à charger les données.
-   ```javascript
-   $('#example').DataTable({
-       ajax: {
-           url: 'data/serverside',
-           error: function(xhr, error, thrown) {
-               alert('Une erreur est survenue lors du chargement des données');
-           }
-       }
-   });
-   ```
-
-### 10. **Fonctionnalité de recherche avancée avec plusieurs critères**
-   - Permettre de filtrer sur plusieurs critères à la fois (ex. plusieurs champs de recherche).
-
-   **Exemple** : Ajouter des champs de recherche personnalisés pour chaque colonne.
-   ```javascript
-   $(document).ready(function() {
-       var table = $('#example').DataTable();
-       
-       $('#searchColumn1').on('keyup', function() {
-           table.column(0).search(this.value).draw();  // Recherche dans la colonne 0
-       });
-       
-       $('#searchColumn2').on('keyup', function() {
-           table.column(1).search(this.value).draw();  // Recherche dans la colonne 1
-       });
-   });
-   ```
-
-### 11. **Champs de saisie dans l'en-tête pour filtrer les colonnes**
-   - Ajoute un champ de saisie dans chaque en-tête de colonne pour filtrer en temps réel.
-
-   **Exemple** : Ajouter des champs de filtrage dans les en-têtes.
-   ```javascript
-   $(document).ready(function() {
-       var table = $('#example').DataTable();
-       
-       $('#example thead th').each(function(i) {
-           var title = $(this).text();
-           $(this).html('<input type="text" placeholder="Filtrer ' + title + '" />');
-           
-           $('input', this).on('keyup change', function() {
-               table.column(i).search(this.value).draw();
-           });
-       });
-   });
-   ```
-
----
-### Conclusion
-
-Avec ces fonctionnalités, tu peux adapter ton tableau DataTable pour une variété d'utilisations et d'interactions complexes. Tu peux ajouter plusieurs des fonctionnalités ci-dessus selon les besoins de ton projet pour améliorer l'expérience utilisateur.
-
-Si tu veux intégrer des fonctionnalités spécifiques ou si tu as des besoins particuliers (par exemple, ajouter une API de pagination personnalisée ou des actions pour les utilisateurs), fais-le moi savoir et je te guiderai avec des exemples adaptés. {% endcomment %}
+                    // Recharger la page après un délai (par exemple, 1 seconde)
+                    setTimeout(function() {
+                        location.reload(); // Recharger la page pour afficher les données mises à jour
+                    }, 1000);  // Délai d'1 seconde
+                } else {
+                    // Si la réponse est une erreur
+                    document.querySelector('#message').innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                // Gestion des erreurs
+                document.querySelector('#message').innerHTML = '<div class="alert alert-danger">Erreur lors du traitement de la demande.</div>';
+            });
+        });
+    });
+</script>

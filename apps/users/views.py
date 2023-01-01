@@ -18,7 +18,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.views import *
 from django.core.mail import send_mail 
 from django.urls import reverse, reverse_lazy
-from django.utils.decorators import method_decorator
+# from django.utils.decorators import method_decorator
 from django.utils import timezone
 
 from apps.home.utils import send_custom_message
@@ -218,9 +218,9 @@ def custom_logout(request):
     send_custom_message(request, _("Vous êtes déconnecté avec succès."), 'success')
     return redirect(reverse('users:login')) 
 
-class ProfileView(LoginRequiredMixin,PermissionRequiredMixin, TemplateView):
+class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = "users/profiles.html"
-    permission_required= 'users.view_profile'
+    # permission_required= 'users.view_profile'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -464,7 +464,6 @@ class AdminDeleteView(UserDeleteView):
 class TeacherDeleteView(UserDeleteView):
     permission_required= 'users.delete_teacherprofile'
     success_url = 'users:teachers_list'
-
 class StudentDeleteView(UserDeleteView):
     permission_required= 'users.delete_studentprofile'
     success_url = 'users:students_list' 
@@ -472,4 +471,3 @@ class StudentDeleteView(UserDeleteView):
 class ParentDeleteView(UserDeleteView):
     permission_required= 'users.delete_parentprofile'
     success_url = 'users:parents_list'
-    

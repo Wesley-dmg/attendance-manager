@@ -160,7 +160,6 @@ def create_availability_request(request):
         send_custom_message(request, _("Erreur interne : {0}".format(str(e))), 'error')
         return redirect('availability:create_request')
 
- 
 class UpdateAvailabilityRequestView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,View):
     """
     Affiche le formulaire de modification d'une demande de disponibilité.
@@ -323,82 +322,48 @@ class TeacherAvailabilityPendingRequestView(LoginRequiredMixin,PermissionRequire
         queryset = AvailabilityRequest.objects.filter(responses__teacher=teacher, responses__status='pending').prefetch_related(teacher_response_prefetch).distinct()
         return queryset
 
-# # Fonction pour accepter une demande 
-# def accept_availability_request(request, request_id):
-#     # Récupérer la demande de disponibilité
-#     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
-    
-#     # Récupérer la réponse de l'enseignant concerné
-#     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
-    
-#     # Vérifier que l'enseignant est bien celui qui a répondu à la demande
-#     if response.teacher != request.user.teacherprofile:
-#         send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')
-#         return redirect('availability:teacher_availability_pending_request_list')
-    
-#     # Mettre à jour le statut de la réponse à "accepté"
-#     response.status = 'accepted'
-#     response.save()
-
-#     # Message de succès
-#     send_custom_message(request, _("Demande acceptée avec succès."), 'success')
-
-#     # Redirection vers la liste des demandes en attente
-#     return redirect('availability:teacher_availability_pending_request_list')
-
-# # Fonction pour rejeter une demande 
-# def reject_availability_request(request, request_id):
-#     # Récupérer la demande de disponibilité
-#     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
-    
-#     # Récupérer la réponse de l'enseignant concerné
-#     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
-
-#     # Vérifier que l'enseignant est bien celui qui a répondu à la demande
-#     if response.teacher != request.user.teacherprofile:
-#         send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')
-#         return redirect('availability:teacher_availability_pending_request_list')
-    
-#     # Mettre à jour le statut de la réponse à "rejeté"
-#     response.status = 'rejected'
-#     response.save()
-
-#     # Message de succès
-#     send_custom_message(request, _("Demande rejetée avec succès."), 'error')
-
-#     # Redirection vers la liste des demandes en attente
-#     return redirect('availability:teacher_availability_pending_request_list')
-
 # Fonction pour accepter une demande
 def accept_availability_request(request, request_id):
-    # if not request.user.is_authenticated:
-    #     return JsonResponse({'error': "Vous devez être connecté."}, status=403)
-
+    # Récupérer la demande de disponibilité
     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
+
+    # Récupérer la réponse de l'enseignant concerné
     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
 
+    # Vérifier que l'enseignant est bien celui qui a répondu à la demande
     if response.teacher != request.user.teacherprofile:
-        return JsonResponse({'error': "Vous ne pouvez pas accepter cette demande."}, status=403)
+        send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."),"error")
+        return JsonResponse({'message': _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'status': 'error'})
 
+    # Mettre à jour le statut de la réponse à "accepté"
     response.status = 'accepted'
     response.save()
 
-    return JsonResponse({'message': "Demande acceptée avec succès.", 'status': 'accepted'}, status=200)
+    # Message de succès
+    send_custom_message(request, _("Demande acceptée avec succès."),'success')
 
+    # Retourner le message en JSON pour l'afficher sans rechargement
+    return JsonResponse({'message': _("Demande acceptée avec succès."), 'status': 'success'})
 
 # Fonction pour rejeter une demande
 def reject_availability_request(request, request_id):
-    # if not request.user.is_authenticated:
-    #     return JsonResponse({'error': "Vous devez être connecté."}, status=403)
-
+    # Récupérer la demande de disponibilité
     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
+
+    # Récupérer la réponse de l'enseignant concerné
     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
 
+    # Vérifier que l'enseignant est bien celui qui a répondu à la demande
     if response.teacher != request.user.teacherprofile:
-        return JsonResponse({'error': "Vous ne pouvez pas rejeter cette demande."}, status=403)
+        send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."),"error")
+        return JsonResponse({'message': _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'status': 'error'})
 
+    # Mettre à jour le statut de la réponse à "rejeté"
     response.status = 'rejected'
     response.save()
 
-    return JsonResponse({'message': "Demande rejetée avec succès.", 'status': 'rejected'}, status=200)
+    # Message de succès
+    send_custom_message(request, _("Demande rejetée avec succès."),"success")
 
+    # Retourner le message en JSON pour l'afficher sans rechargement
+    return JsonResponse({'message': _("Demande rejetée avec succès."), 'status': 'error'})

@@ -8,13 +8,13 @@ app_name = 'timetables'
 
 urlpatterns = [
     
-    path('', timetable_default_redirect, name='timetable_default'),
-    path("<int:pk>/download/", download_timetable, name="timetable_download"),  # Correct ici
+    path("", TimetableListView.as_view(), name="list"),
+    path("create/", CourseSessionCreateView.as_view(), name="timetable_create"),
 
-    path("list", TimetableListView.as_view(), name="timetable_list"),
+    path('timetable_default', timetable_default_redirect, name='timetable_default'),
+    path("<int:pk>/download/", download_timetable, name="timetable_download"),  # Correct ici
     path('<int:pk>/', TimetableDetailView.as_view(), name='timetable_detail'),
 
-    path("create/", CourseSessionCreateView.as_view(), name="timetable_create"),
     path('<int:timetable_id>/add-more/', CourseSessionAddMoreView.as_view(), name='add_more'),
     path("<int:pk>/edit/", CourseSessionUpdateView.as_view(), name="timetable_edit"),
     path("<int:pk>/delete/", TimetableDeleteView.as_view(), name="timetable_delete"),

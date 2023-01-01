@@ -50,6 +50,9 @@ class Timetable(models.Model):
         verbose_name = _("Emploi du temps")
         verbose_name_plural = _("Emplois du temps")
         ordering = ['start_date']
+        permissions = [
+            ('config_recap_semaine', _("Peut configurer et imprimer le recapitulatif de l'emplois du temps et la repartition des salles de la semaine")),
+        ]
 
     def __str__(self):
         return f"Emploi du temps (du {self.start_date} au {self.end_date})"

@@ -7,7 +7,9 @@
         <div class="card">
           <div class="card-header">
             <h5>{{title}}</h5>
-            <a href="{% url create_url %}" class="btn btn-primary float-right">Ajouter une Disponibilité</a>
+            {% if perms.availability.add_availabilityrequest %}
+              <a href="{% url create_url %}" class="btn btn-success float-right"><i class="fa fa-plus-circle"></i>Ajouter une Disponibilité</a>
+            {% endif %}  
           </div>
           <div class="card-block table-border-style">
             <div class="table-responsive">
@@ -47,13 +49,8 @@
                     </td>
                     <td class="d-flex flex-column justify-content-center">
                       {% for response in request.responses.all %}
-                        <span class="badge p-2
-                          {% if response.status == 'accepted' %} badge-success
-                          {% elif response.status == 'rejected' %} badge-danger
-                          {% else %} badge-warning
-                          {% endif %}
-                        ">
-                           {{ response.get_status_display }}
+                        <span class="badge p-2 {% if response.status == 'accepted' %} badge-success{% elif response.status == 'rejected' %} badge-danger {% else %} badge-warning {% endif %}">
+                          {{ response.get_status_display }}
                         </span>
                         <br class="mb-3">
                       {% empty %}
@@ -61,8 +58,13 @@
                       {% endfor %}
                     </td>
                     <td>
-                      <a href="{% url edit_url request.pk %}" class="btn btn-warning btn-sm">Modifier</a>
-                      <a href="{% url delete_url request.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% if perms.availability.change_availabilityrequest %}
+                        <a href="{% url edit_url request.pk %}" class="btn btn-warning btn-sm">Modifier</a>
+                      {% endif %}
+
+                      {% if perms.availability.delete_availabilityrequest %}
+                        <a href="{% url delete_url request.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% endif %}
                     </td>
                   </tr>
                   {% endfor %}

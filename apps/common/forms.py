@@ -7,10 +7,10 @@ class DepartmentLevelSubjectForm(forms.ModelForm):
         model = DepartmentLevelSubject
         fields = ['department_level', 'subject']
         labels = {
-            'department_level': ' Filière et Niveau',
+            'department_level': ' Filière',
             'subject': 'Matière',
         }
         widgets = {
-            'department_level': forms.Select(attrs={'class': 'form-control'}),
-            'subject': forms.Select(attrs={'class': 'form-control'}),
+            'department_level': forms.Select(attrs={'class': 'form-control select2'}),
+            'subject': forms.Select(attrs={'class': 'form-control select2'}),
         }

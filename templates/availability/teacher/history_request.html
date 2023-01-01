@@ -35,8 +35,8 @@
                   <span style="font-size:0.8em; color:#999;">il y a {{ request.created_at|timesince }}</span>
                 </div>
                 <div class="action-buttons mt-2">
-                  <a href="{% url 'availability:accept_availability_request' request.id %}" class="btn btn-primary mr-2">Disponible</a>
-                  <a href="{% url 'availability:reject_availability_request' request.id %}" class="btn btn-secondary">Indisponible</a>
+                  <a href="#" id="accept-request" data-id="{{ request.id }}" class="btn btn-primary" style="margin-right: 10px;">Disponible</a>
+                  <a href="#" id="reject-request" data-id="{{ request.id }}"  class="btn btn-secondary">Indisponible</a>
                 </div>
               </div>
             {% elif response.status == "accepted" %}
@@ -54,8 +54,8 @@
                   <span style="font-size:0.8em; color:#999;">il y a {{ request.created_at|timesince }}</span>
                 </div>
                 <div class="action-buttons mt-2">
-                  <a href="#" class="btn btn-primary disabled mr-2">Disponible</a>
-                  <a href="{% url 'availability:reject_availability_request' request.id %}" class="btn btn-secondary">Indisponible</a>
+                  <a href="#" id="accept-request" data-id="{{ request.id }}" class="btn btn-primary disabled mr-2" style="margin-right: 10px;">Disponible</a>
+                  <a href="#" id="reject-request" data-id="{{ request.id }}"  class="btn btn-secondary">Indisponible</a>
                 </div>
               </div>
             {% elif response.status == "rejected" %}
@@ -73,8 +73,9 @@
                   <span style="font-size:0.8em; color:#999;">il y a {{ request.created_at|timesince }}</span>
                 </div>
                 <div class="action-buttons mt-2">
-                  <a href="{% url 'availability:accept_availability_request' request.id %}" class="btn btn-primary">Disponible</a>
-                  <a href="#" class="btn btn-secondary disabled">Indisponible</a>
+                  <a href="#" id="accept-request" data-id="{{ request.id }}"  class="btn btn-primary" style="margin-right: 10px;">Disponible</a>
+                  <a href="#" id="reject-request" data-id="{{ request.id }}"  class="btn btn-secondary disabled">Indisponible</a>
+                
                 </div>
               </div>
             {% endif %}
@@ -110,13 +111,13 @@ document.addEventListener('DOMContentLoaded', function(){
           let borderColor = "";
           let message = "";
           if (req.status === "pending") {
-            borderColor = "#f0ad4e";
+            //borderColor = "#f0ad4e";
             message = `Êtes-vous disponible pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong> du ${req.period} ?`;
           } else if (req.status === "accepted") {
-            borderColor = "#5cb85c";
+            //borderColor = "#5cb85c";
             message = `Vous avez notifié être <strong>disponible</strong> du ${req.period} pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong>.`;
           } else if (req.status === "rejected") {
-            borderColor = "#d9534f";
+            //borderColor = "#d9534f";
             message = `Vous avez notifié être <strong>indisponible</strong> du ${req.period} pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong>.`;
           }
           let btnAccept = "";
@@ -133,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function(){
           }
   
           container.innerHTML += `
-            <div class="notification p-3 mb-2" style="border: 1px solid ${borderColor};">
+            <div class="notification p-3 mb-2">
               <div class="d-flex justify-content-between align-items-center">
                 <p class="m-0">${message}</p>
                 <span style="font-size:0.8em; color:#999;">il y a ${req.created_at}</span>

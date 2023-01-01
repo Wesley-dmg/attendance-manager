@@ -39,6 +39,7 @@ class TimetableListView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixi
 class TimetableDetailView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,DetailView):
     model = Timetable
     template_name = 'timetable/detail.html'
+    permission_required = 'timetable.view_timetable'  # Accès réservé aux utilisateurs autorisés
     context_object_name = 'timetable'
 
     def get_context_data(self, **kwargs):

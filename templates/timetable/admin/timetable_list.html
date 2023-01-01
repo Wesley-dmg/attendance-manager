@@ -7,7 +7,11 @@
     <div class="card">
       <div class="card-header">
         <h5>{{title}}</h5>
-        <a href="{% url create_url %}" class="btn btn-primary float-right">Ajouter un Emploi du Temps</a>
+        
+        {% if perms.timetable.add_timetable %}
+          <a href="{% url create_url %}" class="btn btn-success float-right"> <i class="fa fa-plus-circle"></i>Ajouter un Emploi du Temps</a>
+        {% endif %}
+          
       </div>
       <div class="card-block table-border-style">
         <div class="table-responsive">
@@ -33,18 +37,24 @@
                   {% endfor %}
                 </td>
                 <td>
-                  <a href="{% url detail_url timetable.pk %}" class="btn btn-sm btn-info" title="Consulter">
-                    <i class="fas fa-eye"></i>
-                  </a>
-                  <a href="{% url edit_url timetable.pk %}" class="btn btn-sm btn-warning" title="Modifier">
-                    <i class="fas fa-edit"></i>
-                  </a>
-                  <a href="{% url delete_url timetable.pk %}" class="btn btn-sm btn-danger" title="Supprimer">
-                    <i class="fas fa-trash"></i>
-                  </a>
-                  <a href="{% url download_url timetable.pk %}" class="btn btn-sm btn-success" title="Télécharger">
-                    <i class="fas fa-download"></i>
-                  </a>
+                  {% if perms.timetable.view_timetable %}
+                    <a href="{% url detail_url timetable.pk %}" class="btn btn-sm btn-info" title="Consulter">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    {% comment %} <a href="{% url download_url timetable.pk %}" class="btn btn-sm btn-success" title="Télécharger">
+                      <i class="fas fa-download"></i>
+                    </a> {% endcomment %}
+                  {% endif %}
+                  {% if perms.timetable.change_timetable %}
+                    <a href="{% url edit_url timetable.pk %}" class="btn btn-sm btn-warning" title="Modifier">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                  {% endif %}
+                  {% if perms.timetable.delete_timetable %}
+                    <a href="{% url delete_url timetable.pk %}" class="btn btn-sm btn-danger" title="Supprimer">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  {% endif %}
                 </td>
               </tr>
               {% empty %}

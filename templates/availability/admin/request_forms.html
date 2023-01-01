@@ -5,31 +5,29 @@
 <div class="card container mt-4">
   <div class="card-header">
     <h5 class="mb-4">{{title}}</h5>
+    <a href="{% url 'availability:availability_request_list' %}" class="px-4 py-1 btn-secondary float-right ">Retour</a>
   </div>
   <!-- Bloc de sélection : matière et enseignants -->
   <div id="selection-container" class="row {% if availability_request %}d-none{% endif %}">
-    <!-- Sélection de la matière -->
-    <div id="subject-selection" class="col-4 card">
+    <!-- Sélection de la matière (via select2) -->
+    <div id="subject-selection" class="col-md-4 card">
       <div class="card-header">
         <h5 class="mb-3">Choisissez une matière</h5>
       </div>
       <div class="p-3">
-        {% for subject in subjects %}
-          <div class="custom-control custom-radio btn btn-outline-primary m-3 btn-sm">
-            <input type="radio"
-                   id="subject-{{ subject.id }}"
-                   name="subject"
-                   class="custom-control-input"
-                   value="{{ subject.id }}"
-                   {% if availability_request and availability_request.subject.id == subject.id %}checked{% endif %}>
-            <label class="custom-control-label" for="subject-{{ subject.id }}">{{ subject.name }}</label>
-          </div>
-        {% endfor %}
+        <select id="subject-select" class="form-control select2">
+          <option value="">Sélectionnez une matière</option>
+          {% for subject in subjects %}
+            <option value="{{ subject.id }}"
+              {% if availability_request and availability_request.subject.id == subject.id %}selected{% endif %}>
+              {{ subject.name }}
+            </option>
+          {% endfor %}
+        </select>
       </div>
     </div>
-
     <!-- Liste des enseignants (chargée dynamiquement) -->
-    <div id="teachers-container" class="col-8 mx-auto d-none card">
+    <div id="teachers-container" class="col-md-8 mx-auto d-none card">
       <div class="card-header">
         <h5 class="mb-3">Sélectionnez des enseignants</h5>
       </div>
@@ -39,26 +37,10 @@
       <button type="button" class="btn btn-primary mt-3" id="show-form" disabled>Faire une demande</button>
     </div>
   </div>
-  <!-- Sélection de la matière -->
-  <div id="subject-selection" class="col-4 card">
-    <div class="card-header">
-      <h5 class="mb-3">Choisissez une matière</h5>
-    </div>
-    <div class="p-3">
-      <select id="subject-select" class="form-control select2" name="subject">
-        {% for subject in subjects %}
-          <option value="{{ subject.id }}" {% if availability_request and availability_request.subject.id == subject.id %}selected{% endif %}>
-            {{ subject.name }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
-
 
   <!-- Formulaire (étape 2) -->
-  <div class="row d-flex justify-content-center">
-    <div id="form-container" class="card col-6 {% if not availability_request %}d-none{% endif %}">
+  <div class="row col-md-8 d-flex justify-content-center">
+    <div id="form-container" class="card col-md-8 {% if not availability_request %}d-none{% endif %}">
       <div class="card-header">
         <h5 class="mb-3">Remplissez le formulaire</h5>
       </div>
@@ -98,7 +80,7 @@
         <button type="submit" class="btn btn-primary">
           {% if availability_request %}Modifier la demande{% else %}Envoyer la demande{% endif %}
         </button>
-        <button type="button" class="btn btn-secondary" id="back-to-selection">Retour</button>
+        <button type="button" class="btn btn-secondary" id="back-to-selection" title="Retour"><i class="feather icon-arrow-right"></i></button>
       </form>
     </div>
   </div>
@@ -107,185 +89,180 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const subjectRadios = document.querySelectorAll("input[name='subject']");
-  const teacherList = document.getElementById("teachers-list");
-  const teachersContainer = document.getElementById("teachers-container");
-  const showFormButton = document.getElementById("show-form");
-  const formContainer = document.getElementById("form-container");
-  const selectionContainer = document.getElementById("selection-container");
-  const backToSelectionButton = document.getElementById("back-to-selection");
-  const hiddenSubjectId = document.getElementById("hidden-subject-id");
-  const hiddenTeacherIds = document.getElementById("hidden-teacher-ids");
-  const filiereSelect = document.getElementById("filiere-select");
-  const hiddenFiliereIds = document.getElementById("hidden-filiere-ids");
+$(document).ready(function () {
+  let $subjectSelect = $('#subject-select');
+  let $teacherList = $('#teachers-list');
+  let $teachersContainer = $('#teachers-container');
+  let $showFormButton = $('#show-form');
+  let $formContainer = $('#form-container');
+  let $selectionContainer = $('#selection-container');
+  let $backToSelectionButton = $('#back-to-selection');
+  let $hiddenSubjectId = $('#hidden-subject-id');
+  let $hiddenTeacherIds = $('#hidden-teacher-ids');
+  let $filiereSelect = $('#filiere-select');
+  let $hiddenFiliereIds = $('#hidden-filiere-ids');
 
-  // Variables initialisées pour modification si disponibles
-  let selectedSubject = hiddenSubjectId.value || null;
-  let selectedTeachers = hiddenTeacherIds.value ? hiddenTeacherIds.value.split(",") : [];
+  let selectedSubject = $hiddenSubjectId.val() || null;
+  let selectedTeachers = $hiddenTeacherIds.val() ? $hiddenTeacherIds.val().split(",") : [];
 
-  // Si on est en mode création, on affiche la sélection
+  // Initialiser select2
+  $subjectSelect.select2({
+    placeholder: "Sélectionnez une matière",
+    allowClear: true,
+    width: '100%'
+  });
+
   if (!selectedSubject) {
-    selectionContainer.classList.remove("d-none");
-    formContainer.classList.add("d-none");
+    $selectionContainer.removeClass("d-none");
+    $formContainer.addClass("d-none");
   }
 
-  // Gestion du changement de matière (mode création)
-  subjectRadios.forEach((radio) => {
-    radio.addEventListener("change", function (event) {
-      selectedSubject = event.target.value;
-      console.log("Matière sélectionnée :", selectedSubject);
-      // Réinitialiser la liste des enseignants
-      fetch(`/availability/ajax/get-teachers/?subject_id=${selectedSubject}`, {
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-      })
-      .then((response) => {
-        console.log("Réponse get-teachers status :", response.status);
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Données reçues pour les enseignants :", data);
-        teacherList.innerHTML = "";
+  // Changement de matière
+  $subjectSelect.on("change", function () {
+    selectedSubject = $(this).val();
+    if (!selectedSubject) {
+      $teacherList.html('');
+      $teachersContainer.addClass("d-none");
+      return;
+    }
+
+    console.log("Matière sélectionnée :", selectedSubject);
+    $.ajax({
+      url: '/availability/ajax/get-teachers/',
+      data: { subject_id: selectedSubject },
+      dataType: 'json',
+      success: function (data) {
+        console.log("Données enseignants :", data);
+        $teacherList.empty();
         selectedTeachers = [];
-        showFormButton.disabled = true;
+        $showFormButton.prop('disabled', true);
 
         if (data.teachers && data.teachers.length > 0) {
-          data.teachers.forEach((teacher) => {
-            teacherList.innerHTML += `
+          data.teachers.forEach(function (teacher) {
+            let checkboxHTML = `
               <div class="form-check my-4">
                 <input type="checkbox" class="form-check-input teacher-checkbox" id="teacher-${teacher.id}" value="${teacher.id}">
                 <label class="mx-2 form-check-label" for="teacher-${teacher.id}">${teacher.name}</label>
               </div>
             `;
+            $teacherList.append(checkboxHTML);
           });
-          document.querySelectorAll(".teacher-checkbox").forEach((checkbox) => {
-            checkbox.addEventListener("change", handleTeacherSelection);
+
+          $(".teacher-checkbox").on("change", function () {
+            let teacherId = $(this).val();
+            if ($(this).is(':checked')) {
+              if (!selectedTeachers.includes(teacherId)) {
+                selectedTeachers.push(teacherId);
+              }
+            } else {
+              selectedTeachers = selectedTeachers.filter(id => id !== teacherId);
+            }
+            console.log("Enseignants sélectionnés :", selectedTeachers);
+            $showFormButton.prop('disabled', selectedTeachers.length === 0);
           });
-          teachersContainer.classList.remove("d-none");
+
+          $teachersContainer.removeClass("d-none");
         } else {
-          console.log("Aucun enseignant trouvé pour cette matière.");
-          teacherList.innerHTML = "<p>Aucun enseignant disponible.</p>";
+          $teacherList.html("<p>Aucun enseignant disponible.</p>");
         }
-      })
-      .catch((error) => {
-        console.error("Erreur lors de la récupération des enseignants :", error);
-      });
+      },
+      error: function (xhr, status, error) {
+        console.error("Erreur AJAX enseignants :", status, error);
+      }
     });
   });
 
-  // Gestion de la sélection/désélection des enseignants
-  function handleTeacherSelection(event) {
-    const teacherId = event.target.value;
-    if (event.target.checked) {
-      if (!selectedTeachers.includes(teacherId)) {
-        selectedTeachers.push(teacherId);
+  // Chargement des filières via AJAX (réutilisable)
+  function loadFilieres(preselect = []) {
+    $.ajax({
+      url: '/availability/ajax/get-filieres/',
+      data: { subject_id: selectedSubject },
+      dataType: 'json',
+      success: function (data) {
+        console.log("Données filières :", data);
+        $filiereSelect.empty();
+        if (data.filieres && data.filieres.length > 0) {
+          data.filieres.forEach(function (filiere) {
+            let isSelected = preselect.includes(String(filiere.id));
+            let option = new Option(filiere.name, filiere.id, isSelected, isSelected);
+            $filiereSelect.append(option);
+          });
+        } else {
+          $filiereSelect.append(new Option("Aucune filière disponible", "", false, false));
+        }
+        $filiereSelect.select2({
+          placeholder: "Sélectionnez des filières",
+          allowClear: true,
+          width: '100%'
+        });
+      },
+      error: function (xhr, status, error) {
+        console.error("Erreur AJAX filières :", status, error);
       }
-    } else {
-      selectedTeachers = selectedTeachers.filter((id) => id !== teacherId);
-    }
-    console.log("Enseignants sélectionnés :", selectedTeachers);
-    showFormButton.disabled = selectedTeachers.length === 0;
+    });
   }
 
-  // En mode modification, charger automatiquement enseignants et filières
+  // Mode modification : charger enseignants + filières
   if (selectedSubject) {
-    // Charger les enseignants pour le sujet sélectionné
-    fetch(`/availability/ajax/get-teachers/?subject_id=${selectedSubject}`, {
-      headers: { "X-Requested-With": "XMLHttpRequest" },
-    })
-    .then((response) => response.json())
-    .then((data) => {
-      teacherList.innerHTML = "";
-      if (data.teachers && data.teachers.length > 0) {
-        data.teachers.forEach((teacher) => {
-          const isChecked = selectedTeachers.includes(String(teacher.id));
-          teacherList.innerHTML += `
-            <div class="form-check my-4">
-              <input type="checkbox" class="form-check-input teacher-checkbox" id="teacher-${teacher.id}" value="${teacher.id}" ${isChecked ? 'checked' : ''}>
-              <label class="mx-2 form-check-label" for="teacher-${teacher.id}">${teacher.name}</label>
-            </div>
-          `;
-        });
-        document.querySelectorAll(".teacher-checkbox").forEach((checkbox) => {
-          checkbox.addEventListener("change", handleTeacherSelection);
-        });
-        teachersContainer.classList.remove("d-none");
-      } else {
-        teacherList.innerHTML = "<p>Aucun enseignant disponible.</p>";
-      }
-    })
-    .catch((error) => {
-      console.error("Erreur lors du chargement des enseignants :", error);
-    });
-
-    // Charger les filières via AJAX et pré-sélectionner celles déjà choisies
+    $subjectSelect.val(selectedSubject).trigger('change');
     $.ajax({
-      url: '/availability/ajax/get-filieres/',
+      url: '/availability/ajax/get-teachers/',
       data: { subject_id: selectedSubject },
       dataType: 'json',
-      success: function(data) {
-        console.log("Données reçues pour les filières :", data);
-        $(filiereSelect).empty();
-        if(data.filieres && data.filieres.length > 0) {
-          data.filieres.forEach(function(filiere) {
-            const isSelected = hiddenFiliereIds.value.split(",").includes(String(filiere.id));
-            const option = new Option(filiere.name, filiere.id, isSelected, isSelected);
-            $(filiereSelect).append(option);
+      success: function (data) {
+        $teacherList.empty();
+        if (data.teachers && data.teachers.length > 0) {
+          data.teachers.forEach(function (teacher) {
+            let isChecked = selectedTeachers.includes(String(teacher.id));
+            let checkboxHTML = `
+              <div class="form-check my-4">
+                <input type="checkbox" class="form-check-input teacher-checkbox" id="teacher-${teacher.id}" value="${teacher.id}" ${isChecked ? 'checked' : ''}>
+                <label class="mx-2 form-check-label" for="teacher-${teacher.id}">${teacher.name}</label>
+              </div>
+            `;
+            $teacherList.append(checkboxHTML);
           });
+
+          $(".teacher-checkbox").on("change", function () {
+            let teacherId = $(this).val();
+            if ($(this).is(':checked')) {
+              if (!selectedTeachers.includes(teacherId)) {
+                selectedTeachers.push(teacherId);
+              }
+            } else {
+              selectedTeachers = selectedTeachers.filter(id => id !== teacherId);
+            }
+            $showFormButton.prop('disabled', selectedTeachers.length === 0);
+          });
+
+          $teachersContainer.removeClass("d-none");
         } else {
-          $(filiereSelect).append(new Option("Aucune filière disponible", "", false, false));
+          $teacherList.html("<p>Aucun enseignant disponible.</p>");
         }
-        $(filiereSelect).select2({
-          placeholder: "Sélectionnez des filières",
-          allowClear: true,
-          width: '100%'
-        });
       },
-      error: function(xhr, status, error) {
-        console.error("Erreur lors du chargement des filières :", status, error);
+      error: function (xhr, status, error) {
+        console.error("Erreur AJAX enseignants :", status, error);
       }
     });
+
+    let preselectedFilieres = $hiddenFiliereIds.val() ? $hiddenFiliereIds.val().split(",") : [];
+    loadFilieres(preselectedFilieres);
   }
 
-  // En mode création, passage à l'étape formulaire
-  showFormButton.addEventListener("click", function () {
-    hiddenSubjectId.value = selectedSubject;
-    hiddenTeacherIds.value = selectedTeachers.join(",");
-    selectionContainer.classList.add("d-none");
-    formContainer.classList.remove("d-none");
+  // Bouton : Passer au formulaire
+  $showFormButton.on("click", function () {
+    $hiddenSubjectId.val(selectedSubject);
+    $hiddenTeacherIds.val(selectedTeachers.join(","));
+    $selectionContainer.addClass("d-none");
+    $formContainer.removeClass("d-none");
 
-    console.log("Chargement des filières pour la matière :", selectedSubject);
-    $.ajax({
-      url: '/availability/ajax/get-filieres/',
-      data: { subject_id: selectedSubject },
-      dataType: 'json',
-      success: function(data) {
-        console.log("Données reçues pour les filières :", data);
-        $(filiereSelect).empty();
-        if(data.filieres && data.filieres.length > 0) {
-          data.filieres.forEach(function(filiere) {
-            const option = new Option(filiere.name, filiere.id, false, false);
-            $(filiereSelect).append(option);
-          });
-        } else {
-          $(filiereSelect).append(new Option("Aucune filière disponible", "", false, false));
-        }
-        $(filiereSelect).select2({
-          placeholder: "Sélectionnez des filières",
-          allowClear: true,
-          width: '100%'
-        });
-      },
-      error: function(xhr, status, error) {
-        console.error("Erreur lors du chargement des filières :", status, error);
-      }
-    });
+    loadFilieres([]);
   });
 
-  // Bouton Retour pour revenir à la sélection
-  backToSelectionButton.addEventListener("click", function () {
-    formContainer.classList.add("d-none");
-    selectionContainer.classList.remove("d-none");
+  // Bouton Retour
+  $backToSelectionButton.on("click", function () {
+    $formContainer.addClass("d-none");
+    $selectionContainer.removeClass("d-none");
   });
 });
 </script>
