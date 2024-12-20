@@ -12,7 +12,6 @@ def index(request):
 
   context = {
     'segment'  : 'index',
-    #'products' : Product.objects.all()
   }
   return render(request, "pages/index.html", context)
 
