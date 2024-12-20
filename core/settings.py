@@ -56,8 +56,22 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    "home",
-
+    'apps.availability',    # Application pour gérer la disponibilité
+    
+    'apps.common',       # Application pour gérer les  relations entre filière et matière 
+    
+    'apps.courses',         # Application pour gérer les filières
+    
+    "apps.home", # Application pour gérer les fonction de base de  l'application comme  les  notification systeme  d'alert et  autre  
+    
+    'apps.rooms',           # Application pour gérer les salles
+    
+    'apps.subjects',        # Application pour gérer les matières
+    
+    'apps.timetable',       # Application pour gérer l'emploi du temps
+    
+    'apps.users',           # Application pour gérer les utilisateurs
+    
     # # Tooling API-GEN
     # 'django_api_gen',            # Django API GENERATOR  # <-- NEW
     # 'rest_framework',            # Include DRF           # <-- NEW 
@@ -184,3 +198,45 @@ LOGIN_REDIRECT_URL = '/'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ########################################
+
+
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'ton_email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'ton_mot_de_passe'
+
+# # Par exemple, pour les notifications SMS
+# TWILIO_ACCOUNT_SID = 'your_account_sid'
+# TWILIO_AUTH_TOKEN = 'your_auth_token'
+# TWILIO_PHONE_NUMBER = '+1234567890'
+
+# # Autres paramètres personnalisés
+# NOTIFY_ADMIN_ON_ERROR = True  # Si tu veux notifier un admin en cas d'erreur
+
+# AUTH_USER_MODEL = 'users.CustomUser'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'django_error.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
+
+# INTERNAL_IPS = [
+#     '127.0.0.1',
+# ]

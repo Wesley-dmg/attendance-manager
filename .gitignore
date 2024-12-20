@@ -11,6 +11,6 @@ env__
 /staticfiles/
 
 #src
-#*.sqlite*
+# *.sqlite*
 
 #.env
