@@ -20,3 +20,12 @@ def tables(request):
     'segment': 'tables'
   }
   return render(request, "pages/dynamic-tables.html", context)
+
+
+def AdminDashboardView(request):
+
+    context = {
+    
+    }
+    return render(request, "home/admin_dashboard.html", context)
+

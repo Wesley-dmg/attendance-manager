@@ -1,5 +1,5 @@
-"""core URL Configuration
-
+"""
+core URL Configuration
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.1/topics/http/urls/
 Examples:
@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.authtoken.views import obtain_auth_token # <-- NEW
@@ -21,13 +22,14 @@ urlpatterns = [
     path('', include('apps.home.urls')),
     path("admin/", admin.site.urls),
     path("", include('admin_datta.urls')),
+    path('', include('apps.users.urls')),  # Inclure les URLs de l'application users
     # path('', include('django_dyn_dt.urls')), # <-- NEW: Dynamic_DT Routing   
 ]
 
 # Lazy-load on routing is needed
 # During the first build, API is not yet generated
-try:
-    urlpatterns.append( path("api/"      , include("api.urls"))    )
-    urlpatterns.append( path("login/jwt/", view=obtain_auth_token) )
-except:
-    pass
+# try:
+#     urlpatterns.append( path("api/"      , include("api.urls"))    )
+#     urlpatterns.append( path("login/jwt/", view=obtain_auth_token) )
+# except:
+#     pass

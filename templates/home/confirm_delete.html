@@ -1,0 +1,26 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+
+  <!-- [ Main Content ] start -->
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Confirmer la Suppression</h5>
+        </div>
+        <div class="card-body">
+          <p>Êtes-vous sûr de vouloir supprimer {{ object.name }} ? Cette action est irréversible.</p>
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Supprimer</button>
+            <a href="{{ cancel_url }}" class="btn btn-secondary">Annuler</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- [ Main Content ] end -->
+
+{% endblock content %}

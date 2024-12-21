@@ -216,7 +216,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # # Autres paramètres personnalisés
 # NOTIFY_ADMIN_ON_ERROR = True  # Si tu veux notifier un admin en cas d'erreur
 
-# AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = 'users.CustomUser'
 
 LOGGING = {
     'version': 1,

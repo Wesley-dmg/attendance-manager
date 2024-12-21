@@ -157,19 +157,21 @@ class CustomUser(AbstractUser):
     def is_admin(self):
         return self.has_role('admin')
 
-@receiver(post_save, sender=CustomUser)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        with transaction.atomic():
-            profile_mapping = {
-                'admin': AdminProfile,
-                'teacher': TeacherProfile,
-                'student': StudentProfile,
-                'parent': ParentProfile,
-            }
-            profile_class = profile_mapping.get(instance.role)
-            if profile_class:
-                profile_class.objects.create(user=instance)
+# @receiver(post_save, sender=CustomUser)
+# def create_user_profile(sender, instance, created, **kwargs):
+#     if created:
+#         with transaction.atomic():
+#             profile_mapping = {
+#                 'admin': AdminProfile,
+#                 'teacher': TeacherProfile,
+#                 'student': StudentProfile,
+#                 'parent': ParentProfile,
+#             }
+#             profile_class = profile_mapping.get(instance.role)
+#             if profile_class:
+#                 # Assurez-vous qu'un profil n'existe pas déjà pour l'utilisateur
+#                 if not profile_class.objects.filter(user=instance).exists():
+#                     profile_class.objects.create(user=instance)
 
 class AdminType(models.Model):
     ADMIN_TYPE_CHOICES = (

@@ -1,0 +1,45 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block   extrastyle %}
+  {{ form.media.css }}
+  <style>
+    .select2-container--default .select2-results__option {
+       background-color: transparent; /* Ou la couleur par défaut de ton app */
+    color: inherit; /* Inhère la couleur du texte si souhaité */
+    }
+  </style>
+{% endblock extrastyle %}
+
+{% block content %}
+
+  <!-- [ Main Content ] start -->
+  <div class="row d-flex justify-content-center align-items-center">
+    <div class="col-sm-12 col-lg-10">
+      <div class="card">
+        <div class="card-header">
+          <h5>{{ title }}</h5>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}  <!-- Cela préremplit automatiquement tous les champs du formulaire -->
+            <button type="submit" class="btn btn-success">Enregistrer</button>
+            <a href="{{ cancel_url }}" class="btn btn-secondary">Annuler</a>
+        </form>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        </div>
+     </div>
+    </div>
+  </div>
+  <!-- [ Main Content ] end -->
+
+{% endblock content %}
+{% block extra_js %}
+    {{ form.media.js }}
+{% endblock extra_js %}

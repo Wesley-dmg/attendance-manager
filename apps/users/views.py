@@ -1,4 +1,4 @@
-from linecache import cache
+from django.core.cache import cache
 import random
 import string
 from django.shortcuts import render
@@ -21,7 +21,6 @@ from django.views import View
 
 from django.contrib.auth import get_user_model
 
-
 def generate_password():
     characters = string.ascii_letters + string.digits + "!@#$%^&*()-_=+"
     return ''.join(random.choice(characters) for _ in range(10))
@@ -32,27 +31,28 @@ def CustomregisterView(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            
-            # Ajoute le type d'administrateur
+
+            # Récupérer le type d'administrateur
             admin_type = form.cleaned_data.get('admin_type', 'admin_general')
             
-            # Vérifie si le profil admin a été créé ou s'il existe déjà
-            admin_profile, created = AdminProfile.objects.get_or_create(
-                user=user, 
-                defaults={'admin_type': AdminType.objects.get(name=admin_type)}
-            )
-            
-            # Vérifie si le profil a été créé
-            if created:
+            # Vérifie si le profil admin existe déjà
+            admin_profile = AdminProfile.objects.filter(user=user).first()
+            if admin_profile is None:
+                # Créez un nouvel admin profile uniquement si ce n'est pas déjà créé
+                admin_type_instance, created = AdminType.objects.get_or_create(name=admin_type)
+                AdminProfile.objects.create(
+                    user=user,
+                    admin_type=admin_type_instance
+                )
                 send_custom_message(request, _("Compte administrateur créé avec succès. Vous pouvez maintenant vous connecter."), 'success')
             else:
                 send_custom_message(request, _("Ce profil existe déjà."), 'info')
-                
-            return redirect('utilisateurs:login')
+            return redirect('users:login')
         else:
             send_custom_message(request, _("Erreur lors de l'inscription. Veuillez vérifier les champs."), 'error')
     else:
         form = CustomUserCreationForm()
+        
     return render(request, 'accounts/auth-signup.html', {'form': form})
 
 # Ajoute les redirections pour chaque rôle dans un dictionnaire pour plus de lisibilité
@@ -206,7 +206,7 @@ class PasswordResetCodeView(View):
                 user.reset_code = None  # Supprime le code pour la sécurité
                 user.save()
                 send_custom_message(self.request, _("Code validé. Vous pouvez maintenant définir un nouveau mot de passe."), 'success')
-                return redirect('utilisateurs:password_reset_confirm')
+                return redirect('users:password_reset_confirm')
             else:
                 send_custom_message(self.request, _("Code de réinitialisation invalide."),'error')
         return render(request, self.template_name, {'form': form})
@@ -301,7 +301,7 @@ class UserCreateView(CreateView):
         user = form.save()
         send_mail(
             'Bienvenue',
-            f'Nom d’utilisateur: {user.username}\nMot de passe: {password}\nLien: {self.request.build_absolute_uri(reverse_lazy("utilisateurs:login"))}',
+            f'Nom d’utilisateur: {user.username}\nMot de passe: {password}\nLien: {self.request.build_absolute_uri(reverse_lazy("users:login"))}',
             'admin@exemple.com',
             [user.email],
             fail_silently=False,
@@ -312,10 +312,10 @@ class UserCreateView(CreateView):
 # Vue pour les administrateurs
 class AdminCreateView(UserCreateView):
     form_class = AdminForm
-    success_url = reverse_lazy('utilisateurs:admins_list')
+    success_url = reverse_lazy('users:admins_list')
     extra_context = {'role': 'admin',
                      'title': 'Ajouter Administrateur',
-                     'cancel_url': reverse_lazy('utilisateurs:admins_list')}
+                     'cancel_url': reverse_lazy('users:admins_list')}
 
     def form_invalid(self, form):
         # Message d'erreur si le formulaire est invalide
@@ -325,10 +325,10 @@ class AdminCreateView(UserCreateView):
 # Vue pour les enseignants
 class TeacherCreateView(UserCreateView):
     form_class = TeacherForm
-    success_url = reverse_lazy('utilisateurs:teachers_list')
+    success_url = reverse_lazy('users:teachers_list')
     extra_context = {'role': 'teacher',
                      'title': 'Ajouter Administrateur',
-                     'cancel_url': reverse_lazy('utilisateurs:teachers_list')}
+                     'cancel_url': reverse_lazy('users:teachers_list')}
     
     def form_invalid(self, form):
         # Message d'erreur si le formulaire est invalide
@@ -338,10 +338,10 @@ class TeacherCreateView(UserCreateView):
 # Vue pour les étudiants
 class StudentCreateView(UserCreateView):
     form_class = StudentForm
-    success_url = reverse_lazy('utilisateurs:students_list')
+    success_url = reverse_lazy('users:students_list')
     extra_context = {'role': 'student',
                      'title': 'Ajouter Étudiant',
-                     'cancel_url': reverse_lazy('utilisateurs:students_list')}
+                     'cancel_url': reverse_lazy('users:students_list')}
 
     def form_invalid(self, form):
         # Message d'erreur si le formulaire est invalide
@@ -351,10 +351,10 @@ class StudentCreateView(UserCreateView):
 # Vue pour les parents
 class ParentCreateView(UserCreateView):
     form_class = ParentForm
-    success_url = reverse_lazy('utilisateurs:parents_list')
+    success_url = reverse_lazy('users:parents_list')
     extra_context = {'role': 'parent',
                      'title': 'Ajouter Parent',
-                     'cancel_url': reverse_lazy('utilisateurs:parents_list')}
+                     'cancel_url': reverse_lazy('users:parents_list')}
 
     def form_invalid(self, form):
         # Message d'erreur si le formulaire est invalide
@@ -369,7 +369,7 @@ class AdminUpdateView(UpdateView):
     template_name = 'users/admin/user_form.html'
     extra_context = {
         'title': 'Modifier Administrateur',
-        'cancel_url': reverse_lazy('utilisateurs:admins_list'),
+        'cancel_url': reverse_lazy('users:admins_list'),
     }
 
     def get_initial(self):
@@ -390,7 +390,7 @@ class TeacherUpdateView(UpdateView):
     template_name = 'users/admin/user_form.html'
     extra_context = {
         'title': 'Modifier Professeur',
-        'cancel_url': reverse_lazy('utilisateurs:teachers_list'),
+        'cancel_url': reverse_lazy('users:teachers_list'),
     }
     def get_initial(self):
         initial = super().get_initial()
@@ -410,7 +410,7 @@ class StudentUpdateView(UpdateView):
     template_name = 'users/admin/user_form.html'
     extra_context = {
         'title': 'Modifier Étudiant',
-        'cancel_url': reverse_lazy('utilisateurs:students_list'),
+        'cancel_url': reverse_lazy('users:students_list'),
     }
 
     def get_initial(self):
@@ -430,7 +430,7 @@ class ParentUpdateView(UpdateView):
     template_name = 'users/admin/user_form.html'
     extra_context = {
         'title': 'Modifier Parent',
-        'cancel_url': reverse_lazy('utilisateurs:parents_list'),
+        'cancel_url': reverse_lazy('users:parents_list'),
     }
 
     def get_initial(self):
@@ -447,7 +447,7 @@ class ParentUpdateView(UpdateView):
 class AdminDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
-    success_url = reverse_lazy('utilisateurs:admins_list')
+    success_url = reverse_lazy('users:admins_list')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -460,7 +460,7 @@ class AdminDeleteView(DeleteView):
 class TeacherDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
-    success_url = reverse_lazy('utilisateurs:teachers_list')
+    success_url = reverse_lazy('users:teachers_list')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -472,7 +472,7 @@ class TeacherDeleteView(DeleteView):
 class StudentDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
-    success_url = reverse_lazy('utilisateurs:students_list')
+    success_url = reverse_lazy('users:students_list')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -484,7 +484,7 @@ class StudentDeleteView(DeleteView):
 class ParentDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
-    success_url = reverse_lazy('utilisateurs:parents_list')
+    success_url = reverse_lazy('users:parents_list')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
