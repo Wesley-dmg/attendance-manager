@@ -1,0 +1,46 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Liste des Salles</h5>
+                <a href="{{ create_url }}" class="btn btn-primary float-right">Ajouter une Salle</a>
+            </div>
+            <div class="card-block table-border-style">
+                <div class="table-responsive">
+                    <table class="table datatable">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Nom de la Salle</th>
+                                <th scope="col">Capacité</th>
+                                <th scope="col">Localisation</th>
+                                <th scope="col">Disponibilité</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in rooms %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ room.name }}</td>
+                                <td>{{ room.capacity }}</td>
+                                <td>{{ room.location }}</td>
+                                <td>{{ room.available|yesno:"Oui,Non" }}</td>
+                                <td>
+                                    <a href="{% url edit_url room.id %}" class="btn btn-sm btn-warning">Modifier</a>
+                                    <a href="{% url delete_url room.id %}" class="btn btn-sm btn-danger">Supprimer</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

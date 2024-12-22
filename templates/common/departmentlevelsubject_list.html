@@ -1,0 +1,44 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Liste des Matières par Filière et Niveau</h5>
+                <a href="{% url 'common:departmentlevelsubject_add' %}" class="btn btn-primary float-right">Ajouter une Matière à une Filière/Niveau</a>
+            </div>
+            <div class="card-block table-border-style">
+                <div class="table-responsive">
+                    <table class="table datatable">
+                        <thead>
+                            <tr>
+                                <th scope="col" >#</th>
+                                <th scope="col" >Filière</th>
+                                <th scope="col" >Niveau</th>
+                                <th scope="col" >Matière</th>
+                                <th scope="col" >Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dls in object_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ dls.department_level.department.name }}</td>
+                                <td>{{ dls.department_level.level.name }}</td>
+                                <td>{{ dls.subject.name }}</td>
+                                <td>
+                                    <a href="{% url 'common:departmentlevelsubject_edit' dls.id %}" class="btn btn-sm btn-warning">Modifier</a>
+                                    <a href="{% url 'common:departmentlevelsubject_delete' dls.id %}" class="btn btn-sm btn-danger">Supprimer</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

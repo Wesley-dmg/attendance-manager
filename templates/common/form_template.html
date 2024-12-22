@@ -1,0 +1,26 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+
+  <!-- [ Main Content ] start -->
+  <div class="row d-flex justify-content-center align-items-center">
+    <div class="col-sm-12 col-lg-10">
+      <div class="card">
+        <div class="card-header">
+          <h5>{{ title }}</h5>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-success">Enregistrer</button>
+            <a href="{{ cancel_url }}" class="btn btn-secondary">Annuler</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- [ Main Content ] end -->
+
+{% endblock content %}

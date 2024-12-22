@@ -213,7 +213,7 @@ class PasswordResetCodeView(View):
 
 
 # Liste 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class AdminListView(ListView):
     model = CustomUser
     template_name = 'users/admin/admins_list.html'
@@ -228,7 +228,7 @@ class AdminListView(ListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role='admin')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class TeacherListView(ListView):
     model = CustomUser
     template_name = 'users/admin/teachers_list.html'
@@ -243,7 +243,7 @@ class TeacherListView(ListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role='teacher').select_related('teacherprofile')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class StudentListView(ListView):
     model = CustomUser
     template_name = 'users/admin/students_list.html'
@@ -258,7 +258,7 @@ class StudentListView(ListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role='student')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class ParentListView(ListView):
     model = CustomUser
     template_name = 'users/admin/parents_list.html'
@@ -273,7 +273,7 @@ class ParentListView(ListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role='parent')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class UserCreateView(CreateView):
     template_name = 'users/admin/user_form.html'
     success_url = reverse_lazy('users:admins_list')
@@ -362,7 +362,7 @@ class ParentCreateView(UserCreateView):
         return super().form_invalid(form)
 
 @method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(lambda u: u.is_admin()), name='dispatch')
+@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
 class AdminUpdateView(UpdateView):
     model = CustomUser
     form_class = AdminUpdateForm  # Utilisez AdminUpdateForm au lieu de AdminForm
@@ -383,7 +383,7 @@ class AdminUpdateView(UpdateView):
         return self.extra_context['cancel_url']  # Redirige après la mise à jour
 
 @method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(lambda u: u.is_admin()), name='dispatch')
+@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
 class TeacherUpdateView(UpdateView):
     model = CustomUser
     form_class = TeacherUpdateForm  # Utilisez TeacherUpdateForm au lieu de TeacherForm
@@ -403,7 +403,7 @@ class TeacherUpdateView(UpdateView):
         return self.extra_context['cancel_url']
 
 @method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(lambda u: u.is_admin()), name='dispatch')
+@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
 class StudentUpdateView(UpdateView):
     model = CustomUser
     form_class = StudentUpdateForm  # Utilisez StudentUpdateForm au lieu de StudentForm
@@ -423,7 +423,7 @@ class StudentUpdateView(UpdateView):
         return self.extra_context['cancel_url']
 
 @method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(lambda u: u.is_admin()), name='dispatch')
+@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
 class ParentUpdateView(UpdateView):
     model = CustomUser
     form_class = ParentUpdateForm  # Utilisez ParentUpdateForm au lieu de ParentForm
@@ -443,7 +443,7 @@ class ParentUpdateView(UpdateView):
     def get_success_url(self):
         return self.extra_context['cancel_url']
         
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class AdminDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
@@ -456,7 +456,7 @@ class AdminDeleteView(DeleteView):
         return context
 
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class TeacherDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
@@ -468,7 +468,7 @@ class TeacherDeleteView(DeleteView):
         context['cancel_url'] = self.success_url
         return context
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class StudentDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
@@ -480,7 +480,7 @@ class StudentDeleteView(DeleteView):
         context['cancel_url'] = self.success_url
         return context
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin())], name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class ParentDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
