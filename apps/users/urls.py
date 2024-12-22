@@ -1,4 +1,6 @@
 from django.views.generic import TemplateView
+from django.contrib.auth.views import LogoutView
+
 from django.urls import path
 from .views import (
     CustomregisterView, CustomLoginView,CustomPasswordChangeView,CustomPasswordResetView, CustomPasswordResetConfirmView, PasswordResetCodeView,
@@ -14,6 +16,8 @@ app_name = 'users'  # Nom de l'application pour les URL inversées
 urlpatterns = [
     path('register/', CustomregisterView, name='register'),  # Inscription
     path('login/', CustomLoginView, name='login'),           # Connexion
+    path('logout/', LogoutView.as_view(next_page='login/'), name='logout'),
+  
     path('password_change/', CustomPasswordChangeView.as_view(), name='password_change'),  # Changement de mot de passe
     path('password_reset/', CustomPasswordResetView.as_view(), name='password_reset'),  # Demande de réinitialisation de mot de passe
     path('password_reset_done/', TemplateView.as_view(template_name='accounts/auth-password-change-done.html'), name='password_reset_done'),  # URL à ajouter

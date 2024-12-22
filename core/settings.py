@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    'django_select2',
+
     'apps.availability',    # Application pour gérer la disponibilité
     
     'apps.common',       # Application pour gérer les  relations entre filière et matière 

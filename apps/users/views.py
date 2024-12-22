@@ -9,7 +9,7 @@ from django.utils.translation import gettext as _
 from django.shortcuts import render, redirect
 from django.contrib.auth.views import *
 from django.core.mail import send_mail 
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 
@@ -19,7 +19,9 @@ from apps.users.models import AdminProfile, AdminType, CustomUser
 
 from django.views import View
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout
+
+
 
 def generate_password():
     characters = string.ascii_letters + string.digits + "!@#$%^&*()-_=+"
@@ -211,6 +213,10 @@ class PasswordResetCodeView(View):
                 send_custom_message(self.request, _("Code de réinitialisation invalide."),'error')
         return render(request, self.template_name, {'form': form})
 
+def custom_logout(request):
+    logout(request)  
+    send_custom_message(request, _("Vous êtes déconnecté avec succès."), 'success')
+    return redirect(reverse('users:login')) 
 
 # Liste 
 @method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')

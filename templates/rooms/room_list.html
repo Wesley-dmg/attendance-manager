@@ -16,7 +16,7 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Nom de la Salle</th>
-                                <th scope="col">Capacité</th>
+                                {% comment %} <th scope="col">Capacité</th> {% endcomment %}
                                 <th scope="col">Localisation</th>
                                 <th scope="col">Disponibilité</th>
                                 <th scope="col">Actions</th>
@@ -27,7 +27,7 @@
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ room.name }}</td>
-                                <td>{{ room.capacity }}</td>
+                                {% comment %} <td>{{ room.capacity }}</td> {% endcomment %}
                                 <td>{{ room.location }}</td>
                                 <td>{{ room.available|yesno:"Oui,Non" }}</td>
                                 <td>

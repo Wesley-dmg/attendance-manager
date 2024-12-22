@@ -1,4 +1,6 @@
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404
+from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
@@ -7,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
+from apps.home.utils import send_custom_message
 from apps.rooms.forms import ReservationForm, RoomForm
 from apps.rooms.models import Reservation, Room
 
@@ -71,14 +74,16 @@ class RoomDeleteView(LoginRequiredMixin, DeleteView):
 
 # Vue pour lister les réservations
 @method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
-class ReservationListView(ListView):
+class AdminReservationListView(ListView):
     model = Reservation
-    template_name = 'rooms/reservation_list.html'
+    template_name = 'rooms/admin/reservation_list.html'
     context_object_name = 'reservations'
     extra_context = {
         'create_url': reverse_lazy('rooms:reservation_create'),
         'edit_url': 'rooms:reservation_update',
         'delete_url': 'rooms:reservation_delete',
+        'validate_url': 'rooms:reservation_validate', 
+        'reject_url': 'rooms:reservation_reject',    
     }
 
     def get_queryset(self):
@@ -94,7 +99,9 @@ class ReservationCreateView(LoginRequiredMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # Passer l'utilisateur connecté
+        kwargs['user'] = self.request.user  
+        
+        print(f"User in get_form_kwargs: {self.request.user}")
         return kwargs
 
     def form_valid(self, form):
@@ -182,5 +189,43 @@ class ReservationDeleteView(LoginRequiredMixin, DeleteView):
         context['object_name'] = f"{self.object.room.name} - {self.object.reservation_date}"
         context['cancel_url'] = reverse_lazy('rooms:reservation_list')
         return context
+
+@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
+class ReservationValidateView(View):
+    """Vue pour valider une réservation et mettre à jour la disponibilité de la salle."""
+
+    def post(self, request, *args, **kwargs):
+        reservation_id = kwargs.get('pk')
+        reservation = get_object_or_404(Reservation, pk=reservation_id)
+
+        # Valider la réservation
+        reservation.validated = True
+        reservation.save()
+
+        # Mettre la salle en indisponible
+        reservation.room.update_room_availability(False)
+
+        # Message de succès
+        send_custom_message(request, _("La réservation a été validée avec succès."),'success')
+
+        return HttpResponseRedirect(reverse_lazy('rooms:reservation_list'))
     
-    
+@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
+class ReservationRejectView(View):
+    """Vue pour rejeter une réservation et remettre la salle à disposition."""
+
+    def post(self, request, *args, **kwargs):
+        reservation_id = kwargs.get('pk')
+        reservation = get_object_or_404(Reservation, pk=reservation_id)
+
+        # Rejeter la réservation
+        reservation.validated = False
+        reservation.save()
+
+        # Rendre la salle disponible
+        reservation.room.update_room_availability(True)
+
+        # Message de succès
+        send_custom_message(request, _("La réservation a été rejetée et la salle est de nouveau disponible."),'success')
+
+        return HttpResponseRedirect(reverse_lazy('rooms:reservation_list'))
