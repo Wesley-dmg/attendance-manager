@@ -1,91 +1,85 @@
 from django.db import models
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
-from django.core.exceptions import ValidationError
-from datetime import timedelta
 
-class AvailabilityManager(models.Manager):
-    def current_and_future_availability(self, professor):
-        """
-        Retrieve current and future availability for a professor.
-        :param professor: The teacher for whom to retrieve availability.
-        :return: QuerySet of availabilities for the current and future weeks.
-        """
-        today = timezone.now().date()
-        start_of_month = today.replace(day=1)
-        end_of_month = (start_of_month + timedelta(days=31)).replace(day=1) - timedelta(days=1)
-
-        return self.filter(
-            professor=professor,
-            created_at__date__gte=today,
-            created_at__date__lte=end_of_month
-        ).order_by('day_of_week', 'start_time')
-
-class Availability(models.Model):
+class AvailabilityRequest(models.Model):
     """
-    Modèle pour gérer les disponibilités des professeurs avec des dates spécifiques.
+    Demande de disponibilité pour une matière.
     """
-
-    # L'utilisateur (professeur) associé
-    professor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+    subject = models.ForeignKey(
+        'subjects.Subject',
         on_delete=models.CASCADE,
-        related_name='availabilities',
-        verbose_name=_("Professeur")
+        verbose_name=_("Matière"),
+        related_name='availability_requests'
+    )
+    teachers = models.ManyToManyField(
+        'users.TeacherProfile',
+        verbose_name=_("Enseignants"),
+        related_name='availability_requests',
+        help_text=_("Enseignants sélectionnés pour cette demande")
+    )
+    days = models.JSONField(
+        verbose_name=_("Jours demandés"),
+        help_text=_("Liste des jours demandés au format JSON. Ex: ['lundi', 'mardi']")
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
     )
 
-    # Date spécifique de la disponibilité
-    date = models.DateField(verbose_name=_("Date"))
-
-    # Heures de début et de fin
-    start_time = models.TimeField(verbose_name=_("Heure de début"))
-    end_time = models.TimeField(verbose_name=_("Heure de fin"))
-
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Créé le"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Mis à jour le"))
-
     class Meta:
-        verbose_name = _("Disponibilité")
-        verbose_name_plural = _("Disponibilités")
-        ordering = ['date', 'start_time']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['professor', 'date', 'start_time', 'end_time'],
-                name='unique_availability_per_professor'
-            )
+        verbose_name = _("Demande de disponibilité")
+        verbose_name_plural = _("Demandes de disponibilités")
+        permissions = [
+            ('can_send_availability_request', _("Peut envoyer une demande de disponibilité")),
         ]
 
     def __str__(self):
-        """
-        Représentation textuelle d'une disponibilité.
-        """
-        return f"{self.professor.username} - {self.date} ({self.start_time} - {self.end_time})"
+        return f"Demande : {self.subject.name} ({self.created_at.date()})"
 
-    def clean(self):
+    def get_teachers(self):
         """
-        Valider les contraintes avant de sauvegarder :
-        - L'heure de début doit être avant l'heure de fin.
-        - Les disponibilités ne doivent pas se chevaucher pour un même professeur à la même date.
+        Retourne les enseignants associés à la matière de cette demande.
         """
-        if self.start_time >= self.end_time:
-            raise ValidationError(_("L'heure de début doit être avant l'heure de fin."))
+        return self.subject.teachers.all()  # On récupère les professeurs associés à cette matière
 
-        overlapping_availability = Availability.objects.filter(
-            professor=self.professor,
-            date=self.date
-        ).exclude(pk=self.pk).filter(
-            start_time__lt=self.end_time,
-            end_time__gt=self.start_time
-        )
-        if overlapping_availability.exists():
-            raise ValidationError(_("Les disponibilités ne doivent pas se chevaucher."))
+class AvailabilityResponse(models.Model):
+    """
+    Réponse d'un enseignant à une demande de disponibilité.
+    """
+    STATUS_CHOICES = [
+        ('pending', _("En attente")),
+        ('accepted', _("Accepté")),
+        ('rejected', _("Rejeté")),
+    ]
 
-    def save(self, *args, **kwargs):
-        """
-        Sauvegarder l'objet avec la validation.
-        """
-        self.full_clean()  # Appelle la méthode clean pour valider avant sauvegarde.
-        super().save(*args, **kwargs)
+    request = models.ForeignKey(
+        'AvailabilityRequest',
+        on_delete=models.CASCADE,
+        verbose_name=_("Demande"),
+        related_name='responses'
+    )
+    teacher = models.ForeignKey(
+        'users.TeacherProfile',
+        on_delete=models.CASCADE,
+        verbose_name=_("Enseignant"),
+        related_name='availability_responses'
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name=_("Statut de la réponse")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Dernière mise à jour")
+    )
 
+    class Meta:
+        verbose_name = _("Réponse de disponibilité")
+        verbose_name_plural = _("Réponses de disponibilités")
+        unique_together = ('request', 'teacher')
+
+    def __str__(self):
+        return f"{self.teacher.user.username} - {self.get_status_display()} pour {self.request.subject.name}"

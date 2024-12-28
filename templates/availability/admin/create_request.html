@@ -1,0 +1,204 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Créer une demande de disponibilité</h2>
+
+  <!-- Étape 1 : Sélection de la matière -->
+  <div>
+    <h5 class="mb-3">Étape 1 : Choisissez une matière</h5>
+    <div id="subject-selection" class="d-inline-flex flex-column p-1 justify-content-center">
+      {% for subject in subjects %}
+      <div class="custom-control custom-radio btn btn-sm d-inline btn-outline-primary m-3">
+        <input type="radio" id="subject-{{ subject.id }}" name="subject" class="custom-control-input mx-3" value="{{ subject.id }}">
+        <label class="custom-control-label mx-3" for="subject-{{ subject.id }}">{{ subject.name }}</label>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <!-- Étape 2 : Affichage des enseignants associés -->
+  <div id="teachers-container" class="d-none">
+    <h5 class="mb-3">Étape 2 : Sélectionnez un ou plusieurs enseignants</h5>
+    <div id="teachers-list">
+      <!-- Les enseignants seront chargés ici via AJAX -->
+    </div>
+    <button type="button" class="btn btn-primary mt-3" id="open-days-modal" disabled>Faire une demande</button>
+  </div>
+</div>
+
+<!-- Modal pour la sélection des jours -->
+<div class="modal fade" id="daysModal" tabindex="-1" aria-labelledby="daysModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="daysModalLabel">Sélectionnez les jours</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="days-form" method="POST" action="{% url 'availability:create_availability_request' %}">
+          {% csrf_token %}
+          <p>Matière et professeurs sélectionnés :</p>
+          <ul id="selected-data"></ul>
+
+          <!-- Champs cachés pour inclure les IDs -->
+          <input type="hidden" name="subject_id" id="hidden-subject-id">
+          <input type="hidden" name="teacher_ids" id="hidden-teacher-ids">
+          <input type="hidden" name="filiere_ids" id="hidden-filiere-ids">
+
+          <!-- Checkbox des jours -->
+          <div class="d-flex flex-column align-items-around justify-content-center">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="days" id="monday" value="Monday">
+              <label class="form-check-label" for="monday">Lundi</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="days" id="tuesday" value="Tuesday">
+              <label class="form-check-label" for="tuesday">Mardi</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="days" id="wednesday" value="Wednesday">
+              <label class="form-check-label" for="wednesday">Mercredi</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="days" id="thursday" value="Thursday">
+              <label class="form-check-label" for="thursday">Jeudi</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="days" id="friday" value="Friday">
+              <label class="form-check-label" for="friday">Vendredi</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="days" id="saturday" value="Saturday">
+              <label class="form-check-label" for="saturday">Samedi</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-primary" id="submit-days">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+{% block extra_js %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const subjectRadios = document.querySelectorAll("input[name='subject']");
+    const teacherList = document.getElementById("teachers-list");
+    const teachersContainer = document.getElementById("teachers-container");
+    const openDaysModalButton = document.getElementById("open-days-modal");
+    const selectedDataList = document.getElementById("selected-data");
+
+    // Champs cachés du modal
+    const hiddenSubjectId = document.getElementById("hidden-subject-id");
+    const hiddenTeacherIds = document.getElementById("hidden-teacher-ids");
+    const hiddenFiliereIds = document.getElementById("hidden-filiere-ids");
+
+    let selectedTeachers = []; // Liste des professeurs sélectionnés
+    let selectedSubject = null; // ID de la matière sélectionnée
+    let associatedFilieres = []; // Liste des filières associées
+
+    // Fonction pour gérer le changement de matière
+    function handleSubjectChange(event) {
+        selectedSubject = event.target.value;
+        console.log("Matière sélectionnée, ID :", selectedSubject);
+
+        // Requête pour récupérer les enseignants
+        fetch(`/ajax/get-teachers/?subject_id=${selectedSubject}`, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                teacherList.innerHTML = "";
+                selectedTeachers = [];
+                openDaysModalButton.disabled = true;
+
+                if (data.teachers.length > 0) {
+                    data.teachers.forEach((teacher) => {
+                        teacherList.innerHTML += `
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input teacher-checkbox" id="teacher-${teacher.id}" value="${teacher.id}">
+                                <label class="custom-control-label" for="teacher-${teacher.id}">${teacher.name}</label>
+                            </div>
+                        `;
+                    });
+
+                    teachersContainer.classList.remove("d-none");
+                } else {
+                    teacherList.innerHTML = "<p>Aucun enseignant associé à cette matière.</p>";
+                    teachersContainer.classList.remove("d-none");
+                }
+
+                document.querySelectorAll(".teacher-checkbox").forEach((checkbox) => {
+                    checkbox.addEventListener("change", handleTeacherSelection);
+                });
+            })
+            .catch((error) => {
+                console.error("Erreur dans la requête AJAX des enseignants :", error);
+            });
+
+        // Requête pour récupérer les filières associées
+        fetch(`/ajax/get-filieres/?subject_id=${selectedSubject}`, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log("Filières associées :", data);
+                associatedFilieres = data.filieres || [];
+            })
+            .catch((error) => {
+                console.error("Erreur dans la requête AJAX des filières :", error);
+            });
+    }
+
+    // Fonction pour gérer la sélection des professeurs
+    function handleTeacherSelection(event) {
+        const teacherId = event.target.value;
+        if (event.target.checked) {
+            selectedTeachers.push(teacherId);
+        } else {
+            selectedTeachers = selectedTeachers.filter((id) => id !== teacherId);
+        }
+
+        openDaysModalButton.disabled = selectedTeachers.length === 0;
+    }
+
+    // Gestion du clic sur "Faire une demande"
+    openDaysModalButton.addEventListener("click", function () {
+        // Remplir les champs cachés avec les données sélectionnées
+        hiddenSubjectId.value = selectedSubject;
+        hiddenTeacherIds.value = selectedTeachers.join(",");
+        hiddenFiliereIds.value = associatedFilieres.map((filiere) => filiere.id).join(",");
+
+        // Mettre à jour la liste visible dans le modal
+        selectedDataList.innerHTML = `
+            <li>Matière ID : ${selectedSubject}</li>
+            ${selectedTeachers.map((id) => `<li>Professeur ID : ${id}</li>`).join("")}
+            ${associatedFilieres.map((filiere) => `<li>Filière ID : ${filiere.id}, Nom : ${filiere.name}</li>`).join("")}
+        `;
+
+        // Afficher le modal
+        const modal = new bootstrap.Modal(document.getElementById("daysModal"));
+        modal.show();
+    });
+
+    // Ajouter des écouteurs d'événements pour les radios des matières
+    subjectRadios.forEach((radio) => {
+        radio.addEventListener("change", handleSubjectChange);
+    });
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock extra_js %}

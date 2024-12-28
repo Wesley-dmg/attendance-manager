@@ -22,6 +22,12 @@ class DepartmentLevelSubject(models.Model):
         """
         return f'{self.subject.name} - Niveau: {self.department_level.level.name}, Filière: {self.department_level.department.name}'
 
+    def get_full_description(self):
+        """
+            Retourne une description complète de cette matière pour un département et un niveau d'étude donnés.
+        """
+        return f'{self.subject.name} - Niveau: {self.department_level.level.name}, Filière: {self.department_level.department.name}'
+
     def __str__(self):
         return f'{self.subject.name} - {self.department_level.level.name} ({self.department_level.department.name})'
 

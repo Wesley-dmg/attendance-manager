@@ -209,7 +209,7 @@ class AdminForm(BaseUserForm):
 # Formulaire pour les enseignants
 class TeacherForm(BaseUserForm):
     subjects = forms.ModelMultipleChoiceField(queryset=Subject.objects.all(), widget=Select2MultipleWidget, required=True)
-    department_levels = forms.ModelMultipleChoiceField(queryset=DepartmentLevel.objects.all(), widget=Select2MultipleWidget, required=True)
+    # department_levels = forms.ModelMultipleChoiceField(queryset=DepartmentLevel.objects.all(), widget=Select2MultipleWidget, required=False)
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -218,7 +218,7 @@ class TeacherForm(BaseUserForm):
             user.save()
             teacher_profile, created = TeacherProfile.objects.get_or_create(user=user)
             teacher_profile.subjects.set(self.cleaned_data['subjects'])
-            teacher_profile.department_levels.set(self.cleaned_data['department_levels'])
+            # teacher_profile.department_levels.set(self.cleaned_data['department_levels'])
         
         return user
 
@@ -282,13 +282,13 @@ class AdminUpdateForm(BaseUserForm):
 
 class TeacherUpdateForm(BaseUserForm):
     subjects = forms.ModelMultipleChoiceField(queryset=Subject.objects.all(), widget=Select2MultipleWidget, required=True)
-    department_levels = forms.ModelMultipleChoiceField(queryset=DepartmentLevel.objects.all(), widget=Select2MultipleWidget, required=True)
+    # department_levels = forms.ModelMultipleChoiceField(queryset=DepartmentLevel.objects.all(), widget=Select2MultipleWidget, required=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and hasattr(self.instance, 'teacherprofile'):
             self.fields['subjects'].initial = self.instance.teacherprofile.subjects.all()
-            self.fields['department_levels'].initial = self.instance.teacherprofile.department_levels.all()
+            # self.fields['department_levels'].initial = self.instance.teacherprofile.department_levels.all()
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -297,7 +297,7 @@ class TeacherUpdateForm(BaseUserForm):
             user.save()
             teacher_profile, created = TeacherProfile.objects.get_or_create(user=user)
             teacher_profile.subjects.set(self.cleaned_data['subjects'])
-            teacher_profile.department_levels.set(self.cleaned_data['department_levels'])
+            # teacher_profile.department_levels.set(self.cleaned_data['department_levels'])
             teacher_profile.save()
         return user
 

@@ -26,7 +26,7 @@ def setup_permissions_for_roles():
 
     role_permissions = {
         'Admin': ['add_customuser', 'change_customuser', 'delete_customuser', 'view_customuser'],
-        'Teacher': ['add_subject', 'change_subject', 'view_subject'],
+        'Teacher': ['add_subject', 'change_subject', 'view_subject','view_availability', 'add_availability', 'change_own_availability'],
         'Student': ['view_subject'],
         'Parent': ['view_profile'],
     }
@@ -119,9 +119,9 @@ class CustomUser(AbstractUser):
             super().save(update_fields=['password_updated_at', 'password_changed', 'first_login'])
 
         
-    def clean(self):
-        if self.is_superuser and self.role != 'admin':
-            raise ValidationError(_("Un super-utilisateur doit avoir le rôle 'admin'."))
+    # def clean(self):
+    #     if self.is_superuser and self.role != 'admin':
+    #         raise ValidationError(_("Un super-utilisateur doit avoir le rôle 'admin'."))
 
     def needs_password_change(self):
         """Vérifie si l'utilisateur doit changer son mot de passe."""
@@ -195,17 +195,11 @@ class AdminProfile(models.Model):
 class TeacherProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, verbose_name=_('Utilisateur'))
     grade = models.CharField(max_length=50, blank=True, verbose_name=_('Grade'))
-    subjects = models.ManyToManyField(Subject, related_name='teachers', verbose_name=_('Matières'))
-    department_levels = models.ManyToManyField(DepartmentLevel, related_name='teachers', verbose_name=_('Niveaux départementaux'))
-    # job_title = models.CharField(max_length=50, blank=True)  # Poste occupé (ex: professeur titulaire)
+    subjects = models.ManyToManyField(Subject, related_name='teachers', verbose_name=_("Matières enseignées"))
     
     def teaches_subject(self, subject):
         """vérifier si un enseignant enseigne un sujet spécifique."""
         return subject in self.subjects.all()
-
-    def get_department_levels(self):
-        """Retourne les niveaux et départements où l'enseignant intervient"""
-        return self.department_levels.all()
 
     def get_subjects(self):
         """Retourne les matières que l'enseignant enseigne"""

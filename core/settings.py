@@ -15,6 +15,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from str2bool import str2bool
 
+from django.utils.translation import gettext_lazy as _
+
 # import django_dyn_dt
 
 load_dotenv()  # take environment variables from .env.
@@ -166,7 +168,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = "fr-FR"
+LANGUAGES = [
+    ('fr', _('French')),
+    ('en', _('English')),
+]
+LANGUAGE_CODE = 'fr'  # Par défaut en français
+
 
 TIME_ZONE = "UTC"
 

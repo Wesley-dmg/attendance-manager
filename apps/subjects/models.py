@@ -8,7 +8,7 @@ class Subject(models.Model):
     """
     Représente une matière enseignée dans le cadre d'un département et d'un niveau d'étude.
     """
-    name = models.CharField(max_length=100, verbose_name=_("Nom de la matière"))
+    name = models.CharField(max_length=100, verbose_name=_("Nom de la matière"),unique=True)
     code = models.CharField(max_length=10, unique=True, verbose_name=_("Code de la matière"))
     
     department_levels = models.ManyToManyField('courses.DepartmentLevel', through='common.DepartmentLevelSubject', related_name='subjects', verbose_name=_("Niveaux et départements"))
