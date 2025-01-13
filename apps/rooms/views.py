@@ -6,7 +6,9 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import user_passes_test,login_required
 from django.contrib.auth.decorators import login_required, user_passes_test
+
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from apps.home.utils import send_custom_message
@@ -14,8 +16,8 @@ from apps.rooms.forms import RoomForm
 from apps.rooms.models import Room
 
 # Vue pour lister les rooms
-@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
-class RoomListView(LoginRequiredMixin, ListView):
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
+class RoomListView(ListView):
     model = Room
     template_name = 'rooms/room_list.html'
     context_object_name = 'rooms'
@@ -29,8 +31,8 @@ class RoomListView(LoginRequiredMixin, ListView):
         return Room.objects.all()
 
 # Vue pour créer une nouvelle salle
-@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
-class RoomCreateView(LoginRequiredMixin, CreateView):
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
+class RoomCreateView(CreateView):
     permission_required = 'rooms.add_room'  # Permettre uniquement aux utilisateurs ayant la permission d'ajouter
     model = Room
     form_class = RoomForm
@@ -44,8 +46,8 @@ class RoomCreateView(LoginRequiredMixin, CreateView):
         return context
 
 # Vue pour mettre à jour une salle existante
-@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
-class RoomUpdateView(LoginRequiredMixin,  UpdateView):
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
+class RoomUpdateView(UpdateView):
     permission_required = 'rooms.change_room'
     model = Room
     form_class = RoomForm
@@ -59,8 +61,8 @@ class RoomUpdateView(LoginRequiredMixin,  UpdateView):
         return context
 
 # Vue pour supprimer une salle
-@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
-class RoomDeleteView(LoginRequiredMixin, DeleteView):
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
+class RoomDeleteView(DeleteView):
     permission_required = 'rooms.delete_room'
     model = Room
     template_name = 'rooms/confirm_delete.html'

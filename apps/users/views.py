@@ -78,8 +78,9 @@ def CustomLoginView(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 # Mets à jour la date de première connexion si elle est vide
-                if not user.first_login:
-                    user.first_login = timezone.now()
+                if user.first_login:
+                    user.first_login = False  # Marque comme non-première connexion
+                    user.first_login_date = timezone.now()  # Facultatif, si tu veux sauvegarder la date de première connexion
                     user.save()
 
                 # Connexion de l'utilisateur et envoi du message de succès
@@ -218,6 +219,13 @@ def custom_logout(request):
     send_custom_message(request, _("Vous êtes déconnecté avec succès."), 'success')
     return redirect(reverse('users:login')) 
 
+@login_required
+def profils(request):
+  context = {
+    
+  }
+  return render(request, 'users/profils.html', context)
+
 # Liste 
 @method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class AdminListView(ListView):
@@ -316,6 +324,7 @@ class UserCreateView(CreateView):
         return super().form_valid(form)
 
 # Vue pour les administrateurs
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class AdminCreateView(UserCreateView):
     form_class = AdminForm
     success_url = reverse_lazy('users:admins_list')
@@ -329,6 +338,7 @@ class AdminCreateView(UserCreateView):
         return super().form_invalid(form)
     
 # Vue pour les enseignants
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class TeacherCreateView(UserCreateView):
     form_class = TeacherForm
     success_url = reverse_lazy('users:teachers_list')
@@ -342,6 +352,7 @@ class TeacherCreateView(UserCreateView):
         return super().form_invalid(form)
 
 # Vue pour les étudiants
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class StudentCreateView(UserCreateView):
     form_class = StudentForm
     success_url = reverse_lazy('users:students_list')
@@ -355,6 +366,7 @@ class StudentCreateView(UserCreateView):
         return super().form_invalid(form)
 
 # Vue pour les parents
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class ParentCreateView(UserCreateView):
     form_class = ParentForm
     success_url = reverse_lazy('users:parents_list')
@@ -367,8 +379,7 @@ class ParentCreateView(UserCreateView):
         send_custom_message(self.request, _("Erreur dans le formulaire. Un profil Parent pour cet utilisateur existe déjà."), 'error')
         return super().form_invalid(form)
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class AdminUpdateView(UpdateView):
     model = CustomUser
     form_class = AdminUpdateForm  # Utilisez AdminUpdateForm au lieu de AdminForm
@@ -388,8 +399,7 @@ class AdminUpdateView(UpdateView):
     def get_success_url(self):
         return self.extra_context['cancel_url']  # Redirige après la mise à jour
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class TeacherUpdateView(UpdateView):
     model = CustomUser
     form_class = TeacherUpdateForm  # Utilisez TeacherUpdateForm au lieu de TeacherForm
@@ -408,8 +418,7 @@ class TeacherUpdateView(UpdateView):
     def get_success_url(self):
         return self.extra_context['cancel_url']
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class StudentUpdateView(UpdateView):
     model = CustomUser
     form_class = StudentUpdateForm  # Utilisez StudentUpdateForm au lieu de StudentForm
@@ -428,8 +437,7 @@ class StudentUpdateView(UpdateView):
     def get_success_url(self):
         return self.extra_context['cancel_url']
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(lambda u: u.is_admin), name='dispatch')
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class ParentUpdateView(UpdateView):
     model = CustomUser
     form_class = ParentUpdateForm  # Utilisez ParentUpdateForm au lieu de ParentForm

@@ -4,12 +4,16 @@ from django.urls import reverse_lazy
 
 from apps.subjects.forms import SubjectForm
 from apps.subjects.models import Subject
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import user_passes_test,login_required
 
 # CRUD for Subject
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class SubjectListView(ListView):
     model = Subject
     template_name = 'subjects/subject_list.html'
 
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class SubjectCreateView(CreateView):
     model = Subject
     form_class = SubjectForm
@@ -22,6 +26,7 @@ class SubjectCreateView(CreateView):
         context['cancel_url'] = reverse_lazy('subjects:subject_list')
         return context
 
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class SubjectUpdateView(UpdateView):
     model = Subject
     form_class = SubjectForm
@@ -34,6 +39,7 @@ class SubjectUpdateView(UpdateView):
         context['cancel_url'] = reverse_lazy('subjects:subject_list')
         return context
 
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class SubjectDeleteView(DeleteView):
     model = Subject
     template_name = 'subjects/confirm_delete.html'

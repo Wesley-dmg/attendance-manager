@@ -213,11 +213,11 @@ The theme used to style this starter provides the following files:
    |-- templates/                     # Root Templates Folder 
    |    |          
    |    |-- accounts/       
-   |    |    |-- auth-signin.html     # Sign IN Page
-   |    |    |-- auth-signup.html     # Sign UP Page
+   |    |    |-- auth-signin.html
+   |    |    |-- auth-signup.html
    |    |
    |    |-- includes/       
-   |    |    |-- footer.html          # Footer component
+   |    |    |-- footer.htm        # Footer component
    |    |    |-- sidebar.html         # Sidebar component
    |    |    |-- navigation.html      # Navigation Bar
    |    |    |-- scripts.html         # Scripts Component

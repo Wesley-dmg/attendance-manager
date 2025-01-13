@@ -188,11 +188,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# DYN_DB_PKG_ROOT = os.path.dirname( inspect.getfile( django_dyn_dt ) ) # <-- NEW: Dynamic_DT
+import os
+
+MEDIA_URL = '/media/'  # URL accessible depuis le navigateur
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Répertoire de stockage des fichiers
+
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
-    # os.path.join(DYN_DB_PKG_ROOT, "templates/static"),                # <-- NEW: Dynamic_DT 
 )
 
 #if not DEBUG:
@@ -203,7 +206,9 @@ STATICFILES_DIRS = (
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = 'users:login'  
+# LOGIN_REDIRECT_URL = '/'
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ########################################

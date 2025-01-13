@@ -3,8 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db import models
-import re
-import random
+# import re
+# import random
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -81,6 +81,8 @@ class CustomUser(AbstractUser):
     
     password_updated_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Date de mise à jour du mot de passe'))
     first_login = models.BooleanField(default=True, verbose_name=_('Première connexion'))
+    first_login_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Date de première connexion'))
+    
     password_changed = models.BooleanField(default=False, verbose_name=_('Mot de passe modifié'))
     reset_code = models.CharField(max_length=6, blank=True, null=True, verbose_name=_('Code de réinitialisation'))
     
@@ -186,7 +188,7 @@ class AdminType(models.Model):
 
 class AdminProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, verbose_name=_('Utilisateur'))
-    managed_departments = models.TextField(blank=True, verbose_name=_('Départements gérés'))
+    # managed_departments = models.TextField(blank=True, verbose_name=_('Départements gérés'))
     admin_type = models.ForeignKey(AdminType, on_delete=models.SET_NULL, null=True, related_name='admins', verbose_name=_('Type d’admin'))
 
     def __str__(self):

@@ -5,12 +5,17 @@ from django.urls import reverse_lazy
 from apps.courses.forms import DepartmentForm, DepartmentLevelForm, LevelForm
 from apps.courses.models import Department, DepartmentLevel, Level
 
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import user_passes_test,login_required
+
 
 # CRUD for Department
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class DepartmentListView(ListView):
     model = Department
     template_name = 'courses/department_list.html'
 
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class DepartmentCreateView(CreateView):
     model = Department
     form_class = DepartmentForm
@@ -35,6 +40,7 @@ class DepartmentUpdateView(UpdateView):
         context['cancel_url'] = reverse_lazy('courses:department_list')
         return context
 
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class DepartmentDeleteView(DeleteView):
     model = Department
     template_name = 'courses/confirm_delete.html'
@@ -47,10 +53,12 @@ class DepartmentDeleteView(DeleteView):
 
 
 # CRUD for Level
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class LevelListView(ListView):
     model = Level
     template_name = 'courses/level_list.html'
 
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class LevelCreateView(CreateView):
     model = Level
     form_class = LevelForm
@@ -86,10 +94,12 @@ class LevelDeleteView(DeleteView):
         return context
 
 # CRUD for DepartmentLevel
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class DepartmentLevelListView(ListView):
     model = DepartmentLevel
     template_name = 'courses/departmentlevel_list.html'
 
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class DepartmentLevelCreateView(CreateView):
     model = DepartmentLevel
     form_class = DepartmentLevelForm

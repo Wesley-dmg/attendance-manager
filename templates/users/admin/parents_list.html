@@ -29,8 +29,8 @@
                       {% if user.profile_picture %}
                         <img src="{{ user.profile_picture.url }}" alt="Photo de {{ user.first_name }}" width="50" height="50" class="rounded-circle">
                       {% else %}
-                        {% if user.gender == "female" %}<img class="rounded-circle" style="width:40px;" src="{% static 'assets/images/user/avatar-1.jpg' %}"
-                          alt="activity-user">
+                        {% if user.gender == "female" %}
+                        <img class="rounded-circle" style="width:40px;" src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="activity-user">
                           {% else %}
                           <img class="rounded-circle" style="width:40px;" src="{% static 'assets/images/user/avatar-2.jpg' %}"
                           alt="activity-user">

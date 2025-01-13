@@ -8,6 +8,9 @@ from apps.availability.models import AvailabilityRequest, AvailabilityResponse
 from apps.common.models import DepartmentLevelSubject
 from apps.subjects.models import Subject
 
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import user_passes_test,login_required
+
 from apps.users.models import TeacherProfile
 
 from django.views.decorators.csrf import csrf_exempt
@@ -77,7 +80,7 @@ def get_filieres(request):
         return JsonResponse({"filieres": filiere_list}, status=200)
 
     return JsonResponse({"error": "Requête invalide."}, status=400)
-
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class CreateAvailabilityRequestView(View):
     """
     Vue pour afficher le formulaire de création d'une demande et gérer la soumission.

@@ -7,7 +7,7 @@ from .views import (
     AdminListView, TeacherListView, StudentListView, ParentListView,
     AdminCreateView, TeacherCreateView, StudentCreateView, ParentCreateView,
     AdminUpdateView, TeacherUpdateView, StudentUpdateView, ParentUpdateView,
-    AdminDeleteView, TeacherDeleteView, StudentDeleteView, ParentDeleteView
+    AdminDeleteView, TeacherDeleteView, StudentDeleteView, ParentDeleteView, custom_logout, profils
     
 )
 
@@ -15,14 +15,16 @@ app_name = 'users'  # Nom de l'application pour les URL inversées
 
 urlpatterns = [
     path('register/', CustomregisterView, name='register'),  # Inscription
-    path('login/', CustomLoginView, name='login'),           # Connexion
-    path('logout/', LogoutView.as_view(next_page='login/'), name='logout'),
+    path('login/', CustomLoginView, name='login'),
+    path('logout/', custom_logout, name='logout'),
   
     path('password_change/', CustomPasswordChangeView.as_view(), name='password_change'),  # Changement de mot de passe
     path('password_reset/', CustomPasswordResetView.as_view(), name='password_reset'),  # Demande de réinitialisation de mot de passe
     path('password_reset_done/', TemplateView.as_view(template_name='accounts/auth-password-change-done.html'), name='password_reset_done'),  # URL à ajouter
     path('reset_password_confirm/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),  # Nouveau mot de passe sans paramètres
     path('password_reset_code/', PasswordResetCodeView.as_view(), name='password_reset_code'),  # Vue pour entrer le code de validation
+    
+    path('profils/', profils, name='profils'),
     
     path('admins/liste/', AdminListView.as_view(), name='admins_list'),
     path('teachers/liste/', TeacherListView.as_view(), name='teachers_list'),
