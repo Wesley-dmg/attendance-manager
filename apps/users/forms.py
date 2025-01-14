@@ -336,3 +336,23 @@ class ParentUpdateForm(BaseUserForm):
             parent_profile.children.set(self.cleaned_data['children'])
             parent_profile.save()
         return user
+
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = [
+            'first_name', 
+            'last_name', 
+            'email', 
+            'phone_number', 
+            'address', 
+            'profile_picture'
+        ]
+        widgets = {
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
+        }

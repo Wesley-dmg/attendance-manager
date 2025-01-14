@@ -16,7 +16,10 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework.authtoken.views import obtain_auth_token # <-- NEW
+from rest_framework.authtoken.views import obtain_auth_token
+
+from core import settings # <-- NEW
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', include('apps.home.urls')),
@@ -44,3 +47,7 @@ urlpatterns = [
 #     urlpatterns.append( path("login/jwt/", view=obtain_auth_token) )
 # except:
 #     pass
+
+# Servir les fichiers médias en mode développement
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

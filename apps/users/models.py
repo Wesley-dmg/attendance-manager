@@ -6,12 +6,10 @@ from django.db import models
 # import re
 # import random
 from django.utils.translation import gettext_lazy as _
-from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from django.core.validators import RegexValidator
 
-from apps.availability import apps
 from apps.courses.models import DepartmentLevel
 from apps.subjects.models import Subject
 
@@ -120,11 +118,6 @@ class CustomUser(AbstractUser):
             # Utilise update_fields pour éviter une boucle infinie
             super().save(update_fields=['password_updated_at', 'password_changed', 'first_login'])
 
-        
-    # def clean(self):
-    #     if self.is_superuser and self.role != 'admin':
-    #         raise ValidationError(_("Un super-utilisateur doit avoir le rôle 'admin'."))
-
     def needs_password_change(self):
         """Vérifie si l'utilisateur doit changer son mot de passe."""
         if self.first_login or self.password_updated_at is None:
@@ -158,22 +151,6 @@ class CustomUser(AbstractUser):
     @property
     def is_admin(self):
         return self.has_role('admin')
-
-# @receiver(post_save, sender=CustomUser)
-# def create_user_profile(sender, instance, created, **kwargs):
-#     if created:
-#         with transaction.atomic():
-#             profile_mapping = {
-#                 'admin': AdminProfile,
-#                 'teacher': TeacherProfile,
-#                 'student': StudentProfile,
-#                 'parent': ParentProfile,
-#             }
-#             profile_class = profile_mapping.get(instance.role)
-#             if profile_class:
-#                 # Assurez-vous qu'un profil n'existe pas déjà pour l'utilisateur
-#                 if not profile_class.objects.filter(user=instance).exists():
-#                     profile_class.objects.create(user=instance)
 
 class AdminType(models.Model):
     ADMIN_TYPE_CHOICES = (

@@ -1,0 +1,76 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    
+    <div class="card">
+        <div class="card-header">
+          <h5 style="font-size:1.5rem !important ;">Profile</h5>
+        </div>
+        <div class="card-body ">
+            <div class="row d-flex justify-content-center align-items-center">
+                <div class="col-md-3 text-center">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Photo de profil" class="img-fluid rounded-circle">
+                    {% else %}
+                        {% if user.gender == "female" %}              
+                            <img src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="profile image"class="img-fluid rounded-circle">
+                        {% else %}
+                            <img  src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="profile image"class="img-fluid rounded-circle">
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="col-md-9 m-auto ">
+                    <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+                    <p><strong>Email :</strong> {{ user.email }}</p>
+                    <p><strong>Téléphone :</strong> {{ user.phone_number }}</p>
+                    <p><strong>Adresse :</strong> {{ user.address }}</p>
+                    
+                    {% if user.is_teacher %}
+                        <p><strong>Grade :</strong> {{ profile.grade }}</p>
+                        <p><strong>Matières enseignées :</strong> {{ profile.get_subjects|join:", " }}</p>
+                    {% elif user.is_student %}
+                        <p><strong>ID Étudiant :</strong> {{ profile.student_id }}</p>
+                        <p><strong>Filière :</strong> {{ profile.major }}</p>
+                        <p><strong>Statut :</strong> {{ profile.get_enrollment_status }}</p>
+                    {% elif user.is_parent %}
+                        <p><strong>Enfants :</strong> {{ profile.get_children_names }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-center">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">Modifier le Profil</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour modifier le profil -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Éditer mes Informations</h5>
+                    </div>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'users:profile_update' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ form.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

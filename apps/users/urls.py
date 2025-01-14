@@ -4,11 +4,10 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path
 from .views import (
     CustomregisterView, CustomLoginView,CustomPasswordChangeView,CustomPasswordResetView, CustomPasswordResetConfirmView, PasswordResetCodeView,
-    AdminListView, TeacherListView, StudentListView, ParentListView,
+    AdminListView, ProfileUpdateView, ProfileView, TeacherListView, StudentListView, ParentListView,
     AdminCreateView, TeacherCreateView, StudentCreateView, ParentCreateView,
     AdminUpdateView, TeacherUpdateView, StudentUpdateView, ParentUpdateView,
-    AdminDeleteView, TeacherDeleteView, StudentDeleteView, ParentDeleteView, custom_logout, profils
-    
+    AdminDeleteView, TeacherDeleteView, StudentDeleteView, ParentDeleteView, custom_logout
 )
 
 app_name = 'users'  # Nom de l'application pour les URL inversées
@@ -24,8 +23,11 @@ urlpatterns = [
     path('reset_password_confirm/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),  # Nouveau mot de passe sans paramètres
     path('password_reset_code/', PasswordResetCodeView.as_view(), name='password_reset_code'),  # Vue pour entrer le code de validation
     
-    path('profils/', profils, name='profils'),
+    # path('profiles/', profiles, name='profiles'),
     
+    path('profiles/', ProfileView.as_view(), name='profiles'),
+    path('profile/update/', ProfileUpdateView.as_view(), name='profile_update'),
+
     path('admins/liste/', AdminListView.as_view(), name='admins_list'),
     path('teachers/liste/', TeacherListView.as_view(), name='teachers_list'),
     path('students/liste/', StudentListView.as_view(), name='students_list'),

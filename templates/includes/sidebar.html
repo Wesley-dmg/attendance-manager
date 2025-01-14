@@ -13,34 +13,76 @@
     </div>
     <div class="navbar-content scroll-div">
       <ul class="nav pcoded-inner-navbar">
+        
         <li class="nav-item pcoded-menu-caption">
           <label>Navigation</label>
         </li>
+
+        <!-- Dashboard accessible par tous les utilisateurs -->
         <li data-username="dashboard Default Ecommerce CRM Analytics Crypto Project" class="nav-item {% if 'index' in segment %}active{% endif %}">
-          {% if request.user.is_superuser %}
           <a href=" " class="nav-link ">
-          {% else %}
-          <a href=" " class="nav-link ">
-          {% endif %}
             <span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span>
           </a>
         </li>
-        
-        <li class="nav-item  ">
-          <a href=" " class="nav-link "><span class="pcoded-micon"><i
-                class="feather icon-server text-c-green"></i></span><span class="pcoded-mtext">Dynamic Tables</span></a>
-        </li>
-        
 
-        {% if not request.user.is_authenticated %}
-        <li data-username="Authentication Sign up Sign in reset password Change password Personal information profile settings map form subscribe" class="nav-item pcoded-hasmenu">
-          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i class="feather icon-lock"></i></span><span class="pcoded-mtext">Authentication</span></a>
+        {% if is_admin %}
+        <!-- Section pour l'Admin -->
+        <li class="nav-item pcoded-menu-caption"><label>Utilisateurs</label></li>
+        <li class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link ">
+            <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+            <span class="pcoded-mtext">Gestion des utilisateurs</span>
+          </a>
           <ul class="pcoded-submenu">
-            <li class=""><a href="{% url 'users:login' %}" class="">Sign IN</a></li>
-            <li class=""><a href="{% url 'users:register' %}" class="">Sign UP</a></li>
+            <li class="nav-item"><a href="{% url 'users:admins_list' %}" class="nav-link">Liste des admins</a></li>
+            <li class="nav-item"><a href="{% url 'users:create_admin' %}" class="nav-link">Ajouter un admin</a></li>
+            <li class="nav-item"><a href="{% url 'users:teachers_list' %}" class="nav-link">Liste des enseignants</a></li>
+            <li class="nav-item"><a href="{% url 'users:create_teacher' %}" class="nav-link">Ajouter un enseignant</a></li>
+            <li class="nav-item"><a href="{% url 'users:students_list' %}" class="nav-link">Liste des étudiants</a></li>
+            <li class="nav-item"><a href="{% url 'users:create_student' %}" class="nav-link">Ajouter un étudiant</a></li>
+            <li class="nav-item"><a href="{% url 'users:parents_list' %}" class="nav-link">Liste des parents</a></li>
+            <li class="nav-item"><a href="{% url 'users:create_parent' %}" class="nav-link">Ajouter un parent</a></li>
           </ul>
         </li>
         {% endif %}
+
+        {% if is_teacher %}
+        <!-- Section pour le Professeur -->
+        <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
+        <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>
+        <li class="nav-item"><a href="{% url 'courses:departmentlevel_add' %}" class="nav-link">Ajouter un emploi du temps</a></li>
+
+        <li class="nav-item pcoded-menu-caption"><label>Disponibilité</label></li>
+        <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des demandes</a></li>
+        <li class="nav-item"><a href="{% url 'courses:departmentlevel_add' %}" class="nav-link">Historique des demandes</a></li>
+
+        <li class="nav-item pcoded-menu-caption"><label>Absence</label></li>
+        <li class="nav-item"><a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des absences</a></li>
+        <li class="nav-item"><a href="{% url 'rooms:room_create' %}" class="nav-link">Ajouter une absence</a></li>
+        {% endif %}
+
+        {% if is_student %}
+        <!-- Section pour l'Etudiant -->
+        <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
+        <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>
+
+        <li class="nav-item pcoded-menu-caption"><label>Absence</label></li>
+        <li class="nav-item"><a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des absences</a></li>
+        {% endif %}
+
+        {% if is_parent %}
+        <!-- Section pour le Parent -->
+        <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
+        <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>
+
+        <li class="nav-item pcoded-menu-caption"><label>Absence</label></li>
+        <li class="nav-item"><a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des absences</a></li>
+        {% endif %}
+
+        {% comment %} <!-- Section Notification pour tous les utilisateurs -->
+        <li class="nav-item pcoded-menu-caption"><label>Notifications</label></li>
+        <li class="nav-item"><a href="#" class="nav-link">Voir les notifications</a></li> {% endcomment %}
+
 
         {% admin_get_menu as app_list %}
         {% if app_list %}
@@ -71,76 +113,7 @@
           {% endfor %}
         {% endif %}
 
-        {% if request.user.is_authenticated and not request.user.is_superuser %}
-        <li class="nav-item pcoded-menu-caption">
-          <label>UI Element</label>
-        </li>
-        <li
-          data-username="basic components Button Alert Badges breadcrumb Paggination progress Tooltip popovers Carousel Cards Collapse Tabs pills Modal Grid System Typography Extra Shadows Embeds"
-          class="nav-item pcoded-hasmenu {% if 'basic_components' in parent %}active pcoded-trigger{% endif %}">
-          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
-                class="feather icon-box"></i></span><span class="pcoded-mtext">Components</span></a>
-          <ul class="pcoded-submenu">
-            <li class=""><a href="" class="">Button</a></li>
-            <li class=""><a href="" class="">Badges</a></li>
-            <li class=""><a href="" class="">Breadcrumb & paggination</a></li>
-            <li class=""><a href="" class="">Collapse</a></li>
-            <li class=""><a href="" class="">Tabs & pills</a></li>
-            <li class=""><a href="" class="">Typography</a></li>
-
-
-            <li class="{% if 'feather_icon' in segment %}active{% endif %}"><a href=" " class="">Feather<span
-                  class="pcoded-badge label label-danger">NEW</span></a></li>
-          </ul>
-        </li>
-        <li class="nav-item pcoded-menu-caption">
-          <label>Forms & table</label>
-        </li>
-        <li data-username="form elements advance componant validation masking wizard picker select" class="nav-item {% if 'form_elements' in segment %}active{% endif %}">
-          <a href=" " class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-text"></i></span><span class="pcoded-mtext">Form elements</span></a>
-        </li>
-        <li data-username="Table bootstrap datatable footable" class="nav-item {% if 'basic_tables' in segment %}active{% endif %}">
-          <a href=" " class="nav-link "><span class="pcoded-micon"><i
-                class="feather icon-server"></i></span><span class="pcoded-mtext">Table</span></a>
-        </li>
-        <li class="nav-item pcoded-menu-caption">
-          <label>Chart & Maps</label>
-        </li>
-        <li data-username="Charts Morris" class="nav-item "><a href=" " class="nav-link "><span
-              class="pcoded-micon"><i class="feather icon-pie-chart"></i></span><span
-              class="pcoded-mtext">Chart</span></a>
-        </li>
-        <li data-username="Maps Google" class="nav-item {% if 'google_maps' in segment %}active{% endif %}"><a href=" " class="nav-link "><span
-              class="pcoded-micon"><i class="feather icon-map"></i></span><span class="pcoded-mtext">Maps</span></a>
-        </li>
-        <li class="nav-item pcoded-menu-caption">
-          <label>Pages</label>
-        </li>
-        <li
-          data-username="Authentication Sign up Sign in reset password Change password Personal information profile settings map form subscribe"
-          class="nav-item pcoded-hasmenu">
-          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
-                class="feather icon-lock"></i></span><span class="pcoded-mtext">Authentication</span></a>
-          <ul class="pcoded-submenu">
-            <li class=""><a href="{% url 'users:register' %}" class="" target="_blank">Sign up</a></li>
-            <li class=""><a href="{% url 'users:login' %}" class="" target="_blank">Sign in</a></li>
-          </ul>
-        </li>
-        <li data-username="Profile Page" class="nav-item {% if 'profile' in segment %}active{% endif %}"><a href=" " class="nav-link"><span
-              class="pcoded-micon"><i class="feather icon-user"></i></span><span class="pcoded-mtext">Profile
-              Page</span></a>
-        </li>
-        <li data-username="Sample Page" class="nav-item {% if 'sample_page' in segment %}active{% endif %}"><a href="" class="nav-link"><span
-              class="pcoded-micon"><i class="feather icon-sidebar"></i></span><span class="pcoded-mtext">Sample
-              page</span></a>
-        </li>
-        <li data-username="Disabled Menu" class="nav-item disabled"><a href="javascript:" class="nav-link"><span
-              class="pcoded-micon"><i class="feather icon-power"></i></span><span class="pcoded-mtext">Disabled
-              menu</span></a>
-        </li>
-        {% endif %}
       </ul>
     </div>
   </div>
 </nav>
-

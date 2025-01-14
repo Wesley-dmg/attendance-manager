@@ -3,8 +3,13 @@ import random
 import string
 from django.shortcuts import render
 from django.contrib.auth.decorators import user_passes_test,login_required
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404
+
+from .forms import UserUpdateForm
 from django.contrib.auth import login, authenticate, update_session_auth_hash
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView,FormView
+from django.views.generic import  TemplateView, ListView, CreateView, UpdateView, DeleteView,FormView
 from django.utils.translation import gettext as _
 from django.shortcuts import render, redirect
 from django.contrib.auth.views import *
@@ -15,7 +20,7 @@ from django.utils import timezone
 
 from apps.home.utils import send_custom_message
 from apps.users.forms import AdminForm, AdminUpdateForm, CustomLoginForm, CustomPasswordChangeForm, CustomPasswordResetForm, CustomSetPasswordForm, CustomUserCreationForm, ParentForm, ParentUpdateForm, PasswordResetCodeForm, StudentForm, StudentUpdateForm, TeacherForm, TeacherUpdateForm
-from apps.users.models import AdminProfile, AdminType, CustomUser
+from apps.users.models import AdminProfile, AdminType, CustomUser, ParentProfile, StudentProfile, TeacherProfile
 
 from django.views import View
 
@@ -219,12 +224,42 @@ def custom_logout(request):
     send_custom_message(request, _("Vous êtes déconnecté avec succès."), 'success')
     return redirect(reverse('users:login')) 
 
-@login_required
-def profils(request):
-  context = {
+# @login_required
+# def profiles(request):
+#   context = {
     
-  }
-  return render(request, 'users/profils.html', context)
+#   }
+#   return render(request, 'users/profiles.html', context)
+
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = "users/profiles.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        # Ajouter le profil en fonction du rôle
+        if user.is_teacher:
+            context['profile'] = get_object_or_404(TeacherProfile, user=user)
+        elif user.is_student:
+            context['profile'] = get_object_or_404(StudentProfile, user=user)
+        elif user.is_parent:
+            context['profile'] = get_object_or_404(ParentProfile, user=user)
+        else:
+            context['profile'] = None  # Admins ou autres rôles sans profil spécifique
+
+        # Ajouter le formulaire de mise à jour dans le contexte
+        context['form'] = UserUpdateForm(instance=user)
+        return context
+
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = CustomUser
+    form_class = UserUpdateForm
+    template_name = "users/profiles.html"
+    success_url = reverse_lazy("users:profiles")
+
+    def get_object(self, queryset=None):
+        return self.request.user
 
 # Liste 
 @method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')

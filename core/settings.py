@@ -193,6 +193,9 @@ import os
 MEDIA_URL = '/media/'  # URL accessible depuis le navigateur
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Répertoire de stockage des fichiers
 
+# MEDIA_URL = '/media/'  # URL pour accéder aux fichiers média
+# MEDIA_ROOT = BASE_DIR / 'media'  # Dossier où les fichiers sont stockés
+
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
