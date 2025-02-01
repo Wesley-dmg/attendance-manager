@@ -1,14 +1,25 @@
-# from django.http import JsonResponse
-# from django.shortcuts import get_object_or_404
-# from subjects.models import Subject
+from django.utils.translation import gettext_lazy as _
 
-# def get_teachers_for_subject(request):
-#     if request.is_ajax() and 'subject_id' in request.GET:
-#         subject_id = request.GET['subject_id']
-#         subject = get_object_or_404(Subject, id=subject_id)
-#         teachers = subject.teachers.all()
-#         data = {
-#             'teachers': [{'id': t.id, 'name': t.user.get_full_name()} for t in teachers],
-#         }
-#         return JsonResponse(data)
-#     return JsonResponse({'error': 'Invalid request'}, status=400)
+from apps.home.utils import send_custom_message
+
+# Fonction auxiliaire pour valider les IDs
+def validate_teacher_ids(teacher_ids):
+    if not teacher_ids:
+        return False, _("Aucun ID d'enseignant fourni.")
+    try:
+        teacher_ids = list(map(int, teacher_ids))
+    except ValueError:
+        return False, _("Les IDs des enseignants doivent être des entiers valides.")
+    return teacher_ids, None
+
+def send_availability_request_notification(teachers, subject, filieres, days):
+    filieres_names = ", ".join([filiere.name for filiere in filieres])
+    days_list = ", ".join(days)
+    
+    message = f"Vous avez reçu une demande de disponibilité dans les matières : {subject.name}. "
+    message += f"Les filières concernées sont : {filieres_names}. "
+    message += f"Les jours suivants sont demandés : {days_list}. "
+    message += "Merci de répondre à la demande via votre interface."
+
+    for teacher in teachers:
+        send_custom_message(teacher.user, message, 'info')

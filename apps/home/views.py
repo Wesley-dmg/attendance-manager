@@ -21,6 +21,12 @@ def AdminDashboardView(request):
     }
     return render(request, "home/admin_dashboard.html", context)
 
+def TeacherDashboardView(request):
+
+    context = {
+    
+    }
+    return render(request, "home/teacher_dashboard.html", context)
 
 def index(request):
 
@@ -34,3 +40,17 @@ def tables(request):
     'segment': 'tables'
   }
   return render(request, "pages/dynamic-tables.html", context)
+
+from django.contrib import messages
+from django.shortcuts import render
+
+def ma_vue(request):
+    # Ajouter un message de succès
+    
+    
+    # Ajouter un message d'erreur
+    messages.error(request, 'Une erreur est survenue.')
+    
+    # Retourner la réponse avec les messages
+    messages.success(request, 'Opération réussie !')
+    return render(request, 'home/notification.html')

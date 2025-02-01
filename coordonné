@@ -1,0 +1,118 @@
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Bienvenue
+From: admin@exemple.com
+To: teachers1@timelya.com
+Date: Sat, 18 Jan 2025 13:55:46 -0000
+Message-ID: 
+ <173720854625.6111.10558403165211606924@MacBook-Pro-de-WESLEY.local>
+
+Nom d’utilisateur: teachers1
+Mot de passe: JU3*0qJ$9&
+Lien: http://127.0.0.1:9000/login/
+-------------------------------------------------------------------------------
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Bienvenue
+From: admin@exemple.com
+To: teachers2@timelya.com
+Date: Sat, 18 Jan 2025 13:57:15 -0000
+Message-ID: 
+ <173720863505.6111.8218367846284226109@MacBook-Pro-de-WESLEY.local>
+
+Nom d’utilisateur: teachers2
+Mot de passe: 2=c&N(EkuX
+Lien: http://127.0.0.1:9000/login/
+-------------------------------------------------------------------------------
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Bienvenue
+From: admin@exemple.com
+To: teachers3@timelya.com
+Date: Sat, 18 Jan 2025 13:58:25 -0000
+Message-ID: 
+ <173720870556.6111.17373797856671208749@MacBook-Pro-de-WESLEY.local>
+
+Nom d’utilisateur: teachers3
+Mot de passe: ZL-o$O^)i&
+Lien: http://127.0.0.1:9000/login/
+-------------------------------------------------------------------------------
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Bienvenue
+From: admin@exemple.com
+To: teachers4@timelya.com
+Date: Sat, 18 Jan 2025 13:59:25 -0000
+Message-ID: 
+ <173720876521.6111.2386443514503766885@MacBook-Pro-de-WESLEY.local>
+
+Nom d’utilisateur: teachers4
+Mot de passe: tCm0R!(LQ&
+Lien: http://127.0.0.1:9000/login/
+-------------------------------------------------------------------------------
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Bienvenue
+From: admin@exemple.com
+To: teachers5@timelya.com
+Date: Sat, 18 Jan 2025 14:00:30 -0000
+Message-ID: 
+ <173720883039.6111.17404361934820743353@MacBook-Pro-de-WESLEY.local>
+
+Nom d’utilisateur: teachers5
+Mot de passe: zG+TdNm-2)
+Lien: http://127.0.0.1:9000/login/
+-------------------------------------------------------------------------------
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Bienvenue
+From: admin@exemple.com
+To: teachers6@timelya.com
+Date: Sat, 18 Jan 2025 14:02:25 -0000
+Message-ID: 
+ <173720894564.6111.12621495425189282121@MacBook-Pro-de-WESLEY.local>
+
+Nom d’utilisateur: teachers6
+Mot de passe: bhyy6Mb2)(
+Lien: http://127.0.0.1:9000/login/
+-------------------------------------------------------------------------------
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Bienvenue
+From: admin@exemple.com
+To: teachers7@timelya.com
+Date: Sat, 18 Jan 2025 14:19:01 -0000
+Message-ID: 
+ <173720994124.6111.15344339902951749190@MacBook-Pro-de-WESLEY.local>
+
+Nom d’utilisateur: teachers7
+Mot de passe: e9#s-fw*h=
+Lien: http://127.0.0.1:9000/login/
+-------------------------------------------------------------------------------
+ID de matière reçu : 2
+Matière trouvée : Histoire Geographie (ID: 2)
+Nombre de relations trouvées pour la matière : 1
+Filières associées : [{'id': 1, 'name': 'Histoire Geographie - Niveau: L1, Filière: MCC'}]
+ID de matière reçu : 1
+Matière trouvée : Mathématique (ID: 1)
+Nombre de relations trouvées pour la matière : 2
+Filières associées : [{'id': 1, 'name': 'Mathématique - Niveau: L1, Filière: MCC'}, {'id': 2, 'name': 'Mathématique - Niveau: L2, Filière: MCC'}]
+ID de matière reçu : 4
+Matière trouvée : PCT (ID: 4)
+Nombre de relations trouvées pour la matière : 0
+Filières associées : []
+ID de matière reçu : 3
+Matière trouvée : SVT (ID: 3)
+Nombre de relations trouvées pour la matière : 1
+Filières associées : [{'id': 3, 'name': 'SVT - Niveau: L3, Filière: MCC'}]
+ID de matière reçu : 1
+Matière trouvée : Mathématique (ID: 1)
+Nombre de relations trouvées pour la matière : 2
+Filières associées : [{'id': 1, 'name': 'Mathématique - Niveau: L1, Filière: MCC'}, {'id': 2, 'name': 'Mathématique - Niveau: L2, Filière: MCC'}]

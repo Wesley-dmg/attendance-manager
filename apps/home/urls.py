@@ -8,6 +8,9 @@ app_name = 'home'  # Namespace for this application
 urlpatterns = [
   path('Administration/', views.AdminDashboardView, name='admin_dashboard'),
   
+  path('Home/', views.TeacherDashboardView, name='teacher_dashboard'),
+  
   path(   ''    , views.index,  name='index'),
+  path(   'ma_vue'    , views.ma_vue,  name='ma_vue'),
   
 ]

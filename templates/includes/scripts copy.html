@@ -1,15 +1,14 @@
 {% load static %}
 
-<!-- Required Js -->
+<!-- Core Scripts -->
 <script src="{% static 'assets/js/vendor-all.min.js' %}"></script>
-<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
 <script src="{% static 'assets/js/pcoded.min.js' %}"></script>
 <script src="{% static 'assets/js/dark-mode.js' %}"></script>
 
+<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
-
+<!-- DataTables -->
 <script src="{% static 'assets/data_table/jquery.dataTables.min.js' %}"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -18,9 +17,41 @@
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
 
-<script src="{% static 'assets/js/datatable-all-option.js' %}" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
 
+<script>
+    $(document).ready(function() {
+        // Initialisation globale des DataTables
+        $('table.datatable').each(function() {
+            // Options par défaut pour tous les DataTables
+            var table = $(this).DataTable({
+                dom: 'Bfrtip',  // Utilise les boutons (B), la recherche (f), la table (t) et les informations (r)
+                buttons: [
+                    'copy',   // Copier dans le presse-papiers
+                    'excel',  // Exporter en Excel
+                    'pdf',    // Exporter en PDF
+                    'print'   // Imprimer
+                ],
+                responsive: true,  // Tableau responsive (s'adapte aux tailles d'écran)
+                paging: true,      // Pagination
+                searching: true,   // Recherche activée
+                ordering: true,    // Tri activé
+                lengthMenu: [10, 25, 50, 75, 100], // Choix du nombre d'éléments à afficher par page
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/French.json' // Traduction en français
+                }
+            });
+        });
+    });
+</script>
+
+<!-- Bootstrap -->
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
 <script src="{% static 'assets/js/bootstrap-notify.js' %}" defer></script>
+
+<!-- Custom Scripts -->
+<script src="{% static 'assets/js/flash-notification.js' %}" defer></script>
+
 <script type="text/javascript">
     $(document).ready(function() {
         {% for message in messages %}
@@ -68,7 +99,7 @@
     });
 </script>
 
-{% comment %} <script>
+-{% comment %} <script>
     $(document).ready(function() {
         // Initialisation des DataTables
         $('table.datatable').each(function() {
@@ -101,6 +132,9 @@ Dans ce cas, si tu veux qu'un tableau particulier n'affiche pas de boutons, il s
 <table class="table datatable no-buttons">
 Conclusion :
 Avec ce script global, tous tes DataTables auront une initialisation cohérente avec des boutons d'exportation et des options de pagination, recherche et tri. Si certains tableaux nécessitent des personnalisations (pas de boutons, styles différents, etc.), tu peux facilement ajouter des classes ou ajuster les options selon tes besoins. {% endcomment %}
+
+
+
 
 {% comment %} Oui, tu peux ajouter de nombreuses autres fonctionnalités et options aux **DataTables** pour personnaliser l'expérience utilisateur et améliorer l'interaction avec tes tableaux. Voici quelques fonctionnalités supplémentaires que tu peux intégrer, avec des explications et des exemples :
 
@@ -303,6 +337,7 @@ Avec ce script global, tous tes DataTables auront une initialisation cohérente 
    ```
 
 ---
+
 ### Conclusion
 
 Avec ces fonctionnalités, tu peux adapter ton tableau DataTable pour une variété d'utilisations et d'interactions complexes. Tu peux ajouter plusieurs des fonctionnalités ci-dessus selon les besoins de ton projet pour améliorer l'expérience utilisateur.

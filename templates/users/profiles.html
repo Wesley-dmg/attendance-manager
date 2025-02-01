@@ -12,12 +12,12 @@
             <div class="row d-flex justify-content-center align-items-center">
                 <div class="col-md-3 text-center">
                     {% if user.profile_picture %}
-                        <img src="{{ user.profile_picture.url }}" alt="Photo de profil" class="img-fluid rounded-circle">
+                        <img src="{{ user.profile_picture.url }}" alt="Photo de profil" class="img-thumbnail img-fluid rounded-circle">
                     {% else %}
                         {% if user.gender == "female" %}              
-                            <img src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="profile image"class="img-fluid rounded-circle">
+                            <img src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="profile image"class="img-thumbnail img-fluid rounded-circle">
                         {% else %}
-                            <img  src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="profile image"class="img-fluid rounded-circle">
+                            <img  src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="profile image"class="img-thumbnail img-fluid rounded-circle">
                         {% endif %}
                     {% endif %}
                 </div>

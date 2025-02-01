@@ -18,35 +18,82 @@
           <label>Navigation</label>
         </li>
 
-        <!-- Dashboard accessible par tous les utilisateurs -->
+        <!-- Tableau de bord accessible par tous les utilisateurs -->
         <li data-username="dashboard Default Ecommerce CRM Analytics Crypto Project" class="nav-item {% if 'index' in segment %}active{% endif %}">
           <a href=" " class="nav-link ">
-            <span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span>
+            <span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Tableau de bord</span>
           </a>
         </li>
 
-        {% if is_admin %}
+        {% if user.is_admin %}
         <!-- Section pour l'Admin -->
         <li class="nav-item pcoded-menu-caption"><label>Utilisateurs</label></li>
+        <!-- Menu des Admins -->
         <li class="nav-item pcoded-hasmenu">
           <a href="javascript:" class="nav-link ">
             <span class="pcoded-micon"><i class="feather icon-users"></i></span>
-            <span class="pcoded-mtext">Gestion des utilisateurs</span>
+            <span class="pcoded-mtext">Gestion des Admins</span>
           </a>
           <ul class="pcoded-submenu">
-            <li class="nav-item"><a href="{% url 'users:admins_list' %}" class="nav-link">Liste des admins</a></li>
-            <li class="nav-item"><a href="{% url 'users:create_admin' %}" class="nav-link">Ajouter un admin</a></li>
-            <li class="nav-item"><a href="{% url 'users:teachers_list' %}" class="nav-link">Liste des enseignants</a></li>
-            <li class="nav-item"><a href="{% url 'users:create_teacher' %}" class="nav-link">Ajouter un enseignant</a></li>
-            <li class="nav-item"><a href="{% url 'users:students_list' %}" class="nav-link">Liste des étudiants</a></li>
-            <li class="nav-item"><a href="{% url 'users:create_student' %}" class="nav-link">Ajouter un étudiant</a></li>
-            <li class="nav-item"><a href="{% url 'users:parents_list' %}" class="nav-link">Liste des parents</a></li>
-            <li class="nav-item"><a href="{% url 'users:create_parent' %}" class="nav-link">Ajouter un parent</a></li>
+            <li class="nav-item">
+              <a href="{% url 'users:admins_list' %}" class="nav-link">Liste des admins</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'users:create_admin' %}" class="nav-link">Ajouter un admin</a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Menu des Professeurs -->
+        <li class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link ">
+            <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+            <span class="pcoded-mtext">Gestion des Professeurs</span>
+          </a>
+          <ul class="pcoded-submenu">
+            <li class="nav-item">
+              <a href="{% url 'users:teachers_list' %}" class="nav-link">Liste des professeurs</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'users:create_teacher' %}" class="nav-link">Ajouter un professeur</a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Menu des Étudiants -->
+        <li class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link ">
+            <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+            <span class="pcoded-mtext">Gestion des Étudiants</span>
+          </a>
+          <ul class="pcoded-submenu">
+            <li class="nav-item">
+              <a href="{% url 'users:students_list' %}" class="nav-link">Liste des étudiants</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'users:create_student' %}" class="nav-link">Ajouter un étudiant</a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Menu des Parents -->
+        <li class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link ">
+            <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+            <span class="pcoded-mtext">Gestion des Parents</span>
+          </a>
+          <ul class="pcoded-submenu">
+            <li class="nav-item">
+              <a href="{% url 'users:parents_list' %}" class="nav-link">Liste des parents</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'users:create_parent' %}" class="nav-link">Ajouter un parent</a>
+            </li>
           </ul>
         </li>
         {% endif %}
 
-        {% if is_teacher %}
+        {% if user.is_teacher %}
         <!-- Section pour le Professeur -->
         <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
         <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>
@@ -61,7 +108,7 @@
         <li class="nav-item"><a href="{% url 'rooms:room_create' %}" class="nav-link">Ajouter une absence</a></li>
         {% endif %}
 
-        {% if is_student %}
+        {% if user.is_student %}
         <!-- Section pour l'Etudiant -->
         <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
         <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>
@@ -70,7 +117,7 @@
         <li class="nav-item"><a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des absences</a></li>
         {% endif %}
 
-        {% if is_parent %}
+        {% if user.is_parent %}
         <!-- Section pour le Parent -->
         <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
         <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>

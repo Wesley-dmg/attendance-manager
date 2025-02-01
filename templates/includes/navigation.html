@@ -66,9 +66,10 @@
                 <div class="media">
                   <img class="img-radius" src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="Generic placeholder image">
                   <div class="media-body">
-                    <p><strong>John Doe</strong><span class="n-time text-muted"><i
+                    <p>
+                      <strong>John Doe</strong><span class="n-time text-muted"><i
                           class="icon feather icon-clock m-r-10"></i>30 min</span></p>
-                    <p>New ticket Added</p>
+                    <p>New ticket Added </p>
                   </div>
                 </div>
               </li>
@@ -109,8 +110,16 @@
           </a>
           <div class="dropdown-menu dropdown-menu-right profile-notification">
             <div class="pro-head">
-              <img src="{% static 'assets/images/user/avatar-1.jpg' %}" class="img-radius" alt="User-Profile-Image">
-              <span>John Doe</span>
+              {% if user.profile_picture %}
+              <img src="{{ user.profile_picture.url }}" class="img-radius img-thumbnail img-fluid" alt="User-Profile-Image">
+              {% else %}
+                {% if user.gender == "female" %}              
+                  <img src="{% static 'assets/images/user/avatar-1.jpg' %}" class="img-radius img-thumbnail img-fluid" alt="User-Profile-Image">
+                {% else %}
+                  <img src="{% static 'assets/images/user/avatar-2.jpg' %}" class="img-radius img-thumbnail img-fluid" alt="User-Profile-Image">
+                {% endif %}
+              {% endif %}
+              <span>{{ user.first_name }} {{ user.last_name }}</span>
               {% if request.user.is_authenticated %}
                 <a href="{%url 'users:logout'%}" class="dud-logout" title="Logout">
                   <i class="feather icon-log-out"></i>
