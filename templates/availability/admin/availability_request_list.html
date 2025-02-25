@@ -16,8 +16,9 @@
                   <tr>
                     <th scope="col">#</th>
                     <th scope="col">Matière</th>
+                    <th scope="col">Filières</th>
+                    <th scope="col">Période</th>
                     <th scope="col">Enseignants</th>
-                    <th scope="col">Jours Demandés</th>
                     <th scope="col">Réponses</th>
                     <th scope="col">Actions</th>
                   </tr>
@@ -28,28 +29,39 @@
                     <th scope="row">{{ forloop.counter }}</th>
                     <td>{{ request.subject.name }}</td>
                     <td>
-                      {% for teacher in request.teachers.all %}
-                        {{ teacher.user.username }} 
-                        {% if not forloop.last %}, {% endif %}
+                      {% for filiere in request.filieres.all %}
+                        {{ filiere.get_full_description }}{% if not forloop.last %}, {% endif %}
+                      {% empty %}
+                        <span class="text-muted">Aucune filière</span>
                       {% endfor %}
                     </td>
-                    <td>{{ request.days|join:', ' }}</td>
                     <td>
+                      Du {{ request.start_date|date:"d/m/Y" }} au
+                      {{ request.end_date|date:"d/m/Y" }}
+                    </td>
+                    <td>
+                      {% for teacher in request.teachers.all %}
+                        {{ teacher.user.first_name }} {{ teacher.user.last_name }}
+                        {% if not forloop.last %} <br class="mb-3"> {% endif %}
+                      {% endfor %}
+                    </td>
+                    <td class="d-flex flex-column justify-content-center">
                       {% for response in request.responses.all %}
-                        <span class="badge 
+                        <span class="badge p-2
                           {% if response.status == 'accepted' %} badge-success
                           {% elif response.status == 'rejected' %} badge-danger
                           {% else %} badge-warning
                           {% endif %}
                         ">
-                          {{ response.teacher.user.first_name }} {{ response.teacher.user.last_name}} - {{ response.get_status_display }}
-                        </span><br>
+                           {{ response.get_status_display }}
+                        </span>
+                        <br class="mb-3">
                       {% empty %}
                         <span class="badge badge-secondary">Aucune réponse</span>
                       {% endfor %}
                     </td>
                     <td>
-                      <a href="{% url 'availability:availability_request_edit' request.pk %}" class="btn btn-warning btn-sm">Modifier</a>
+                      <a href="{% url 'availability:availability_request_update' request.pk %}" class="btn btn-warning btn-sm">Modifier</a>
                       <a href="{% url 'availability:availability_request_delete' request.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
                     </td>
                   </tr>

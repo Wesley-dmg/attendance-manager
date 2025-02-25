@@ -1,0 +1,154 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5>Historique des demandes de disponibilité</h5>
+      <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="filterMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <span class="feather icon-filter mr-2"></span> Filtre
+        </button>
+        <div class="dropdown-menu" aria-labelledby="filterMenuButton">
+          <a class="dropdown-item filter-item" data-status="all" href="#!">Tout</a>
+          <a class="dropdown-item filter-item" data-status="accepted" href="#!">Accepté</a>
+          <a class="dropdown-item filter-item" data-status="rejected" href="#!">Rejeté</a>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Zone d'affichage des notifications -->
+    <div id="request-list">
+      {% for request in requests %}
+        {% if request.teacher_response %}
+          {% with response=request.teacher_response.0 %}
+            {% if response.status == "pending" %}
+              <div class="notification pending p-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <p class="m-0">
+                    Êtes-vous disponible pour faire cours aux filière(s)
+                    {% for filiere in request.filieres.all %}
+                      {{ filiere }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                    en <strong>{{ request.subject.name }}</strong> du 
+                    {{ request.start_date|date:"d/m/Y" }} au {{ request.end_date|date:"d/m/Y" }} ?
+                  </p>
+                  <span style="font-size:0.8em; color:#999;">il y a {{ request.created_at|timesince }}</span>
+                </div>
+                <div class="action-buttons mt-2">
+                  <a href="{% url 'availability:accept_availability_request' request.id %}" class="btn btn-primary mr-2">Disponible</a>
+                  <a href="{% url 'availability:reject_availability_request' request.id %}" class="btn btn-secondary">Indisponible</a>
+                </div>
+              </div>
+            {% elif response.status == "accepted" %}
+              <div class="notification accepted p-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <p class="m-0">
+                    Vous avez notifié être <strong>disponible</strong> du 
+                    {{ request.start_date|date:"d/m/Y" }} au {{ request.end_date|date:"d/m/Y" }}
+                    pour faire cours aux filière(s)
+                    {% for filiere in request.filieres.all %}
+                      {{ filiere }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                    en <strong>{{ request.subject.name }}</strong>.
+                  </p>
+                  <span style="font-size:0.8em; color:#999;">il y a {{ request.created_at|timesince }}</span>
+                </div>
+                <div class="action-buttons mt-2">
+                  <a href="#" class="btn btn-primary disabled mr-2">Disponible</a>
+                  <a href="{% url 'availability:reject_availability_request' request.id %}" class="btn btn-secondary">Indisponible</a>
+                </div>
+              </div>
+            {% elif response.status == "rejected" %}
+              <div class="notification rejected p-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <p class="m-0">
+                    Vous avez notifié être <strong>indisponible</strong> du 
+                    {{ request.start_date|date:"d/m/Y" }} au {{ request.end_date|date:"d/m/Y" }}
+                    pour faire cours aux filière(s)
+                    {% for filiere in request.filieres.all %}
+                      {{ filiere }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                    en <strong>{{ request.subject.name }}</strong>.
+                  </p>
+                  <span style="font-size:0.8em; color:#999;">il y a {{ request.created_at|timesince }}</span>
+                </div>
+                <div class="action-buttons mt-2">
+                  <a href="{% url 'availability:accept_availability_request' request.id %}" class="btn btn-primary">Disponible</a>
+                  <a href="#" class="btn btn-secondary disabled">Indisponible</a>
+                </div>
+              </div>
+            {% endif %}
+          {% endwith %}
+        {% endif %}
+      {% empty %}
+        <p>Aucune demande trouvée.</p>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Sélection des éléments de filtre dans le dropdown
+  const filterItems = document.querySelectorAll('.dropdown-item.filter-item');
+  filterItems.forEach(item => {
+    item.addEventListener('click', function(e){
+      e.preventDefault();
+      const status = this.getAttribute('data-status');
+      console.log("Filtre sélectionné :", status);
+      // Construction de l'URL en utilisant le pathname actuel et le paramètre status
+      const url = window.location.pathname + '?status=' + status;
+      fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        const container = document.getElementById('request-list');
+        container.innerHTML = ""; // Réinitialise le contenu
+        data.requests.forEach(req => {
+          let borderColor = "";
+          let message = "";
+          if (req.status === "pending") {
+            borderColor = "#f0ad4e";
+            message = `Êtes-vous disponible pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong> du ${req.period} ?`;
+          } else if (req.status === "accepted") {
+            borderColor = "#5cb85c";
+            message = `Vous avez notifié être <strong>disponible</strong> du ${req.period} pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong>.`;
+          } else if (req.status === "rejected") {
+            borderColor = "#d9534f";
+            message = `Vous avez notifié être <strong>indisponible</strong> du ${req.period} pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong>.`;
+          }
+          let btnAccept = "";
+          let btnReject = "";
+          if (req.status === "pending") {
+            btnAccept = `<a href="${req.url_accept}" class="btn btn-primary mr-2">Disponible</a>`;
+            btnReject = `<a href="${req.url_reject}" class="btn btn-secondary">Indisponible</a>`;
+          } else if (req.status === "accepted") {
+            btnAccept = `<a href="#" class="btn btn-primary disabled mr-2">Disponible</a>`;
+            btnReject = `<a href="${req.url_reject}" class="btn btn-secondary">Indisponible</a>`;
+          } else if (req.status === "rejected") {
+            btnAccept = `<a href="${req.url_accept}" class="btn btn-primary">Disponible</a>`;
+            btnReject = `<a href="#" class="btn btn-secondary disabled">Indisponible</a>`;
+          }
+  
+          container.innerHTML += `
+            <div class="notification p-3 mb-2" style="border: 1px solid ${borderColor};">
+              <div class="d-flex justify-content-between align-items-center">
+                <p class="m-0">${message}</p>
+                <span style="font-size:0.8em; color:#999;">il y a ${req.created_at}</span>
+              </div>
+              <div class="action-buttons mt-2">
+                ${btnAccept}
+                ${btnReject}
+              </div>
+            </div>
+          `;
+        });
+      })
+      .catch(error => console.error('Erreur lors de la récupération des données :', error));
+    });
+  });
+});
+</script>
+{% endblock %}

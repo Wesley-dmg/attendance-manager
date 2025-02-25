@@ -1,25 +1,27 @@
-from django.db.models import Prefetch
-from django.urls import reverse_lazy
-from django.views.generic import ListView, UpdateView,DeleteView,RedirectView
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views import View
-
-from django.http import JsonResponse
-from apps.availability.forms import AvailabilityRequestForm
-from apps.availability.models import AvailabilityRequest, AvailabilityResponse
-from apps.availability.utils import send_availability_request_notification, validate_teacher_ids
-from apps.common.models import DepartmentLevelSubject
-from apps.home.utils import send_custom_message
-from apps.subjects.models import Subject
-
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import user_passes_test,login_required
+from django.db.models import Prefetch
+from django.http import JsonResponse
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
+from django.views.generic import ListView, UpdateView,DeleteView
+from django.views import View
+
+from django.shortcuts import get_object_or_404, redirect, render
+
+from apps.common.models import DepartmentLevelSubject
+from apps.subjects.models import Subject
+from apps.availability.models import AvailabilityRequest, AvailabilityResponse
 from apps.users.models import TeacherProfile
+
+from apps.home.utils import send_custom_message
+from apps.availability.utils import validate_teacher_ids
 
 from django.db import transaction
 
-from django.utils.translation import gettext_lazy as _
+from django.urls import reverse
+from django.utils.timesince import timesince
 
 def get_teachers_for_subject(request):
     # Vérifie si la requête est une requête AJAX
@@ -44,46 +46,30 @@ def get_teachers_for_subject(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 def get_filieres(request):
-    """
-    Retourne les filières associées à une matière donnée.
-    """
-    if request.method == "GET" and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        subject_id = request.GET.get("subject_id")
-        
-        if not subject_id:
-            return JsonResponse({"error": "Aucun ID de matière fourni."}, status=400)
+    try:
+        if request.method == "GET":
+            subject_id = request.GET.get("subject_id")
+            if not subject_id:
+                return JsonResponse({"error": "Aucun ID de matière fourni."}, status=400)
+            
+            subject = get_object_or_404(Subject, id=subject_id)
+            dept_level_subjects = DepartmentLevelSubject.objects.filter(subject=subject)
 
-        # Debug : Vérification de l'ID de matière
-        print(f"ID de matière reçu : {subject_id}")
-
-        # Récupérer la matière avec l'ID fourni
-        subject = get_object_or_404(Subject, id=subject_id)
-
-        # Debug : Affichage de la matière trouvée
-        print(f"Matière trouvée : {subject.name} (ID: {subject.id})")
-
-        # Récupérer les relations DepartmentLevelSubject associées à cette matière
-        dept_level_subjects = DepartmentLevelSubject.objects.filter(subject=subject)
-
-        # Debug : Nombre de relations trouvées
-        print(f"Nombre de relations trouvées pour la matière : {dept_level_subjects.count()}")
-
-        # Préparer la liste des filières à renvoyer
-        filiere_list = [
-            {
-                "id": dept_level.department_level.id,  # ID de la filière (niveau départemental)
-                "name": dept_level.get_full_description()  # Description complète de la filière
-            }
-            for dept_level in dept_level_subjects
-        ]
-
-        # Debug : Afficher les filières récupérées
-        print(f"Filières associées : {filiere_list}")
-
-        # Retourner les filières en réponse JSON
-        return JsonResponse({"filieres": filiere_list}, status=200)
-
-    return JsonResponse({"error": "Requête invalide."}, status=400)
+            filiere_list = []
+            for dls in dept_level_subjects:
+                dep_level = dls.department_level  # Instance de DepartmentLevel
+                description = str(dep_level)  # Utilise la méthode __str__
+                filiere_list.append({
+                    "id": dep_level.id,
+                    "name": description,
+                })
+            return JsonResponse({"filieres": filiere_list}, status=200)
+        else:
+            return JsonResponse({"error": "Requête invalide."}, status=400)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({"error": str(e)}, status=500)
 
 class AvailabilityRequestListView(ListView):
     model = AvailabilityRequest
@@ -91,30 +77,80 @@ class AvailabilityRequestListView(ListView):
     context_object_name = 'requests'
 
     def get_queryset(self):
-        # Précharger les réponses pour chaque demande via prefetch_related
         responses = AvailabilityResponse.objects.all()
-        return AvailabilityRequest.objects.prefetch_related(Prefetch('responses', queryset=responses)).all()
+        return AvailabilityRequest.objects.prefetch_related(Prefetch('responses', queryset=responses),'filieres').all()
 
 @method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class CreateAvailabilityRequestView(View):
     """
-    Vue pour afficher le formulaire de création d'une demande et gérer la soumission.
+    Affiche le formulaire de création d'une demande de disponibilité.
     """
-    template_name = "availability/admin/create_request.html"
+    template_name = "availability/admin/request_forms.html"
 
     def get(self, request):
-        """
-        Gère l'affichage du template avec les matières et le formulaire des jours.
-        """
         subjects = Subject.objects.all()
-        availability_form = AvailabilityRequestForm()  
-        context={
+        context = {
             'subjects': subjects,
-            'availability_form': availability_form,
+            'form_action_url': reverse('availability:create_availability_request'),
         }
         return render(request, self.template_name, context)
-
+    
 # Fonction principale pour créer une demande de disponibilité
+# @transaction.atomic
+# def create_availability_request(request):
+#     if request.method != "POST":
+#         send_custom_message(request, _("Méthode non autorisée"), 'error')
+#         return redirect('availability:create_request')
+
+#     try:
+#         subject_id = request.POST.get("subject_id")
+#         teacher_ids_raw = request.POST.get("teacher_ids", "")
+#         teacher_ids = teacher_ids_raw.split(",") if teacher_ids_raw else []
+#         filiere_ids = request.POST.getlist("filiere_ids") 
+#         start_date = request.POST.get("start_date")
+#         end_date = request.POST.get("end_date")
+
+        
+#         if not subject_id or not teacher_ids or not start_date or not end_date or not filiere_ids:
+#             send_custom_message(request, _("Données incomplètes. Veuillez vérifier les informations envoyées."), 'error')
+#             return redirect('availability:create_request')
+
+#         teacher_ids_validated, error_msg = validate_teacher_ids(teacher_ids)
+#         if not teacher_ids_validated:
+#             send_custom_message(request, _("IDs enseignants invalides. Vérifiez les identifiants des enseignants."), 'error')
+#             return redirect('availability:create_request')
+
+#         # Récupération de la matière et des enseignants associés
+#         subject = get_object_or_404(Subject, id=subject_id)
+#         teachers = TeacherProfile.objects.filter(id__in=teacher_ids_validated)
+#         if not teachers.exists():
+#             send_custom_message(request, _("Aucun enseignant valide trouvé. Vérifiez les IDs."), 'error')
+#             return redirect('availability:create_request')
+
+#         # Création de la demande avec les dates
+#         availability_request = AvailabilityRequest.objects.create(
+#             subject=subject,
+#             start_date=start_date,
+#             end_date=end_date)
+#         availability_request.teachers.set(teachers)
+#         availability_request.filieres.set(filiere_ids)
+
+#         # Création d'une réponse "pending" pour chaque enseignant
+#         responses = [
+#             AvailabilityResponse(
+#                 request=availability_request,
+#                 teacher=teacher,
+#                 status='pending') for teacher in teachers
+#         ]
+#         AvailabilityResponse.objects.bulk_create(responses)
+
+#         send_custom_message(request, _("Demande de disponibilité créée avec succès !"), 'success')
+#         return redirect('availability:availability_request_list')
+
+#     except Exception as e:
+#         send_custom_message(request, _("Erreur interne : {0}".format(str(e))), 'error')
+#         return redirect('availability:create_request')
+
 @transaction.atomic
 def create_availability_request(request):
     if request.method != "POST":
@@ -122,41 +158,36 @@ def create_availability_request(request):
         return redirect('availability:create_request')
 
     try:
-        # Récupérer les données envoyées depuis le frontend
         subject_id = request.POST.get("subject_id")
-        teacher_ids = request.POST.get("teacher_ids", "").split(",")
-        filiere_ids = request.POST.get("filiere_ids", "").split(",")
-        days = request.POST.getlist("days")
+        teacher_ids_raw = request.POST.get("teacher_ids", "")
+        teacher_ids = teacher_ids_raw.split(",") if teacher_ids_raw else []
+        filiere_ids = request.POST.getlist("filiere_ids")
+        start_date = request.POST.get("start_date")
+        end_date = request.POST.get("end_date")
 
-        # Validation des données
-        if not subject_id or not teacher_ids or not days:
+        if not subject_id or not teacher_ids or not start_date or not end_date or not filiere_ids:
             send_custom_message(request, _("Données incomplètes. Veuillez vérifier les informations envoyées."), 'error')
-            return redirect('availability:create_request')  # Rediriger immédiatement après l'erreur
+            return redirect('availability:create_request')
 
-        teacher_ids = validate_teacher_ids(teacher_ids)
-        if not teacher_ids:
+        teacher_ids_validated, error_msg = validate_teacher_ids(teacher_ids)
+        if not teacher_ids_validated:
             send_custom_message(request, _("IDs enseignants invalides. Vérifiez les identifiants des enseignants."), 'error')
-            return redirect('availability:create_request')  # Rediriger immédiatement après l'erreur
+            return redirect('availability:create_request')
 
-        # Récupérer la matière associée
         subject = get_object_or_404(Subject, id=subject_id)
-
-        # Récupérer les enseignants associés
-        teachers = TeacherProfile.objects.filter(id__in=teacher_ids)
+        teachers = TeacherProfile.objects.filter(id__in=teacher_ids_validated)
         if not teachers.exists():
             send_custom_message(request, _("Aucun enseignant valide trouvé. Vérifiez les IDs."), 'error')
-            return redirect('availability:create_request')  # Rediriger immédiatement après l'erreur
+            return redirect('availability:create_request')
 
-        # Créer la demande de disponibilité
         availability_request = AvailabilityRequest.objects.create(
             subject=subject,
-            days=days
+            start_date=start_date,
+            end_date=end_date
         )
-
-        # Associer les enseignants à la demande
         availability_request.teachers.set(teachers)
+        availability_request.filieres.set(filiere_ids)
 
-        # Créer une réponse en attente pour chaque enseignant
         responses = [
             AvailabilityResponse(
                 request=availability_request,
@@ -166,117 +197,193 @@ def create_availability_request(request):
         ]
         AvailabilityResponse.objects.bulk_create(responses)
 
-        # Message de succès avec redirection vers une autre page
         send_custom_message(request, _("Demande de disponibilité créée avec succès !"), 'success')
-        
-        # # Envoi du message de notification aux enseignants
-        # send_availability_request_notification(teachers, subject, filieres, days)
         return redirect('availability:availability_request_list')
 
     except Exception as e:
         send_custom_message(request, _("Erreur interne : {0}".format(str(e))), 'error')
-        return redirect('availability:create_request')  # Redirige en cas d'erreur interne
+        return redirect('availability:create_request')
 
+@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
+class UpdateAvailabilityRequestView(View):
+    """
+    Affiche le formulaire de modification d'une demande de disponibilité.
+    """
+    template_name = "availability/admin/request_forms.html"
 
-class AvailabilityRequestUpdateView(UpdateView):
-    model = AvailabilityRequest
-    fields = ['subject', 'teachers', 'days']
-    template_name = 'availability_request_form.html'
-    success_url = reverse_lazy('availability_request_list')
-    
+    def get(self, request, pk):
+        availability_request = get_object_or_404(AvailabilityRequest, pk=pk)
+        subjects = Subject.objects.all()
+        context = {
+            'subjects': subjects,
+            'availability_request': availability_request,
+            'form_action_url': reverse('availability:update_availability_request', args=[availability_request.pk]),
+        }
+        return render(request, self.template_name, context)
+
+@transaction.atomic
+def update_availability_request(request, pk):
+    if request.method != "POST":
+        send_custom_message(request, _("Méthode non autorisée"), 'error')
+        return redirect('availability:availability_request_list')
+
+    try:
+        availability_request = get_object_or_404(AvailabilityRequest, pk=pk)
+        
+        # Vérifier si des réponses ont déjà été traitées (acceptées ou rejetées)
+        if availability_request.responses.filter(status__in=['accepted', 'rejected']).exists():
+            send_custom_message(request, _("Cette demande ne peut pas être modifiée car des réponses ont déjà été traitées."), 'error')
+            return redirect('availability:availability_request_list')
+
+        subject_id = request.POST.get("subject_id")
+        teacher_ids_raw = request.POST.get("teacher_ids", "")
+        teacher_ids = teacher_ids_raw.split(",") if teacher_ids_raw else []
+        filiere_ids = request.POST.getlist("filiere_ids")
+        start_date = request.POST.get("start_date")
+        end_date = request.POST.get("end_date")
+
+        if not subject_id or not teacher_ids or not start_date or not end_date or not filiere_ids:
+            send_custom_message(request, _("Données incomplètes. Veuillez vérifier les informations envoyées."), 'error')
+            return redirect('availability:availability_request_edit', pk=pk)
+
+        teacher_ids_validated, error_msg = validate_teacher_ids(teacher_ids)
+        if not teacher_ids_validated:
+            send_custom_message(request, _("IDs enseignants invalides. Vérifiez les identifiants des enseignants."), 'error')
+            return redirect('availability:availability_request_edit', pk=pk)
+
+        subject = get_object_or_404(Subject, id=subject_id)
+        teachers = TeacherProfile.objects.filter(id__in=teacher_ids_validated)
+        if not teachers.exists():
+            send_custom_message(request, _("Aucun enseignant valide trouvé. Vérifiez les IDs."), 'error')
+            return redirect('availability:availability_request_edit', pk=pk)
+
+        # Mise à jour de la demande
+        availability_request.subject = subject
+        availability_request.start_date = start_date
+        availability_request.end_date = end_date
+        availability_request.save()
+
+        # Mise à jour des relations many-to-many
+        availability_request.teachers.set(teachers)
+        availability_request.filieres.set(filiere_ids)
+
+        send_custom_message(request, _("Demande de disponibilité modifiée avec succès !"), 'success')
+        return redirect('availability:availability_request_list')
+
+    except Exception as e:
+        send_custom_message(request, _("Erreur interne : {0}".format(str(e))), 'error')
+        return redirect('availability:availability_request_edit', pk=pk)
+        
 class AvailabilityRequestDeleteView(DeleteView):
     model = AvailabilityRequest
     template_name = 'availability/admin/confirm_delete.html'
     context_object_name = 'availability_request'
     success_url = reverse_lazy('availability:availability_request_list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['cancel_url'] = reverse_lazy('availability:availability_request_list')
-        # Utilise self.request.user pour récupérer l'utilisateur connecté
-        context['user'] = self.request.user
-        return context
+    cancel_url = reverse_lazy('availability:availability_request_list')
 
     def delete(self, request, *args, **kwargs):
-        send_custom_message(self.request, _("Demande de disponibilité supprimée avec succès."), 'success')
+        availability_request = self.get_object()
+        if availability_request.responses.filter(status__in=['accepted', 'rejected']).exists():
+            send_custom_message(request, _("Cette demande ne peut pas être supprimée car elle a déjà des réponses."), 'error')
+            return redirect(self.success_url)
+        
+        send_custom_message(request, _("Demande de disponibilité supprimée avec succès."), 'success')
         return super().delete(request, *args, **kwargs)
 
-# class TeacherAvailabilityRequestListView(ListView):
-#     model = AvailabilityRequest
-#     template_name = 'availability/teacher/availability_request_list.html'  # Le template à créer
-#     context_object_name = 'requests'
-
-#     def get_queryset(self):
-#         # Filtrer les demandes de disponibilité pour le professeur connecté
-#         teacher = self.request.user.teacherprofile
-#         status_filter = self.request.GET.get('status')  # Récupérer le filtre de statut depuis la requête
-
-#         # Filtrer selon le statut de la réponse
-#         if status_filter == 'approved':
-#             return AvailabilityRequest.objects.filter(responses__teacher=teacher, responses__status='accepted')
-#         elif status_filter == 'rejected':
-#             return AvailabilityRequest.objects.filter(responses__teacher=teacher, responses__status='rejected')
-#         else:
-#             return AvailabilityRequest.objects.filter(responses__teacher=teacher)  # Toutes les demandes
-
+# Historique des demande en attente accepter ou rejeter 
 class TeacherAvailabilityRequestListView(ListView):
     model = AvailabilityRequest
-    template_name = 'availability/teacher/availability_request_list.html'  # Le template à créer
+    template_name = 'availability/teacher/history_request.html'
     context_object_name = 'requests'
 
     def get_queryset(self):
-        # Filtrer les demandes de disponibilité pour le professeur connecté
         teacher = self.request.user.teacherprofile
+        status_filter = self.request.GET.get('status', 'all')
+        teacher_response_prefetch = Prefetch(
+            'responses',
+            queryset=AvailabilityResponse.objects.filter(teacher=teacher),
+            to_attr='teacher_response'
+        )
+        queryset = AvailabilityRequest.objects.filter(
+            responses__teacher=teacher
+        ).prefetch_related(teacher_response_prefetch).distinct()
 
-        # Récupérer le paramètre de filtre 'status' depuis l'URL (GET)
-        status_filter = self.request.GET.get('status')  # Par exemple, 'all', 'approved', 'rejected', 'pending'
-
-        # Par défaut, afficher toutes les demandes de disponibilité
-        queryset = AvailabilityRequest.objects.filter(responses__teacher=teacher)
-
-        # Appliquer le filtre si un statut est spécifié
-        if status_filter:
-            if status_filter == 'approved':
-                queryset = queryset.filter(responses__status='accepted')
-            elif status_filter == 'rejected':
-                queryset = queryset.filter(responses__status='rejected')
-            elif status_filter == 'pending':
-                queryset = queryset.filter(responses__status='pending')
-
+        if status_filter != 'all':
+            queryset = queryset.filter(responses__status=status_filter)
         return queryset
 
-    def get_context_data(self, **kwargs):
-        # Ajouter les filtres disponibles dans le contexte pour affichage
-        context = super().get_context_data(**kwargs)
-        context['status_filter'] = self.request.GET.get('status', '')  # Le filtre actuel (ex: 'approved', 'rejected', 'pending')
-        return context
-    
+    def render_to_response(self, context, **response_kwargs):
+        # Si la requête est AJAX, renvoyer uniquement les données JSON
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            data = []
+            for req in context['requests']:
+                if hasattr(req, 'teacher_response') and req.teacher_response:
+                    resp = req.teacher_response[0]
+                    data.append({
+                        'id': req.id,
+                        'subject': req.subject.name,
+                        'filieres': [str(f) for f in req.filieres.all()],
+                        'period': req.start_date.strftime("%d/%m/%Y") + " - " + req.end_date.strftime("%d/%m/%Y"),
+                        'created_at': timesince(req.created_at) + " ago",
+                        'status': resp.status,
+                        'url_accept': reverse('availability:accept_availability_request', args=[req.id]),
+                        'url_reject': reverse('availability:reject_availability_request', args=[req.id]),
+                    })
+            return JsonResponse({'requests': data})
+        return super().render_to_response(context, **response_kwargs)
+
 class TeacherAvailabilityPendingRequestView(ListView):
     model = AvailabilityRequest
-    template_name = 'availability/teacher/availability_pending_request_list.html'
+    template_name = 'availability/teacher/availability_pending.html'
     context_object_name = 'requests'
 
     def get_queryset(self):
         teacher = self.request.user.teacherprofile
-        return AvailabilityRequest.objects.filter(responses__teacher=teacher, responses__status='pending')
+        teacher_response_prefetch = Prefetch(
+            'responses',
+            queryset=AvailabilityResponse.objects.filter(teacher=teacher, status='pending'),
+            to_attr='teacher_response'
+        )
+        # On filtre uniquement les demandes dont la réponse de l'enseignant est en attente
+        queryset = AvailabilityRequest.objects.filter(responses__teacher=teacher, responses__status='pending').prefetch_related(teacher_response_prefetch).distinct()
+        return queryset
 
+# Fonction pour accepter une demande 
 def accept_availability_request(request, request_id):
+    # Récupérer la demande de disponibilité
     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
+    
+    # Récupérer la réponse de l'enseignant concerné
     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
-
+    
+    # Vérifier que l'enseignant est bien celui qui a répondu à la demande
+    if response.teacher != request.user.teacherprofile:
+        send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')
+        return redirect('availability:teacher_availability_pending_request_list')
+    
     # Mettre à jour le statut de la réponse à "accepté"
     response.status = 'accepted'
     response.save()
 
     # Message de succès
     send_custom_message(request, _("Demande acceptée avec succès."), 'success')
-    
-    return redirect('availability:teacher_availability_pending_request_list')  # Redirection vers la liste des demandes en attente
 
+    # Redirection vers la liste des demandes en attente
+    return redirect('availability:teacher_availability_pending_request_list')
+
+# Fonction pour rejeter une demande 
 def reject_availability_request(request, request_id):
+    # Récupérer la demande de disponibilité
     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
+    
+    # Récupérer la réponse de l'enseignant concerné
     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
-
+    
+    # Vérifier que l'enseignant est bien celui qui a répondu à la demande
+    if response.teacher != request.user.teacherprofile:
+        send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')
+        return redirect('availability:teacher_availability_pending_request_list')
+    
     # Mettre à jour le statut de la réponse à "rejeté"
     response.status = 'rejected'
     response.save()
@@ -284,20 +391,5 @@ def reject_availability_request(request, request_id):
     # Message de succès
     send_custom_message(request, _("Demande rejetée avec succès."), 'error')
 
-    return redirect('availability:teacher_availability_pending_request_list')  # Redirection vers la liste des demandes en attente
-
-# class AvailabilityRequestAcceptRejectView(RedirectView):
-#     # On utilise RedirectView car après l'action (acceptation/rejet), on redirige vers une autre page
-#     def get_redirect_url(self, *args, **kwargs):
-#         request = get_object_or_404(AvailabilityRequest, pk=kwargs['pk'])
-#         action = kwargs['action']  # 'accept' ou 'reject'
-
-#         if action == 'accept':
-#             request.status = 'accepted'
-#         elif action == 'reject':
-#             request.status = 'rejected'
-        
-#         request.save()
-
-#         # Rediriger vers la page de liste des demandes
-#         return reverse_lazy('availability:teacher_availability_request_list')
+    # Redirection vers la liste des demandes en attente
+    return redirect('availability:teacher_availability_pending_request_list')

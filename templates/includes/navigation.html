@@ -111,12 +111,12 @@
           <div class="dropdown-menu dropdown-menu-right profile-notification">
             <div class="pro-head">
               {% if user.profile_picture %}
-              <img src="{{ user.profile_picture.url }}" class="img-radius img-thumbnail img-fluid" alt="User-Profile-Image">
+              <img src="{{ user.profile_picture.url }}" class="img-radius  img-fluid" alt="User-Profile-Image">
               {% else %}
                 {% if user.gender == "female" %}              
-                  <img src="{% static 'assets/images/user/avatar-1.jpg' %}" class="img-radius img-thumbnail img-fluid" alt="User-Profile-Image">
+                  <img src="{% static 'assets/images/user/avatar-1.jpg' %}" class="img-radius img-fluid" alt="User-Profile-Image">
                 {% else %}
-                  <img src="{% static 'assets/images/user/avatar-2.jpg' %}" class="img-radius img-thumbnail img-fluid" alt="User-Profile-Image">
+                  <img src="{% static 'assets/images/user/avatar-2.jpg' %}" class="img-radius img-fluid" alt="User-Profile-Image">
                 {% endif %}
               {% endif %}
               <span>{{ user.first_name }} {{ user.last_name }}</span>

@@ -23,8 +23,6 @@ urlpatterns = [
     path('reset_password_confirm/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),  # Nouveau mot de passe sans paramètres
     path('password_reset_code/', PasswordResetCodeView.as_view(), name='password_reset_code'),  # Vue pour entrer le code de validation
     
-    # path('profiles/', profiles, name='profiles'),
-    
     path('profiles/', ProfileView.as_view(), name='profiles'),
     path('profile/update/', ProfileUpdateView.as_view(), name='profile_update'),
 

@@ -12,6 +12,11 @@ from django.contrib.auth.decorators import user_passes_test,login_required
 class SubjectListView(ListView):
     model = Subject
     template_name = 'subjects/subject_list.html'
+    extra_context = {
+        'create_url': 'subjects:subject_add',
+        'edit_url': 'subjects:subject_edit',
+        'delete_url': 'subjects:subject_delete',
+    }
 
 @method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class SubjectCreateView(CreateView):

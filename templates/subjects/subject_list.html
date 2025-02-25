@@ -7,7 +7,7 @@
         <div class="card">
           <div class="card-header">
             <h5>Liste des Matières</h5>
-            <a href="{% url 'subjects:subject_add' %}" class="btn btn-primary float-right">Ajouter une Matière</a>
+            <a href=" {% url create_url %}" class="btn btn-primary float-right">Ajouter une Matière</a>
           </div>
           <div class="card-block table-border-style">
             <div class="table-responsive">
@@ -27,8 +27,8 @@
                     <td>{{ subject.name }}</td>
                     <td>{{ subject.code }}</td>
                     <td>
-                      <a href="{% url 'subjects:subject_edit' subject.pk %}" class="btn btn-warning btn-sm">Modifier</a>
-                      <a href="{% url 'subjects:subject_delete' subject.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      <a href="{% url edit_url subject.pk %}" class="btn btn-warning btn-sm">Modifier</a>
+                      <a href="{% url delete_url subject.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
                     </td>
                   </tr>
                   {% endfor %}

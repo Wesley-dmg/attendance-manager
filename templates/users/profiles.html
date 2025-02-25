@@ -3,7 +3,6 @@
 
 {% block content %}
 <div class="container mt-4">
-    
     <div class="card">
         <div class="card-header">
           <h5 style="font-size:1.5rem !important ;">Profile</h5>
@@ -15,9 +14,9 @@
                         <img src="{{ user.profile_picture.url }}" alt="Photo de profil" class="img-thumbnail img-fluid rounded-circle">
                     {% else %}
                         {% if user.gender == "female" %}              
-                            <img src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="profile image"class="img-thumbnail img-fluid rounded-circle">
+                            <img src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="profile image"class="img-fluid rounded-circle">
                         {% else %}
-                            <img  src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="profile image"class="img-thumbnail img-fluid rounded-circle">
+                            <img  src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="profile image"class=" img-fluid rounded-circle">
                         {% endif %}
                     {% endif %}
                 </div>

@@ -3,8 +3,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db import models
-# import re
-# import random
 from django.utils.translation import gettext_lazy as _
 from django.dispatch import receiver
 

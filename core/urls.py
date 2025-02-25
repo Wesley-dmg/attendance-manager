@@ -37,6 +37,8 @@ urlpatterns = [
     path('', include(('apps.rooms.urls', 'rooms'), namespace='rooms')),  # Inclure les URLs de l'app 'rooms'
     
     path('', include(('apps.availability.urls', 'availability'), namespace='availability')),  # Inclure les URLs de l'app 'availability'
+    
+    path('', include(('apps.timetable.urls', 'timetable'), namespace='timetable')),  # Inclure les URLs de l'app 'timetable'
 
 ]
 

@@ -224,13 +224,6 @@ def custom_logout(request):
     send_custom_message(request, _("Vous êtes déconnecté avec succès."), 'success')
     return redirect(reverse('users:login')) 
 
-# @login_required
-# def profiles(request):
-#   context = {
-    
-#   }
-#   return render(request, 'users/profiles.html', context)
-
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = "users/profiles.html"
 
@@ -269,6 +262,7 @@ class AdminListView(ListView):
     context_object_name = 'users'
     extra_context = {
         'role': 'admin',
+        'title': 'Liste des Administrateurs',
         'create_url': reverse_lazy('users:create_admin'),
         'edit_url': 'users:edit_admin',
         'delete_url': 'users:delete_admin',
@@ -284,7 +278,8 @@ class TeacherListView(ListView):
     context_object_name = 'users'
     extra_context = {
         'role': 'teacher',
-        'create_url': reverse_lazy('users:create_teacher'),
+        'title': 'Liste des Professeurs',
+        'create_url': 'users:create_teacher',
         'edit_url': 'users:edit_teacher',
         'delete_url': 'users:delete_teacher',
     }
@@ -299,7 +294,7 @@ class StudentListView(ListView):
     context_object_name = 'users'
     extra_context = {
         'role': 'student',
-        'create_url': reverse_lazy('users:create_student'),
+        'create_url': 'users:create_student',
         'edit_url': 'users:edit_student',
         'delete_url': 'users:delete_student',
     }
@@ -325,8 +320,7 @@ class ParentListView(ListView):
 @method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class UserCreateView(CreateView):
     template_name = 'users/admin/user_form.html'
-    success_url = reverse_lazy('users:admins_list')
-
+    
     def form_valid(self, form):
         # Vérification si un utilisateur existe déjà avec cet email ou nom d'utilisateur
         username = form.cleaned_data['email'].split('@')[0]
@@ -363,9 +357,11 @@ class UserCreateView(CreateView):
 class AdminCreateView(UserCreateView):
     form_class = AdminForm
     success_url = reverse_lazy('users:admins_list')
-    extra_context = {'role': 'admin',
+    extra_context = {
+                     'role': 'admin',
                      'title': 'Ajouter Administrateur',
-                     'cancel_url': reverse_lazy('users:admins_list')}
+                     'cancel_url': 'users:admins_list'
+                     }
 
     def form_invalid(self, form):
         # Message d'erreur si le formulaire est invalide
@@ -405,9 +401,11 @@ class StudentCreateView(UserCreateView):
 class ParentCreateView(UserCreateView):
     form_class = ParentForm
     success_url = reverse_lazy('users:parents_list')
-    extra_context = {'role': 'parent',
+    extra_context = {
+                     'role': 'parent',
                      'title': 'Ajouter Parent',
-                     'cancel_url': reverse_lazy('users:parents_list')}
+                     'cancel_url': 'users:parents_list'
+                     }
 
     def form_invalid(self, form):
         # Message d'erreur si le formulaire est invalide
@@ -460,7 +458,7 @@ class StudentUpdateView(UpdateView):
     template_name = 'users/admin/user_form.html'
     extra_context = {
         'title': 'Modifier Étudiant',
-        'cancel_url': reverse_lazy('users:students_list'),
+        'cancel_url': 'users:students_list',
     }
 
     def get_initial(self):
@@ -469,6 +467,7 @@ class StudentUpdateView(UpdateView):
         if self.object.date_of_birth:
             initial['date_of_birth'] = self.object.date_of_birth.strftime('%Y-%m-%d')
         return initial
+    
     def get_success_url(self):
         return self.extra_context['cancel_url']
 
@@ -504,12 +503,11 @@ class AdminDeleteView(DeleteView):
         context['cancel_url'] = self.success_url
         return context
 
-
 @method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class TeacherDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
-    success_url = reverse_lazy('users:teachers_list')
+    success_url = 'users:teachers_list'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -521,7 +519,7 @@ class TeacherDeleteView(DeleteView):
 class StudentDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
-    success_url = reverse_lazy('users:students_list')
+    success_url = 'users:students_list'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -533,7 +531,7 @@ class StudentDeleteView(DeleteView):
 class ParentDeleteView(DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
-    success_url = reverse_lazy('users:parents_list')
+    success_url = 'users:parents_list'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

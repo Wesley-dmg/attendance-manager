@@ -12,7 +12,9 @@ class DepartmentLevelSubject(models.Model):
     subject = models.ForeignKey('subjects.Subject', on_delete=models.CASCADE, related_name='department_levels_subjects', verbose_name=_('Matière'))
 
     class Meta:
-        unique_together = ('department_level', 'subject')  # Assure qu'une matière n'est liée qu'une seule fois à un département-niveau.
+        constraints = [
+                        models.UniqueConstraint(fields=['department_level', 'subject'], name='unique_departmentlevel_subject')
+                    ]# Assure qu'une matière n'est liée qu'une seule fois à un département-niveau.
         verbose_name = _('Matière par département et niveau')
         verbose_name_plural = _('Matières par département et niveau')
     

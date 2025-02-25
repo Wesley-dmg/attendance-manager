@@ -50,12 +50,18 @@ class DepartmentLevel(models.Model):
     level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name='department_levels', verbose_name=_('Niveau'))
 
     class Meta:
-        unique_together = ('department', 'level')  # Assure qu'une combinaison département-niveau est unique.
+        constraints = [
+                        models.UniqueConstraint(fields=['department', 'level'], name='unique_department_level')
+                    ]# Assure qu'une combinaison département-niveau est unique.
         verbose_name = _('Niveau départemental')
         verbose_name_plural = _('Niveaux départementaux')
     
     def __str__(self):
         return f'{self.level.name} - {self.department.name}'
+    
+    @property
+    def get_full_description(self):
+        return str(self)
 
 
 

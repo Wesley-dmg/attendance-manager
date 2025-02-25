@@ -1,0 +1,74 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4>PLAN DE REPARTITION DES FILIERES</h4>
+                <p>
+                    <strong>
+                        ☞ Semaine du {{ timetable.start_date|date:"d/m/Y" }} au {{ timetable.end_date|date:"d/m/Y" }}
+                    </strong>
+                </p>
+                <div class="d-flex justify-content-center">
+                    {% if previous_timetable %}
+                    <a href="{% url 'timetable_detail' previous_timetable.id %}" class="btn btn-outline-secondary">← Timetable Précédent</a>
+                    {% endif %}
+                    {% if next_timetable %}
+                    <a href="{% url 'timetable_detail' next_timetable.id %}" class="btn btn-outline-secondary float-right">Timetable Suivant →</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered text-center dt-responsive nowrap" id="timetableTable">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>NIVEAU </th>
+                                <th>SALLE</th>
+                                <th>FILIÈRE</th>
+                                <th>MATIÈRE</th>
+                                <th>ENSEIGNANT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for building, floors in structured_sessions.items %}
+                                {% for floor, rooms in floors.items %}
+                                    {% with floor_rooms_count=rooms|length %}
+                                        {% for room, sessions in rooms.items %}
+                                            {% with room_sessions_count=sessions|length %}
+                                                {% for session in sessions %}
+                                                    <tr>
+                                                        {% if forloop.parentloop.parentloop.first and forloop.parentloop.first and forloop.first %}
+                                                            <td rowspan="{{ floor_rooms_count }}">{{ building }}<br>{{ floor }}</td>
+                                                        {% endif %}
+                                                        {% if forloop.parentloop.first and forloop.first %}
+                                                            <td rowspan="{{ room_sessions_count }}">{{ room }}</td>
+                                                        {% endif %}
+                                                        <td>
+                                                            {{ session.department.name }} - {{ session.level }}
+                                                            <br><strong>{{ session.start_time|date:"H:i" }}</strong>
+                                                        </td>
+                                                        <td>{{ session.subject.name }}</td>
+                                                        <td>{{ session.teacher.user.get_full_name }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            {% endwith %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                {% endfor %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5">Aucune session programmée pour cette semaine.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
