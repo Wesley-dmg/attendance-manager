@@ -3,75 +3,30 @@
 # from django.contrib.auth.decorators import user_passes_test,login_required
 # views.py
 
-from django.views.generic import DetailView
-from django.db.models import Max, Min
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView,CreateView, UpdateView, DeleteView 
 from apps.timetable.models import CourseSession, Timetable
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 
-# class TimetableDetailView(DetailView):
-#     model = Timetable
-#     template_name = 'timetables/detail.html'
-#     context_object_name = 'timetable'  # le nom utilisé dans le template
+class TimetableListView(ListView):
+    model = Timetable
+    template_name = "timetable/timetable_list.html"
+    context_object_name = "timetables"
 
-#     def get_object(self, queryset=None):
-#         """
-#         S'il n'y a pas de pk dans l'URL, on renvoie le dernier Timetable.
-#         Sinon, on renvoie le Timetable correspondant au pk.
-#         """
-#         if 'pk' not in self.kwargs:
-#             # Pas de pk => on prend le dernier
-#             return Timetable.objects.order_by('-start_date').first()
-#         return super().get_object(queryset)
+    def get_queryset(self):
+        return Timetable.objects.prefetch_related("department_levels").order_by("-start_date")
 
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         current_timetable = self.object  # Le Timetable affiché
-
-#         # Récupérer le Timetable précédent (celui qui a start_date < current_timetable.start_date)
-#         previous_timetable = (Timetable.objects.filter(start_date__lt=current_timetable.start_date)
-#                               .order_by('-start_date').first())
-        
-#         context['previous_timetable'] = previous_timetable
-
-#         # Récupérer le Timetable suivant (celui qui a start_date > current_timetable.start_date)
-#         next_timetable = (Timetable.objects
-#                           .filter(start_date__gt=current_timetable.start_date)
-#                           .order_by('start_date')
-#                           .first())
-#         context['next_timetable'] = next_timetable
-
-#         # pour la période couverte par current_timetable
-#         context['course_sessions'] = current_timetable.course_sessions.all()
-#         context['department_levels'] = current_timetable.department_levels.all()
-
-#         return context
-
-# class TimetableDetailView(DetailView):
-#     model = Timetable
-#     template_name = 'timetable/detail.html'
-#     context_object_name = 'timetable'
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         timetable = self.object
-
-#         # Timetable précédent (start_date < actuel)
-#         previous_timetable = (Timetable.objects
-#                               .filter(start_date__lt=timetable.start_date)
-#                               .order_by('-start_date')
-#                               .first())
-#         context['previous_timetable'] = previous_timetable
-
-#         # Timetable suivant (start_date > actuel)
-#         next_timetable = (Timetable.objects
-#                           .filter(start_date__gt=timetable.start_date)
-#                           .order_by('start_date')
-#                           .first())
-#         context['next_timetable'] = next_timetable
-
-#         # Autres données que tu veux passer au template...
-#         return context
-
-
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Liste des Emplois du Temps'
+        context["create_url"] = "timetables:timetable_create"
+        context["edit_url"] = "timetables:timetable_edit"
+        context["delete_url"] = "timetables:timetable_delete"
+        context["detail_url"] = "timetables:timetable_detail"
+        context["download_url"] = "timetables:timetable_download"
+        return context
+    
 class TimetableDetailView(DetailView):
     model = Timetable
     template_name = 'timetable/detail.html'
@@ -107,3 +62,23 @@ class TimetableDetailView(DetailView):
 
         context['structured_sessions'] = structure
         return context
+
+
+
+class TimetableCreateView(CreateView):
+    model = Timetable
+    fields = ['start_date', 'end_date', 'room', 'subject', 'teacher', 'level']
+    template_name = 'timetables/timetable_form.html'
+    success_url = reverse_lazy('timetables:list')  # Redirige après la création
+
+class TimetableUpdateView(UpdateView):
+    model = Timetable
+    fields = ['start_date', 'end_date', 'room', 'subject', 'teacher', 'level']
+    template_name = 'timetables/timetable_form.html'
+    success_url = reverse_lazy('timetables:list')
+
+
+class TimetableDeleteView(DeleteView):
+    model = Timetable
+    template_name = 'timetables/timetable_confirm_delete.html'
+    success_url = reverse_lazy('timetables:list')
