@@ -70,24 +70,3 @@ class Room(models.Model):
         """Met à jour la disponibilité de la salle."""
         self.available = availability
         self.save()
-
-
-# Ajout des permissions pour la gestion des salles
-def create_room_permissions():
-    content_type = ContentType.objects.get_for_model(Room)
-
-    permissions = [
-        ('add_room', 'Peut ajouter une salle'),
-        ('change_room', 'Peut modifier une salle'),
-        ('delete_room', 'Peut supprimer une salle'),
-        ('view_room', 'Peut voir une salle'),
-    ]
-
-    for codename, name in permissions:
-        # Vérifier si la permission existe déjà avant de la créer
-        Permission.objects.get_or_create(
-            codename=codename, 
-            name=name, 
-            content_type=content_type
-        )
-

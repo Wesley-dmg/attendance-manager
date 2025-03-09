@@ -32,29 +32,3 @@ class Subject(models.Model):
         if not self.code.isalnum():
             raise ValidationError(_("Le code de la matière doit être alphanumérique."))
         super().clean()
-
-
-# Gestion des Permissions pour le modèle `Subject`
-
-def create_permissions_for_subject():
-    """
-    Crée des permissions spécifiques pour le modèle `Subject`.
-    """
-    from django.contrib.contenttypes.models import ContentType
-    from django.contrib.auth.models import Permission
-    
-    content_type = ContentType.objects.get_for_model(Subject)
-
-    subject_permissions = [
-        ('add_subject', _('Ajouter une matière')),
-        ('change_subject', _('Modifier une matière')),
-        ('delete_subject', _('Supprimer une matière')),
-        ('view_subject', _('Voir une matière')),
-    ]
-    
-    for codename, name in subject_permissions:
-        Permission.objects.get_or_create(
-            codename=codename,
-            name=name,
-            content_type=content_type
-        )

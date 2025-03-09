@@ -7,10 +7,6 @@ from apps.common.models import DepartmentLevelSubject
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import user_passes_test,login_required
 
-# # The `@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')`
-# decorator is typically used in Django to apply multiple decorators to class-based views. In this
-# specific case, the decorator is combining two decorators: `login_required` and
-# `user_passes_test(lambda u: u.is_admin)`.
 # @method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 
 # CRUD for DepartmentLevelSubject

@@ -1,3 +1,4 @@
+import logging
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import user_passes_test,login_required
 from django.db.models import Prefetch
@@ -23,53 +24,55 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils.timesince import timesince
 
-def get_teachers_for_subject(request):
-    # Vérifie si la requête est une requête AJAX
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' and 'subject_id' in request.GET:
-        try:
-            subject_id = int(request.GET['subject_id'])
-        except ValueError:
-            return JsonResponse({'error': 'Invalid subject ID'}, status=400)
+logger = logging.getLogger(__name__)
 
-        # Récupère la matière avec cet ID
-        subject = get_object_or_404(Subject, id=subject_id)
 
-        # Récupère les enseignants associés à cette matière via la relation ManyToMany
-        teachers = TeacherProfile.objects.filter(subjects=subject)
+def get_teachers(request):
+    subject_id = request.GET.get('subject_id')
+    if not subject_id:
+        return JsonResponse({'error': "Aucun ID de matière fourni."}, status=400)
+    
+    try:
+        subject_id = int(subject_id)
+    except ValueError:
+        return JsonResponse({'error': 'ID de matière invalide.'}, status=400)
 
-        # Prépare les données des enseignants pour la réponse JSON
-        data = {
-            'teachers': [{'id': t.id, 'name': t.user.get_full_name()} for t in teachers],
-        }
-        return JsonResponse(data)
+    # Récupère la matière avec cet ID
+    subject = get_object_or_404(Subject, id=subject_id)
 
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    # Récupère les enseignants associés à cette matière via la relation ManyToMany
+    teachers = TeacherProfile.objects.filter(subjects=subject)
+
+    # Prépare les données des enseignants pour la réponse JSON
+    data = {
+        'teachers': [{'id': t.id, 'name': t.user.get_full_name()} for t in teachers],
+    }
+    return JsonResponse(data)
 
 def get_filieres(request):
+    subject_id = request.GET.get("subject_id")
+    if not subject_id:
+        return JsonResponse({"error": "Aucun ID de matière fourni."}, status=400)
+    
     try:
-        if request.method == "GET":
-            subject_id = request.GET.get("subject_id")
-            if not subject_id:
-                return JsonResponse({"error": "Aucun ID de matière fourni."}, status=400)
-            
-            subject = get_object_or_404(Subject, id=subject_id)
-            dept_level_subjects = DepartmentLevelSubject.objects.filter(subject=subject)
-
-            filiere_list = []
-            for dls in dept_level_subjects:
-                dep_level = dls.department_level  # Instance de DepartmentLevel
-                description = str(dep_level)  # Utilise la méthode __str__
-                filiere_list.append({
-                    "id": dep_level.id,
-                    "name": description,
-                })
-            return JsonResponse({"filieres": filiere_list}, status=200)
-        else:
-            return JsonResponse({"error": "Requête invalide."}, status=400)
+        subject = get_object_or_404(Subject, id=subject_id)
+        # Récupère les associations entre la matière et les filières
+        dept_level_subjects = DepartmentLevelSubject.objects.filter(subject=subject)
+        
+        filiere_list = []
+        for dls in dept_level_subjects:
+            dep_level = dls.department_level  # Instance de DepartmentLevel
+            description = str(dep_level)  # Utilise la méthode __str__
+            filiere_list.append({
+                "id": dep_level.id,
+                "name": description,
+            })
+        return JsonResponse({"filieres": filiere_list}, status=200)
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({"error": str(e)}, status=500)
+        # Log de l'exception avec le traceback complet dans les logs
+        logger.exception("Erreur dans get_filieres: %s", e)
+        # Retourne un message d'erreur générique à l'utilisateur
+        return JsonResponse({"error": "Une erreur interne s'est produite. Veuillez réessayer plus tard."}, status=500)
 
 class AvailabilityRequestListView(ListView):
     model = AvailabilityRequest
@@ -95,62 +98,6 @@ class CreateAvailabilityRequestView(View):
         }
         return render(request, self.template_name, context)
     
-# Fonction principale pour créer une demande de disponibilité
-# @transaction.atomic
-# def create_availability_request(request):
-#     if request.method != "POST":
-#         send_custom_message(request, _("Méthode non autorisée"), 'error')
-#         return redirect('availability:create_request')
-
-#     try:
-#         subject_id = request.POST.get("subject_id")
-#         teacher_ids_raw = request.POST.get("teacher_ids", "")
-#         teacher_ids = teacher_ids_raw.split(",") if teacher_ids_raw else []
-#         filiere_ids = request.POST.getlist("filiere_ids") 
-#         start_date = request.POST.get("start_date")
-#         end_date = request.POST.get("end_date")
-
-        
-#         if not subject_id or not teacher_ids or not start_date or not end_date or not filiere_ids:
-#             send_custom_message(request, _("Données incomplètes. Veuillez vérifier les informations envoyées."), 'error')
-#             return redirect('availability:create_request')
-
-#         teacher_ids_validated, error_msg = validate_teacher_ids(teacher_ids)
-#         if not teacher_ids_validated:
-#             send_custom_message(request, _("IDs enseignants invalides. Vérifiez les identifiants des enseignants."), 'error')
-#             return redirect('availability:create_request')
-
-#         # Récupération de la matière et des enseignants associés
-#         subject = get_object_or_404(Subject, id=subject_id)
-#         teachers = TeacherProfile.objects.filter(id__in=teacher_ids_validated)
-#         if not teachers.exists():
-#             send_custom_message(request, _("Aucun enseignant valide trouvé. Vérifiez les IDs."), 'error')
-#             return redirect('availability:create_request')
-
-#         # Création de la demande avec les dates
-#         availability_request = AvailabilityRequest.objects.create(
-#             subject=subject,
-#             start_date=start_date,
-#             end_date=end_date)
-#         availability_request.teachers.set(teachers)
-#         availability_request.filieres.set(filiere_ids)
-
-#         # Création d'une réponse "pending" pour chaque enseignant
-#         responses = [
-#             AvailabilityResponse(
-#                 request=availability_request,
-#                 teacher=teacher,
-#                 status='pending') for teacher in teachers
-#         ]
-#         AvailabilityResponse.objects.bulk_create(responses)
-
-#         send_custom_message(request, _("Demande de disponibilité créée avec succès !"), 'success')
-#         return redirect('availability:availability_request_list')
-
-#     except Exception as e:
-#         send_custom_message(request, _("Erreur interne : {0}".format(str(e))), 'error')
-#         return redirect('availability:create_request')
-
 @transaction.atomic
 def create_availability_request(request):
     if request.method != "POST":
@@ -279,15 +226,29 @@ class AvailabilityRequestDeleteView(DeleteView):
     template_name = 'availability/admin/confirm_delete.html'
     context_object_name = 'availability_request'
     success_url = reverse_lazy('availability:availability_request_list')
-    cancel_url = reverse_lazy('availability:availability_request_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Confirmer la Suppression'
+        context['cancel_url'] = reverse_lazy('availability:availability_request_list')
+        return context
 
     def delete(self, request, *args, **kwargs):
+        # On récupère l'objet à supprimer
         availability_request = self.get_object()
+        print(f"Objet à supprimer : {availability_request}")  # Débogage : Afficher l'objet
+    
+        # Vérification si des réponses ont été acceptées ou rejetées
         if availability_request.responses.filter(status__in=['accepted', 'rejected']).exists():
-            send_custom_message(request, _("Cette demande ne peut pas être supprimée car elle a déjà des réponses."), 'error')
-            return redirect(self.success_url)
-        
+            print("Réponses traitées, suppression impossible.")  # Débogage : Message si suppression impossible
+            send_custom_message(request, _("Cette demande ne peut pas être supprimée car des réponses ont déjà été traitées."), 'error')
+            return redirect('availability:availability_request_list')
+    
+        # Si la suppression est autorisée
+        print("Suppression autorisée, on va supprimer.")  # Débogage : Message si suppression autorisée
         send_custom_message(request, _("Demande de disponibilité supprimée avec succès."), 'success')
+    
+        # Suppression réelle de l'objet
         return super().delete(request, *args, **kwargs)
 
 # Historique des demande en attente accepter ou rejeter 
@@ -378,7 +339,7 @@ def reject_availability_request(request, request_id):
     
     # Récupérer la réponse de l'enseignant concerné
     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
-    
+
     # Vérifier que l'enseignant est bien celui qui a répondu à la demande
     if response.teacher != request.user.teacherprofile:
         send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')

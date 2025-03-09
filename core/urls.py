@@ -28,17 +28,17 @@ urlpatterns = [
     
     path('', include('apps.users.urls')),  # Inclure les URLs de l'application users
     
-    path('', include(('apps.courses.urls', 'courses'), namespace='courses')),  # Inclure les URLs de l'app 'courses'
+    path('courses', include(('apps.courses.urls', 'courses'), namespace='courses')),  # Inclure les URLs de l'app 'courses'
     
-    path('', include(('apps.subjects.urls', 'subjects'), namespace='subjects')),  # Inclure les URLs de l'app 'subjects'
+    path('subjects/', include(('apps.subjects.urls', 'subjects'), namespace='subjects')),  # Inclure les URLs de l'app 'subjects'
     
-    path('', include(('apps.common.urls', 'common'), namespace='common')),  # Inclure les URLs de l'app 'common'
+    path('departmentlevelsubjects/', include(('apps.common.urls', 'common'), namespace='common')),  # Inclure les URLs de l'app 'common'
     
-    path('', include(('apps.rooms.urls', 'rooms'), namespace='rooms')),  # Inclure les URLs de l'app 'rooms'
+    path('rooms/', include(('apps.rooms.urls', 'rooms'), namespace='rooms')),  # Inclure les URLs de l'app 'rooms'
     
-    path('', include(('apps.availability.urls', 'availability'), namespace='availability')),  # Inclure les URLs de l'app 'availability'
+    path('availability/', include(('apps.availability.urls', 'availability'), namespace='availability')),  # Inclure les URLs de l'app 'availability'
     
-    path('', include(('apps.timetable.urls', 'timetable'), namespace='timetable')),  # Inclure les URLs de l'app 'timetable'
+    path('timetables/', include(('apps.timetable.urls', 'timetable'), namespace='timetable')),  # Inclure les URLs de l'app 'timetable'
 
 ]
 

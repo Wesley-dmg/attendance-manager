@@ -7,9 +7,9 @@ app_name = 'subjects'  # Namespace for this application
 
 urlpatterns = [   
     # Subject URLs
-    path('subjects/', SubjectListView.as_view(), name='subject_list'),
-    path('subjects/add/', SubjectCreateView.as_view(), name='subject_add'),
-    path('subjects/<int:pk>/edit/', SubjectUpdateView.as_view(), name='subject_edit'),
-    path('subjects/<int:pk>/delete/', SubjectDeleteView.as_view(), name='subject_delete'),
+    path('', SubjectListView.as_view(), name='subject_list'),
+    path('add/', SubjectCreateView.as_view(), name='subject_add'),
+    path('<int:pk>/edit/', SubjectUpdateView.as_view(), name='subject_edit'),
+    path('<int:pk>/delete/', SubjectDeleteView.as_view(), name='subject_delete'),
 
 ]

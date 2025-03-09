@@ -46,7 +46,7 @@
                 message: messageContent
             }, {
                 type: messageType, // 'success', 'info', 'warning', 'danger'
-                delay: 10000, // Durée de l'affichage (en ms)
+                delay: 5000, // Durée de l'affichage (en ms)
                 placement: {
                     from: 'top', 
                     align: 'center' 
@@ -68,50 +68,27 @@
     });
 </script>
 
-{% comment %} <script>
-    //rafraîchissement automatique le navigateur toutes les 30 secondes
-    
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+    // Initialisation de select2 pour le sélecteur de matières
+    $('.select2').select2({
+        //placeholder: 'Sélectionnez une matière',
+        allowClear: true,
+        width: '100%'
+    });
+    });
+</script>
+{% comment %} 
+<script>
     setInterval(function(){
         window.location.reload();
       }, 60000);
 </script> {% endcomment %}
 
 
-  {% comment %} <script>
-    $(document).ready(function() {
-        // Initialisation des DataTables
-        $('table.datatable').each(function() {
-            var tableOptions = {
-                dom: 'Bfrtip',
-                buttons: [
-                    'copy', 'excel', 'pdf', 'print'
-                ],
-                responsive: true,
-                paging: true,
-                searching: true,
-                ordering: true,
-                lengthMenu: [10, 25, 50, 75, 100],
-                language: {
-                    url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/French.json'
-                }
-            };
-
-            // Si ce tableau n'a pas de boutons, on les désactive
-            if ($(this).hasClass('no-buttons')) {
-                tableOptions.buttons = [];
-            }
-
-            $(this).DataTable(tableOptions);
-        });
-    });
-</script>
-Dans ce cas, si tu veux qu'un tableau particulier n'affiche pas de boutons, il suffit de lui ajouter la classe no-buttons :
-
-<table class="table datatable no-buttons">
-Conclusion :
-Avec ce script global, tous tes DataTables auront une initialisation cohérente avec des boutons d'exportation et des options de pagination, recherche et tri. Si certains tableaux nécessitent des personnalisations (pas de boutons, styles différents, etc.), tu peux facilement ajouter des classes ou ajuster les options selon tes besoins. {% endcomment %}
-
-{% comment %} Oui, tu peux ajouter de nombreuses autres fonctionnalités et options aux **DataTables** pour personnaliser l'expérience utilisateur et améliorer l'interaction avec tes tableaux. Voici quelques fonctionnalités supplémentaires que tu peux intégrer, avec des explications et des exemples :
+{% comment %}
+ Oui, tu peux ajouter de nombreuses autres fonctionnalités et options aux **DataTables** pour personnaliser l'expérience utilisateur et améliorer l'interaction avec tes tableaux. Voici quelques fonctionnalités supplémentaires que tu peux intégrer, avec des explications et des exemples :
 
 ### 1. **Filtrage avancé (searchable)**
    - Par défaut, DataTables permet de filtrer les lignes du tableau, mais tu peux personnaliser les filtres ou ajouter des filtres avancés pour certaines colonnes spécifiques.

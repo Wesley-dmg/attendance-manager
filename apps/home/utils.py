@@ -20,3 +20,4 @@ def send_custom_message(request, message, message_type='info'):
         messages.add_message(request, message_types[message_type], message)
     else:
         messages.add_message(request, messages.INFO, message)
+

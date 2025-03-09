@@ -32,23 +32,3 @@ class DepartmentLevelSubject(models.Model):
 
     def __str__(self):
         return f'{self.subject.name} - {self.department_level.level.name} ({self.department_level.department.name})'
-
-def create_permissions_for_models():
-    """
-    Crée des permissions spécifiques pour les modèles `Department`, `Level`, et `DepartmentLevelSubject`.
-    """
-    content_type_department_level_subject = ContentType.objects.get_for_model(DepartmentLevelSubject)
-    
-    # Permissions pour le modèle `DepartmentLevelSubject`
-    department_level_subject_permissions = [
-        ('add_departmentlevelsubject', _('Ajouter une matière par département et niveau')),
-        ('change_departmentlevelsubject', _('Modifier une matière par département et niveau')),
-        ('delete_departmentlevelsubject', _('Supprimer une matière par département et niveau')),
-        ('view_departmentlevelsubject', _('Voir une matière par département et niveau')),
-    ]
-    for codename, name in department_level_subject_permissions:
-        Permission.objects.get_or_create(
-            codename=codename,
-            name=name,
-            content_type=content_type_department_level_subject
-        )

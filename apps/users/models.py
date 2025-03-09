@@ -10,36 +10,10 @@ from django.core.validators import RegexValidator
 
 from apps.courses.models import DepartmentLevel
 from apps.subjects.models import Subject
-
-from django.db.models.signals import post_migrate
-from django.dispatch import receiver
+# from django.db.models.signals import post_migrate
+# from django.dispatch import receiver
 from django.db import transaction
 from django.apps import apps
-
-def setup_permissions_for_roles():
-    CustomUser = apps.get_model('users', 'CustomUser')
-    content_type = ContentType.objects.get_for_model(CustomUser)
-
-    role_permissions = {
-        'Admin': ['add_customuser', 'change_customuser', 'delete_customuser', 'view_customuser'],
-        'Teacher': ['add_subject', 'change_subject', 'view_subject','view_availability', 'add_availability', 'change_own_availability'],
-        'Student': ['view_subject'],
-        'Parent': ['view_profile'],
-    }
-
-    for role, perms in role_permissions.items():
-        group, _ = Group.objects.get_or_create(name=role)
-        for perm_codename in perms:
-            permission, _ = Permission.objects.get_or_create(
-                codename=perm_codename,
-                name=f'Can {perm_codename.replace("_", " ")}',
-                content_type=content_type
-            )
-            group.permissions.add(permission)
-
-@receiver(post_migrate)
-def create_permissions_for_roles(sender, **kwargs):
-    setup_permissions_for_roles()
 
 phone_number_validator = RegexValidator(
     regex=r'^(?:\+229|00229|\d{10})[\s-]?(\d{2,})[\s-]?(\d{2,})[\s-]?(\d{2,})[\s-]?(\d{2,})[\s-]?(\d{2,})$',

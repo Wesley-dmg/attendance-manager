@@ -44,6 +44,22 @@
       <button type="button" class="btn btn-primary mt-3" id="show-form" disabled>Faire une demande</button>
     </div>
   </div>
+  <!-- Sélection de la matière -->
+  <div id="subject-selection" class="col-4 card">
+    <div class="card-header">
+      <h5 class="mb-3">Choisissez une matière</h5>
+    </div>
+    <div class="p-3">
+      <select id="subject-select" class="form-control select2" name="subject">
+        {% for subject in subjects %}
+          <option value="{{ subject.id }}" {% if availability_request and availability_request.subject.id == subject.id %}selected{% endif %}>
+            {{ subject.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
 
   <!-- Formulaire (étape 2) -->
   <div class="row d-flex justify-content-center">
@@ -125,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
       selectedSubject = event.target.value;
       console.log("Matière sélectionnée :", selectedSubject);
       // Réinitialiser la liste des enseignants
-      fetch(`/ajax/get-teachers/?subject_id=${selectedSubject}`, {
+      fetch(`/availability/ajax/get-teachers/?subject_id=${selectedSubject}`, {
         headers: { "X-Requested-With": "XMLHttpRequest" },
       })
       .then((response) => {
@@ -179,7 +195,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // En mode modification, charger automatiquement enseignants et filières
   if (selectedSubject) {
     // Charger les enseignants pour le sujet sélectionné
-    fetch(`/ajax/get-teachers/?subject_id=${selectedSubject}`, {
+    fetch(`/availability/ajax/get-teachers/?subject_id=${selectedSubject}`, {
       headers: { "X-Requested-With": "XMLHttpRequest" },
     })
     .then((response) => response.json())
@@ -209,7 +225,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Charger les filières via AJAX et pré-sélectionner celles déjà choisies
     $.ajax({
-      url: '/ajax/get-filieres/',
+      url: '/availability/ajax/get-filieres/',
       data: { subject_id: selectedSubject },
       dataType: 'json',
       success: function(data) {
@@ -245,7 +261,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     console.log("Chargement des filières pour la matière :", selectedSubject);
     $.ajax({
-      url: '/ajax/get-filieres/',
+      url: '/availability/ajax/get-filieres/',
       data: { subject_id: selectedSubject },
       dataType: 'json',
       success: function(data) {
