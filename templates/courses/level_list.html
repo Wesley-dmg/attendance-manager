@@ -6,8 +6,11 @@
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header">
-                <h5>Liste des Niveaux d'Études</h5>
-                <a href="{% url 'courses:level_add' %}" class="btn btn-primary float-right">Ajouter un Niveau</a>
+                <h5>{{title}}</h5>
+                
+                {% if perms.courses.add_level %}
+                    <a href="{% url create_url %}" class="btn btn-success float-right"><i class="fa fa-plus-circle"></i>Ajouter un Niveau</a>
+                {% endif %}
             </div>
             <div class="card-block table-border-style">
                 <div class="table-responsive">
@@ -25,8 +28,15 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ level.name }}</td>
                                 <td>
-                                    <a href="{% url 'courses:level_edit' level.id %}" class="btn btn-sm btn-warning">Modifier</a>
-                                    <a href="{% url 'courses:level_delete' level.id %}" class="btn btn-sm btn-danger">Supprimer</a>
+                                    
+                                    {% if perms.courses.change_level %}
+                                        <a href="{% url edit_url level.id %}" class="btn btn-sm btn-warning">Modifier</a>
+                                    {% endif %}
+
+                                    {% if  perms.courses.delete_level%}
+                                        <a href="{% url delete_url level.id %}" class="btn btn-sm btn-danger">Supprimer</a>
+                                    {% endif %}
+
                                 </td>
                             </tr>
                             {% endfor %}

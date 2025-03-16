@@ -1,5 +1,7 @@
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import (UserCreationForm, AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm, UsernameField,UserChangeForm)
+from apps.courses.models import DepartmentLevel
+from apps.subjects.models import Subject
 from django_select2.forms import Select2MultipleWidget
 from django.core.cache import cache
 from django import forms
@@ -9,11 +11,11 @@ import string
 
 # Formulaire d'inscription pour les administrateurs uniquement
 class CustomUserCreationForm(UserCreationForm):
-    admin_type = forms.ChoiceField(
-        choices=AdminType.ADMIN_TYPE_CHOICES,
-        label=_("Type d'administrateur"),
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
+    # admin_type = forms.ChoiceField(
+    #     choices=AdminType.ADMIN_TYPE_CHOICES,
+    #     label=_("Type d'administrateur"),
+    #     widget=forms.Select(attrs={'class': 'form-control'})
+    # )
     password1 = forms.CharField(
         label=_("Mot de passe"),
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Mot de passe'}),
@@ -54,11 +56,13 @@ class CustomUserCreationForm(UserCreationForm):
             user.save()
             
             # Récupération ou création de l'AdminType
-            admin_type_name = self.cleaned_data['admin_type']
-            admin_type, created = AdminType.objects.get_or_create(name=admin_type_name)
+            # admin_type_name = self.cleaned_data['admin_type']
+            # admin_type, created = AdminType.objects.get_or_create(name=admin_type_name)
             
             # Crée le profil Admin avec le type spécifié
-            AdminProfile.objects.create(user=user, admin_type=admin_type)
+            AdminProfile.objects.create(user=user
+                                        # , admin_type=admin_type
+                                        )
 
         return user
 
@@ -189,7 +193,7 @@ class BaseUserForm(forms.ModelForm):
 
 # Formulaire pour les administrateurs
 class AdminForm(BaseUserForm):
-    admin_type = forms.ModelChoiceField(queryset=AdminType.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}), required=True)
+    # admin_type = forms.ModelChoiceField(queryset=AdminType.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}), required=True)
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -199,16 +203,20 @@ class AdminForm(BaseUserForm):
             
             # Vérifier si un AdminProfile existe déjà pour cet utilisateur
             if not hasattr(user, 'adminprofile'):
-                AdminProfile.objects.create(user=user, admin_type=self.cleaned_data['admin_type'])
+                AdminProfile.objects.create(user=user
+                                            # , admin_type=self.cleaned_data['admin_type']
+                                            )
             else:
                 # Gérer le cas où le profil existe déjà, par exemple, mettre à jour les informations
-                user.adminprofile.admin_type = self.cleaned_data['admin_type']
+                # user.adminprofile.admin_type = self.cleaned_data['admin_type']
                 user.adminprofile.save()
         return user
 
 # Formulaire pour les enseignants
 class TeacherForm(BaseUserForm):
-    subjects = forms.ModelMultipleChoiceField(queryset=Subject.objects.all(), widget=Select2MultipleWidget, required=True)
+    subjects = forms.ModelMultipleChoiceField(queryset=Subject.objects.all(), widget=Select2MultipleWidget(attrs={'class': 'form-control select2'}), required=True)
+    
+    
     # department_levels = forms.ModelMultipleChoiceField(queryset=DepartmentLevel.objects.all(), widget=Select2MultipleWidget, required=False)
 
     def save(self, commit=True):
@@ -263,12 +271,12 @@ class ParentForm(BaseUserForm):
         return user
     
 class AdminUpdateForm(BaseUserForm):
-    admin_type = forms.ModelChoiceField(queryset=AdminType.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}), required=True)
+    # admin_type = forms.ModelChoiceField(queryset=AdminType.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}), required=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and hasattr(self.instance, 'adminprofile'):
-            self.fields['admin_type'].initial = self.instance.adminprofile.admin_type
+        # if self.instance and hasattr(self.instance, 'adminprofile'):
+        #     self.fields['admin_type'].initial = self.instance.adminprofile.admin_type
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -276,20 +284,19 @@ class AdminUpdateForm(BaseUserForm):
         if commit:
             user.save()
             admin_profile, created = AdminProfile.objects.get_or_create(user=user)
-            admin_profile.admin_type = self.cleaned_data['admin_type']
+            # admin_profile.admin_type = self.cleaned_data['admin_type']
             admin_profile.save()
         return user
 
 class TeacherUpdateForm(BaseUserForm):
     subjects = forms.ModelMultipleChoiceField(queryset=Subject.objects.all(), widget=Select2MultipleWidget, required=True)
-    # department_levels = forms.ModelMultipleChoiceField(queryset=DepartmentLevel.objects.all(), widget=Select2MultipleWidget, required=True)
+    
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and hasattr(self.instance, 'teacherprofile'):
             self.fields['subjects'].initial = self.instance.teacherprofile.subjects.all()
-            # self.fields['department_levels'].initial = self.instance.teacherprofile.department_levels.all()
-
+            
     def save(self, commit=True):
         user = super().save(commit=False)
         user.role = 'teacher'
@@ -297,7 +304,7 @@ class TeacherUpdateForm(BaseUserForm):
             user.save()
             teacher_profile, created = TeacherProfile.objects.get_or_create(user=user)
             teacher_profile.subjects.set(self.cleaned_data['subjects'])
-            # teacher_profile.department_levels.set(self.cleaned_data['department_levels'])
+            
             teacher_profile.save()
         return user
 

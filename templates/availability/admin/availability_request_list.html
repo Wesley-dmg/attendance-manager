@@ -6,8 +6,8 @@
       <div class="col-xl-12">
         <div class="card">
           <div class="card-header">
-            <h5>Liste des Demandes de Disponibilité</h5>
-            <a href="{% url 'availability:create_request' %}" class="btn btn-primary float-right">Ajouter une Disponibilité</a>
+            <h5>{{title}}</h5>
+            <a href="{% url create_url %}" class="btn btn-primary float-right">Ajouter une Disponibilité</a>
           </div>
           <div class="card-block table-border-style">
             <div class="table-responsive">
@@ -61,8 +61,8 @@
                       {% endfor %}
                     </td>
                     <td>
-                      <a href="{% url 'availability:availability_request_update' request.pk %}" class="btn btn-warning btn-sm">Modifier</a>
-                      <a href="{% url 'availability:availability_request_delete' request.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      <a href="{% url edit_url request.pk %}" class="btn btn-warning btn-sm">Modifier</a>
+                      <a href="{% url delete_url request.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
                     </td>
                   </tr>
                   {% endfor %}

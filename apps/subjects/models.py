@@ -2,8 +2,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 
-from apps.common.models import DepartmentLevelSubject  # Importer correctement si déplacé
-
 class Subject(models.Model):
     """
     Représente une matière enseignée dans le cadre d'un département et d'un niveau d'étude.

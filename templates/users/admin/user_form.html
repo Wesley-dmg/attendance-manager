@@ -24,7 +24,7 @@
           <form method="post">
             {% csrf_token %}
             {{ form.as_p }}  <!-- Cela préremplit automatiquement tous les champs du formulaire -->
-            <button type="submit" class="btn btn-success">Enregistrer</button>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
             <a href="{{ cancel_url }}" class="btn btn-secondary">Annuler</a>
         </form>
 

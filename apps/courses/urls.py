@@ -8,10 +8,10 @@ app_name = 'courses'  # Namespace for this application
 
 urlpatterns = [   
     # Department URLs
-    path('departments/', DepartmentListView.as_view(), name='department_list'),
-    path('departments/add/', DepartmentCreateView.as_view(), name='department_add'),
-    path('departments/<int:pk>/edit/', DepartmentUpdateView.as_view(), name='department_edit'),
-    path('departments/<int:pk>/delete/', DepartmentDeleteView.as_view(), name='department_delete'),
+    path('', DepartmentListView.as_view(), name='department_list'),
+    path('add/', DepartmentCreateView.as_view(), name='department_add'),
+    path('<int:pk>/edit/', DepartmentUpdateView.as_view(), name='department_edit'),
+    path('<int:pk>/delete/', DepartmentDeleteView.as_view(), name='department_delete'),
 
     # Level URLs
     path('levels/', LevelListView.as_view(), name='level_list'),

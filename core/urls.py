@@ -28,11 +28,11 @@ urlpatterns = [
     
     path('', include('apps.users.urls')),  # Inclure les URLs de l'application users
     
-    path('courses', include(('apps.courses.urls', 'courses'), namespace='courses')),  # Inclure les URLs de l'app 'courses'
+    path('courses/', include(('apps.courses.urls', 'courses'), namespace='courses')),  # Inclure les URLs de l'app 'courses'
     
     path('subjects/', include(('apps.subjects.urls', 'subjects'), namespace='subjects')),  # Inclure les URLs de l'app 'subjects'
     
-    path('departmentlevelsubjects/', include(('apps.common.urls', 'common'), namespace='common')),  # Inclure les URLs de l'app 'common'
+    path('common/', include(('apps.common.urls', 'common'), namespace='common')),  # Inclure les URLs de l'app 'common'
     
     path('rooms/', include(('apps.rooms.urls', 'rooms'), namespace='rooms')),  # Inclure les URLs de l'app 'rooms'
     

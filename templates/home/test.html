@@ -1,0 +1,18 @@
+
+
+{% if perms.users.view_parentprofile %}
+  <h1> vous aviez accès à la vue du profile parent </h1>
+  {% else %}
+  <h1>vous n'aviez pas les permissions requises </h1>
+{% endif %}
+  
+{% comment %} <h1>nsbxj</h1>
+
+__uu
+{% if  user.has_perm('apps.users.view_parentprofil') %}
+    <h1>La permission est bien assignée.</h1>
+  {% else %}
+    <h2>La permission n'est pas assignée ou le nom est incorrect
+{% endif %}
+   {% endcomment %}
+

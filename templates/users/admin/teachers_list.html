@@ -7,7 +7,9 @@
         <div class="card">
           <div class="card-header">
             <h5>Liste des Enseignants</h5>
-            <a href="{{ create_url }}" class="btn btn-primary float-right">Ajouter un Enseignant</a>
+            {% if perms.users.add_teacherprofile %}
+              <a href="{{ create_url }}" class="btn btn-success float-right"><i class="fa fa-plus-circle"></i>Ajouter un Enseignant</a>
+            {% endif %}
           </div>
           <div class="card-block table-border-style">
             <div class="table-responsive">
@@ -68,8 +70,12 @@
 
                     
                     <td>
-                      <a href="{% url edit_url user.pk %}" class="btn btn-warning btn-sm">Modifier</a>
-                      <a href="{% url delete_url user.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% if perms.users.change_teacherprofile %}
+                        <a href="{% url edit_url user.pk %}" class="btn btn-warning btn-sm">Modifier</a>
+                    {% endif %}
+                    {% if perms.users.delete_teacherprofile %}
+                        <a href="{% url delete_url user.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% endif %}
                     </td>
                   </tr>
                   {% endfor %}

@@ -1,17 +1,18 @@
-import logging
+# import logging
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import user_passes_test,login_required
+from django.contrib.auth.decorators import user_passes_test,login_required,permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-
-from django.views.generic import ListView, UpdateView,DeleteView
+from django.views.generic import ListView,DeleteView
 from django.views import View
 
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.common.models import DepartmentLevelSubject
+from apps.home.mixins import AdminTestMixin
 from apps.subjects.models import Subject
 from apps.availability.models import AvailabilityRequest, AvailabilityResponse
 from apps.users.models import TeacherProfile
@@ -24,8 +25,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils.timesince import timesince
 
-logger = logging.getLogger(__name__)
-
+# logger = logging.getLogger(__name__)
 
 def get_teachers(request):
     subject_id = request.GET.get('subject_id')
@@ -70,29 +70,38 @@ def get_filieres(request):
         return JsonResponse({"filieres": filiere_list}, status=200)
     except Exception as e:
         # Log de l'exception avec le traceback complet dans les logs
-        logger.exception("Erreur dans get_filieres: %s", e)
+        # logger.exception("Erreur dans get_filieres: %s", e)
         # Retourne un message d'erreur générique à l'utilisateur
         return JsonResponse({"error": "Une erreur interne s'est produite. Veuillez réessayer plus tard."}, status=500)
 
-class AvailabilityRequestListView(ListView):
+class AvailabilityRequestListView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin, ListView):
     model = AvailabilityRequest
     template_name = 'availability/admin/availability_request_list.html'
+    permission_required= 'availability.view_availabilityrequest'
     context_object_name = 'requests'
-
+    extra_context = {
+        'title': 'Liste des Demandes de Disponibilité',
+        'create_url': 'availability:create_request',
+        'edit_url': 'availability:availability_request_update',
+        'delete_url': 'availability:availability_request_delete',
+    }
+    
     def get_queryset(self):
         responses = AvailabilityResponse.objects.all()
         return AvailabilityRequest.objects.prefetch_related(Prefetch('responses', queryset=responses),'filieres').all()
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class CreateAvailabilityRequestView(View):
+ 
+class CreateAvailabilityRequestView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,View):
     """
     Affiche le formulaire de création d'une demande de disponibilité.
     """
     template_name = "availability/admin/request_forms.html"
-
+    permission_required= 'availability.add_availabilityrequest'
+    
     def get(self, request):
         subjects = Subject.objects.all()
         context = {
+            'title': 'Demande de disponibilité',
             'subjects': subjects,
             'form_action_url': reverse('availability:create_availability_request'),
         }
@@ -151,17 +160,19 @@ def create_availability_request(request):
         send_custom_message(request, _("Erreur interne : {0}".format(str(e))), 'error')
         return redirect('availability:create_request')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class UpdateAvailabilityRequestView(View):
+ 
+class UpdateAvailabilityRequestView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,View):
     """
     Affiche le formulaire de modification d'une demande de disponibilité.
     """
     template_name = "availability/admin/request_forms.html"
+    permission_required= 'availability.change_availabilityrequest'
 
     def get(self, request, pk):
         availability_request = get_object_or_404(AvailabilityRequest, pk=pk)
         subjects = Subject.objects.all()
         context = {
+            'title': 'Modifier demande de disponibilité',
             'subjects': subjects,
             'availability_request': availability_request,
             'form_action_url': reverse('availability:update_availability_request', args=[availability_request.pk]),
@@ -221,9 +232,10 @@ def update_availability_request(request, pk):
         send_custom_message(request, _("Erreur interne : {0}".format(str(e))), 'error')
         return redirect('availability:availability_request_edit', pk=pk)
         
-class AvailabilityRequestDeleteView(DeleteView):
+class AvailabilityRequestDeleteView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,DeleteView):
     model = AvailabilityRequest
     template_name = 'availability/admin/confirm_delete.html'
+    permission_required= 'availability.delete_availabilityrequest'
     context_object_name = 'availability_request'
     success_url = reverse_lazy('availability:availability_request_list')
 
@@ -252,9 +264,10 @@ class AvailabilityRequestDeleteView(DeleteView):
         return super().delete(request, *args, **kwargs)
 
 # Historique des demande en attente accepter ou rejeter 
-class TeacherAvailabilityRequestListView(ListView):
+class TeacherAvailabilityRequestListView(LoginRequiredMixin,PermissionRequiredMixin,ListView):
     model = AvailabilityRequest
     template_name = 'availability/teacher/history_request.html'
+    permission_required= 'availability.can_view_availabilityrequest_history'
     context_object_name = 'requests'
 
     def get_queryset(self):
@@ -293,9 +306,10 @@ class TeacherAvailabilityRequestListView(ListView):
             return JsonResponse({'requests': data})
         return super().render_to_response(context, **response_kwargs)
 
-class TeacherAvailabilityPendingRequestView(ListView):
+class TeacherAvailabilityPendingRequestView(LoginRequiredMixin,PermissionRequiredMixin,ListView):
     model = AvailabilityRequest
     template_name = 'availability/teacher/availability_pending.html'
+    permission_required= 'availability.can_view_availabilityrequest_pending'
     context_object_name = 'requests'
 
     def get_queryset(self):
@@ -309,48 +323,82 @@ class TeacherAvailabilityPendingRequestView(ListView):
         queryset = AvailabilityRequest.objects.filter(responses__teacher=teacher, responses__status='pending').prefetch_related(teacher_response_prefetch).distinct()
         return queryset
 
-# Fonction pour accepter une demande 
+# # Fonction pour accepter une demande 
+# def accept_availability_request(request, request_id):
+#     # Récupérer la demande de disponibilité
+#     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
+    
+#     # Récupérer la réponse de l'enseignant concerné
+#     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
+    
+#     # Vérifier que l'enseignant est bien celui qui a répondu à la demande
+#     if response.teacher != request.user.teacherprofile:
+#         send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')
+#         return redirect('availability:teacher_availability_pending_request_list')
+    
+#     # Mettre à jour le statut de la réponse à "accepté"
+#     response.status = 'accepted'
+#     response.save()
+
+#     # Message de succès
+#     send_custom_message(request, _("Demande acceptée avec succès."), 'success')
+
+#     # Redirection vers la liste des demandes en attente
+#     return redirect('availability:teacher_availability_pending_request_list')
+
+# # Fonction pour rejeter une demande 
+# def reject_availability_request(request, request_id):
+#     # Récupérer la demande de disponibilité
+#     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
+    
+#     # Récupérer la réponse de l'enseignant concerné
+#     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
+
+#     # Vérifier que l'enseignant est bien celui qui a répondu à la demande
+#     if response.teacher != request.user.teacherprofile:
+#         send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')
+#         return redirect('availability:teacher_availability_pending_request_list')
+    
+#     # Mettre à jour le statut de la réponse à "rejeté"
+#     response.status = 'rejected'
+#     response.save()
+
+#     # Message de succès
+#     send_custom_message(request, _("Demande rejetée avec succès."), 'error')
+
+#     # Redirection vers la liste des demandes en attente
+#     return redirect('availability:teacher_availability_pending_request_list')
+
+# Fonction pour accepter une demande
 def accept_availability_request(request, request_id):
-    # Récupérer la demande de disponibilité
+    # if not request.user.is_authenticated:
+    #     return JsonResponse({'error': "Vous devez être connecté."}, status=403)
+
     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
-    
-    # Récupérer la réponse de l'enseignant concerné
     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
-    
-    # Vérifier que l'enseignant est bien celui qui a répondu à la demande
+
     if response.teacher != request.user.teacherprofile:
-        send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')
-        return redirect('availability:teacher_availability_pending_request_list')
-    
-    # Mettre à jour le statut de la réponse à "accepté"
+        return JsonResponse({'error': "Vous ne pouvez pas accepter cette demande."}, status=403)
+
     response.status = 'accepted'
     response.save()
 
-    # Message de succès
-    send_custom_message(request, _("Demande acceptée avec succès."), 'success')
+    return JsonResponse({'message': "Demande acceptée avec succès.", 'status': 'accepted'}, status=200)
 
-    # Redirection vers la liste des demandes en attente
-    return redirect('availability:teacher_availability_pending_request_list')
 
-# Fonction pour rejeter une demande 
+# Fonction pour rejeter une demande
 def reject_availability_request(request, request_id):
-    # Récupérer la demande de disponibilité
+    # if not request.user.is_authenticated:
+    #     return JsonResponse({'error': "Vous devez être connecté."}, status=403)
+
     availability_request = get_object_or_404(AvailabilityRequest, pk=request_id)
-    
-    # Récupérer la réponse de l'enseignant concerné
     response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
 
-    # Vérifier que l'enseignant est bien celui qui a répondu à la demande
     if response.teacher != request.user.teacherprofile:
-        send_custom_message(request, _("Vous ne pouvez pas accepter ou rejeter cette demande."), 'error')
-        return redirect('availability:teacher_availability_pending_request_list')
-    
-    # Mettre à jour le statut de la réponse à "rejeté"
+        return JsonResponse({'error': "Vous ne pouvez pas rejeter cette demande."}, status=403)
+
     response.status = 'rejected'
     response.save()
 
-    # Message de succès
-    send_custom_message(request, _("Demande rejetée avec succès."), 'error')
+    return JsonResponse({'message': "Demande rejetée avec succès.", 'status': 'rejected'}, status=200)
 
-    # Redirection vers la liste des demandes en attente
-    return redirect('availability:teacher_availability_pending_request_list')

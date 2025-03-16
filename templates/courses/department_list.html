@@ -6,8 +6,12 @@
       <div class="col-xl-12">
         <div class="card">
           <div class="card-header">
-            <h5>Liste des Départements</h5>
-            <a href="{% url 'courses:department_add' %}" class="btn btn-primary float-right">Ajouter un Département</a>
+            <h5>{{title}}</h5>
+            
+            {% if perms.courses.view_department %}
+                <a href="{% url create_url %}" class="btn btn-success float-right"> <i class="fa fa-plus-circle"></i>Ajouter un Département</a>
+            {% endif %}
+              
           </div>
           <div class="card-block table-border-style">
             <div class="table-responsive">
@@ -27,8 +31,12 @@
                     <td>{{ department.name }}</td>
                     <td>{{ department.description }}</td>
                     <td>
-                      <a href="{% url 'courses:department_edit' department.pk %}" class="btn btn-warning btn-sm">Modifier</a>
-                      <a href="{% url 'courses:department_delete' department.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% if perms.courses.change_department %}
+                        <a href="{% url edit_url department.pk %}" class="btn btn-warning btn-sm">Modifier</a> 
+                      {%endif%}
+                      {% if perms.courses.delete_department %}
+                        <a href="{% url delete_url department.pk %}" class="btn btn-danger btn-sm">Supprimer</a> 
+                      {%endif%}
                     </td>
                   </tr>
                   {% endfor %}

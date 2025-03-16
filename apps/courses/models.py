@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import Permission
 
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Permission
 
 
 class Department(models.Model):

@@ -2,10 +2,13 @@ from django.core.cache import cache
 import random
 import string
 from django.shortcuts import render
-from django.contrib.auth.decorators import user_passes_test,login_required
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import user_passes_test,login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+
 from django.shortcuts import get_object_or_404
+
+from apps.home.mixins import AdminTestMixin
 
 from .forms import UserUpdateForm
 from django.contrib.auth import login, authenticate, update_session_auth_hash
@@ -20,13 +23,11 @@ from django.utils import timezone
 
 from apps.home.utils import send_custom_message
 from apps.users.forms import AdminForm, AdminUpdateForm, CustomLoginForm, CustomPasswordChangeForm, CustomPasswordResetForm, CustomSetPasswordForm, CustomUserCreationForm, ParentForm, ParentUpdateForm, PasswordResetCodeForm, StudentForm, StudentUpdateForm, TeacherForm, TeacherUpdateForm
-from apps.users.models import AdminProfile, AdminType, CustomUser, ParentProfile, StudentProfile, TeacherProfile
+from apps.users.models import AdminProfile,CustomUser, ParentProfile, StudentProfile, TeacherProfile
 
 from django.views import View
 
 from django.contrib.auth import get_user_model, logout
-
-
 
 def generate_password():
     characters = string.ascii_letters + string.digits + "!@#$%^&*()-_=+"
@@ -38,19 +39,11 @@ def CustomregisterView(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-
-            # Récupérer le type d'administrateur
-            admin_type = form.cleaned_data.get('admin_type', 'admin_general')
-            
             # Vérifie si le profil admin existe déjà
             admin_profile = AdminProfile.objects.filter(user=user).first()
             if admin_profile is None:
                 # Créez un nouvel admin profile uniquement si ce n'est pas déjà créé
-                admin_type_instance, created = AdminType.objects.get_or_create(name=admin_type)
-                AdminProfile.objects.create(
-                    user=user,
-                    admin_type=admin_type_instance
-                )
+                AdminProfile.objects.create(user=user)
                 send_custom_message(request, _("Compte administrateur créé avec succès. Vous pouvez maintenant vous connecter."), 'success')
             else:
                 send_custom_message(request, _("Ce profil existe déjà."), 'info')
@@ -59,7 +52,6 @@ def CustomregisterView(request):
             send_custom_message(request, _("Erreur lors de l'inscription. Veuillez vérifier les champs."), 'error')
     else:
         form = CustomUserCreationForm()
-        
     return render(request, 'accounts/auth-signup.html', {'form': form})
 
 # Ajoute les redirections pour chaque rôle dans un dictionnaire pour plus de lisibilité
@@ -72,39 +64,41 @@ ROLE_REDIRECTS = {
 
 # Vue pour la connexion
 def CustomLoginView(request):
+    # Récupérer le paramètre 'next' depuis GET (lorsque la page est chargée)
+    next_url = request.GET.get('next', '')
+    
     if request.method == 'POST':
         form = CustomLoginForm(data=request.POST)
+        # Prioriser le 'next' transmis via POST
+        next_url = request.POST.get('next', next_url)
         
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
 
-            # Authentifie l'utilisateur avec le nom d'utilisateur et le mot de passe
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                # Mets à jour la date de première connexion si elle est vide
                 if user.first_login:
-                    user.first_login = False  # Marque comme non-première connexion
-                    user.first_login_date = timezone.now()  # Facultatif, si tu veux sauvegarder la date de première connexion
+                    user.first_login = False
+                    user.first_login_date = timezone.now()
                     user.save()
 
-                # Connexion de l'utilisateur et envoi du message de succès
                 login(request, user)
-                send_custom_message(request, _("Vous êtes maintenant connecté."),'success')
+                send_custom_message(request, _("Vous êtes maintenant connecté."), 'success')
 
-                # Redirection dynamique basée sur le rôle
-                return redirect(ROLE_REDIRECTS.get(user.role, 'home:index'))
-            
+                # Si un 'next' existe et est valide, redirigez vers celui-ci, sinon redirigez selon le rôle
+                if next_url:
+                    return redirect(next_url)
+                else:
+                    return redirect(ROLE_REDIRECTS.get(user.role, 'home:index'))
             else:
-                send_custom_message(request, _("Nom d'utilisateur ou mot de passe incorrect."),'error')
-
+                send_custom_message(request, _("Nom d'utilisateur ou mot de passe incorrect."), 'error')
         else:
-            send_custom_message(request, _("Erreur dans le formulaire. Vérifiez vos informations."),'error')
-    
+            send_custom_message(request, _("Erreur dans le formulaire. Vérifiez vos informations."), 'error')
     else:
         form = CustomLoginForm()
     
-    return render(request, 'accounts/auth-signin.html', {'form': form})
+    return render(request, 'accounts/auth-signin.html', {'form': form, 'next': next_url})
 
 # Vue pour le changement de mot de passe
 class CustomPasswordChangeView(PasswordChangeView):
@@ -224,9 +218,10 @@ def custom_logout(request):
     send_custom_message(request, _("Vous êtes déconnecté avec succès."), 'success')
     return redirect(reverse('users:login')) 
 
-class ProfileView(LoginRequiredMixin, TemplateView):
+class ProfileView(LoginRequiredMixin,PermissionRequiredMixin, TemplateView):
     template_name = "users/profiles.html"
-
+    permission_required= 'users.view_profile'
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
@@ -245,21 +240,24 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context['form'] = UserUpdateForm(instance=user)
         return context
 
-class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+class ProfileUpdateView(LoginRequiredMixin,PermissionRequiredMixin, UpdateView):
     model = CustomUser
     form_class = UserUpdateForm
     template_name = "users/profiles.html"
+    permission_required= 'users.change_profile'
     success_url = reverse_lazy("users:profiles")
 
     def get_object(self, queryset=None):
         return self.request.user
 
 # Liste 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class AdminListView(ListView):
+class UserListView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,ListView):
     model = CustomUser
-    template_name = 'users/admin/admins_list.html'
     context_object_name = 'users'
+    
+class AdminListView(UserListView):
+    template_name = 'users/admin/admins_list.html'
+    permission_required= 'users.view_adminprofile'
     extra_context = {
         'role': 'admin',
         'title': 'Liste des Administrateurs',
@@ -271,11 +269,9 @@ class AdminListView(ListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role='admin')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class TeacherListView(ListView):
-    model = CustomUser
+class TeacherListView(UserListView):
     template_name = 'users/admin/teachers_list.html'
-    context_object_name = 'users'
+    permission_required= 'users.view_teacherprofile'
     extra_context = {
         'role': 'teacher',
         'title': 'Liste des Professeurs',
@@ -287,11 +283,9 @@ class TeacherListView(ListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role='teacher').select_related('teacherprofile')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class StudentListView(ListView):
-    model = CustomUser
+class StudentListView(UserListView):
     template_name = 'users/admin/students_list.html'
-    context_object_name = 'users'
+    permission_required= 'users.view_studentprofile'
     extra_context = {
         'role': 'student',
         'create_url': 'users:create_student',
@@ -302,11 +296,9 @@ class StudentListView(ListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role='student')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class ParentListView(ListView):
-    model = CustomUser
+class ParentListView(UserListView):
     template_name = 'users/admin/parents_list.html'
-    context_object_name = 'users'
+    permission_required= 'users.view_parentprofile'
     extra_context = {
         'role': 'parent',
         'create_url': reverse_lazy('users:create_parent'),
@@ -317,8 +309,8 @@ class ParentListView(ListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role='parent')
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class UserCreateView(CreateView):
+# Create
+class UserCreateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,CreateView):
     template_name = 'users/admin/user_form.html'
     
     def form_valid(self, form):
@@ -352,10 +344,9 @@ class UserCreateView(CreateView):
         send_custom_message(self.request, _(f"{user.role.capitalize()} créé avec succès et email envoyé."),'success')
         return super().form_valid(form)
 
-# Vue pour les administrateurs
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class AdminCreateView(UserCreateView):
     form_class = AdminForm
+    permission_required= 'users.add_adminprofile'
     success_url = reverse_lazy('users:admins_list')
     extra_context = {
                      'role': 'admin',
@@ -368,13 +359,12 @@ class AdminCreateView(UserCreateView):
         send_custom_message(self.request, _("Erreur dans le formulaire. Un profil Administrateur pour cet utilisateur existe déjà."), 'error')
         return super().form_invalid(form)
     
-# Vue pour les enseignants
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class TeacherCreateView(UserCreateView):
     form_class = TeacherForm
+    permission_required= 'users.add_teacherprofile'
     success_url = reverse_lazy('users:teachers_list')
     extra_context = {'role': 'teacher',
-                     'title': 'Ajouter Administrateur',
+                     'title': 'Ajouter Enseignants',
                      'cancel_url': reverse_lazy('users:teachers_list')}
     
     def form_invalid(self, form):
@@ -382,10 +372,9 @@ class TeacherCreateView(UserCreateView):
         send_custom_message(self.request, _("Erreur dans le formulaire. Un profil enseignant pour cet utilisateur existe déjà."), 'error')
         return super().form_invalid(form)
 
-# Vue pour les étudiants
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class StudentCreateView(UserCreateView):
     form_class = StudentForm
+    permission_required= 'users.add_studentprofile'
     success_url = reverse_lazy('users:students_list')
     extra_context = {'role': 'student',
                      'title': 'Ajouter Étudiant',
@@ -396,11 +385,10 @@ class StudentCreateView(UserCreateView):
         send_custom_message(self.request, _("Erreur dans le formulaire. Un profil Étudiant pour cet utilisateur existe déjà."), 'error')
         return super().form_invalid(form)
 
-# Vue pour les parents
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
 class ParentCreateView(UserCreateView):
     form_class = ParentForm
     success_url = reverse_lazy('users:parents_list')
+    permission_required= 'users.add_parentprofile'
     extra_context = {
                      'role': 'parent',
                      'title': 'Ajouter Parent',
@@ -412,129 +400,76 @@ class ParentCreateView(UserCreateView):
         send_custom_message(self.request, _("Erreur dans le formulaire. Un profil Parent pour cet utilisateur existe déjà."), 'error')
         return super().form_invalid(form)
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class AdminUpdateView(UpdateView):
+class UserUpdateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,UpdateView):
     model = CustomUser
-    form_class = AdminUpdateForm  # Utilisez AdminUpdateForm au lieu de AdminForm
     template_name = 'users/admin/user_form.html'
+    
+    def get_initial(self):
+        initial = super().get_initial()
+        # Convertit la date de naissance en format ISO pour être compatible avec le champ date
+        if self.object.date_of_birth:
+            initial['date_of_birth'] = self.object.date_of_birth.strftime('%Y-%m-%d')
+        return initial
+    
+    def get_success_url(self):
+        return self.extra_context['cancel_url']
+    
+
+class AdminUpdateView(UserUpdateView):
+    form_class = AdminUpdateForm  # Utilisez AdminUpdateForm au lieu de AdminForm
+    permission_required= 'users.change_adminprofile'
     extra_context = {
         'title': 'Modifier Administrateur',
         'cancel_url': reverse_lazy('users:admins_list'),
     }
 
-    def get_initial(self):
-        initial = super().get_initial()
-        # Convertit la date de naissance en format ISO pour être compatible avec le champ date
-        if self.object.date_of_birth:
-            initial['date_of_birth'] = self.object.date_of_birth.strftime('%Y-%m-%d')
-        return initial
-    
-    def get_success_url(self):
-        return self.extra_context['cancel_url']  # Redirige après la mise à jour
-
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class TeacherUpdateView(UpdateView):
-    model = CustomUser
+class TeacherUpdateView(UserUpdateView):
     form_class = TeacherUpdateForm  # Utilisez TeacherUpdateForm au lieu de TeacherForm
-    template_name = 'users/admin/user_form.html'
+    permission_required= 'users.change_teacherprofile'
     extra_context = {
         'title': 'Modifier Professeur',
         'cancel_url': reverse_lazy('users:teachers_list'),
     }
-    def get_initial(self):
-        initial = super().get_initial()
-        # Convertit la date de naissance en format ISO pour être compatible avec le champ date
-        if self.object.date_of_birth:
-            initial['date_of_birth'] = self.object.date_of_birth.strftime('%Y-%m-%d')
-        return initial
     
-    def get_success_url(self):
-        return self.extra_context['cancel_url']
-
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class StudentUpdateView(UpdateView):
-    model = CustomUser
+class StudentUpdateView(UserUpdateView):
     form_class = StudentUpdateForm  # Utilisez StudentUpdateForm au lieu de StudentForm
-    template_name = 'users/admin/user_form.html'
+    permission_required= 'users.change_studentprofile'
     extra_context = {
         'title': 'Modifier Étudiant',
         'cancel_url': 'users:students_list',
     }
 
-    def get_initial(self):
-        initial = super().get_initial()
-        # Convertit la date de naissance en format ISO pour être compatible avec le champ date
-        if self.object.date_of_birth:
-            initial['date_of_birth'] = self.object.date_of_birth.strftime('%Y-%m-%d')
-        return initial
-    
-    def get_success_url(self):
-        return self.extra_context['cancel_url']
-
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class ParentUpdateView(UpdateView):
-    model = CustomUser
+class ParentUpdateView(UserUpdateView):
     form_class = ParentUpdateForm  # Utilisez ParentUpdateForm au lieu de ParentForm
-    template_name = 'users/admin/user_form.html'
+    permission_required= 'users.change_parentprofile'
     extra_context = {
         'title': 'Modifier Parent',
         'cancel_url': reverse_lazy('users:parents_list'),
     }
 
-    def get_initial(self):
-        initial = super().get_initial()
-        # Convertit la date de naissance en format ISO pour être compatible avec le champ date
-        if self.object.date_of_birth:
-            initial['date_of_birth'] = self.object.date_of_birth.strftime('%Y-%m-%d')
-        return initial
-    
-    def get_success_url(self):
-        return self.extra_context['cancel_url']
-        
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class AdminDeleteView(DeleteView):
+class UserDeleteView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,DeleteView):
     model = CustomUser
     template_name = 'users/admin/user_confirm_delete.html'
-    success_url = reverse_lazy('users:admins_list')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['user'] = self.object  # Passer l'utilisateur actuel dans le contexte
         context['cancel_url'] = self.success_url
         return context
+    
+class AdminDeleteView(UserDeleteView):
+    permission_required= 'users.delete_adminprofile'
+    success_url = reverse_lazy('users:admins_list') 
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class TeacherDeleteView(DeleteView):
-    model = CustomUser
-    template_name = 'users/admin/user_confirm_delete.html'
+class TeacherDeleteView(UserDeleteView):
+    permission_required= 'users.delete_teacherprofile'
     success_url = 'users:teachers_list'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user'] = self.object  # Passer l'utilisateur actuel dans le contexte
-        context['cancel_url'] = self.success_url
-        return context
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class StudentDeleteView(DeleteView):
-    model = CustomUser
-    template_name = 'users/admin/user_confirm_delete.html'
-    success_url = 'users:students_list'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user'] = self.object  # Passer l'utilisateur actuel dans le contexte
-        context['cancel_url'] = self.success_url
-        return context
+class StudentDeleteView(UserDeleteView):
+    permission_required= 'users.delete_studentprofile'
+    success_url = 'users:students_list' 
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class ParentDeleteView(DeleteView):
-    model = CustomUser
-    template_name = 'users/admin/user_confirm_delete.html'
+class ParentDeleteView(UserDeleteView):
+    permission_required= 'users.delete_parentprofile'
     success_url = 'users:parents_list'
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user'] = self.object  # Passer l'utilisateur actuel dans le contexte
-        context['cancel_url'] = self.success_url
-        return context

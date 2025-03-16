@@ -11,6 +11,6 @@ urlpatterns = [
   path('', views.TeacherDashboardView, name='teacher_dashboard'),
   
   path(   ''    , views.index,  name='index'),
-  path(   'ma_vue'    , views.ma_vue,  name='ma_vue'),
+  path(   'ma_vue/'    , views.ma_vue,  name='ma_vue'),
   
 ]

@@ -130,7 +130,9 @@
         <li class="nav-item pcoded-menu-caption"><label>Notifications</label></li>
         <li class="nav-item"><a href="#" class="nav-link">Voir les notifications</a></li> {% endcomment %}
 
-
+        
+      {% if user.is_superuser %}  
+          
         {% admin_get_menu as app_list %}
         {% if app_list %}
           {% for app in app_list %}
@@ -159,7 +161,7 @@
             {% endif %}
           {% endfor %}
         {% endif %}
-
+      {% endif %}
       </ul>
     </div>
   </div>

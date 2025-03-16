@@ -7,7 +7,11 @@
         <div class="card">
           <div class="card-header">
             <h5>{{title}}</h5>
-            <a href="{{ create_url }}" class="btn btn-primary float-right">Ajouter un Administrateur</a>
+            
+            {% if perms.users.add_adminprofile %}
+              <a href="{{ create_url }}" class="btn btn-success float-right"><i class="fa fa-plus-circle"></i>Ajouter un Administrateur</a>
+            {% endif %}
+
           </div>
           <div class="card-block table-border-style">
             <div class="table-responsive">
@@ -46,8 +50,12 @@
                     <td>{{ user.address }}</td> 
                     {% comment %} <td>{{ user.adminprofile.admin_type.name }}</td> {% endcomment %}
                     <td>
+                      {% if perms.users.change_adminprofile %}
                       <a href="{% url edit_url user.pk %}" class="btn btn-warning btn-sm">Modifier</a>
-                      <a href="{% url delete_url user.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% endif %}
+                      {% if perms.users.delete_adminprofile %}
+                        <a href="{% url delete_url user.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% endif %}
                     </td>
                   </tr>
                   {% endfor %}

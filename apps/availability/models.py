@@ -42,7 +42,9 @@ class AvailabilityRequest(models.Model):
         verbose_name = _("Demande de disponibilité")
         verbose_name_plural = _("Demandes de disponibilités")
         permissions = [
-            ('can_send_availability_request', _("Peut envoyer une demande de disponibilité")),
+            ('can_send_availabilityrequest', _("Peut envoyer une demande de disponibilité")),
+            ('can_view_availabilityrequest_history', _("Peut voir l'historique des demande de disponibilité")),
+            ('can_view_availabilityrequest_pending', _("Peut voir les demande de disponibilité en attente")),
         ]
 
     def __str__(self):

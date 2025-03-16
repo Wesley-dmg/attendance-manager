@@ -1,17 +1,9 @@
 from django.contrib.auth.models import AbstractUser, Group, Permission
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.dispatch import receiver
-
 from django.core.validators import RegexValidator
-
-from apps.courses.models import DepartmentLevel
-from apps.subjects.models import Subject
-# from django.db.models.signals import post_migrate
-# from django.dispatch import receiver
 from django.db import transaction
 from django.apps import apps
 
@@ -64,15 +56,21 @@ class CustomUser(AbstractUser):
         verbose_name = _('Utilisateur personnalisé')
         verbose_name_plural = _('Utilisateurs personnalisés')
         ordering = ['-date_joined']
+        permissions = [
+                        ('view_profile','Peut voir son profil'),
+                        ('change_profile','Peut modifier son profil')
+                        ]
+        
 
     def save(self, *args, **kwargs):
         self.clean()
         is_new = self._state.adding  # Vérifie si l'utilisateur est nouveau
 
         # Définir le rôle en fonction de is_superuser
-        if self.is_superuser:
-            self.role = 'admin'
-        elif not self.role:
+        # if self.is_superuser:
+        #     self.role = 'admin'
+        # el
+        if not self.role:
             self.role = 'student'
 
         with transaction.atomic():
@@ -124,29 +122,17 @@ class CustomUser(AbstractUser):
     def is_admin(self):
         return self.has_role('admin')
 
-class AdminType(models.Model):
-    ADMIN_TYPE_CHOICES = (
-        ('admin_general', _('Administrateur Général')),
-        ('admin_exams', _('Administrateur des Examens')),
-    )
-    name = models.CharField(max_length=50, choices=ADMIN_TYPE_CHOICES, default='admin_general', verbose_name=_('Type d’administrateur'))
-    description = models.TextField(blank=True, verbose_name=_('Description'))
-
-    def __str__(self):
-        return self.get_name_display()
-
 class AdminProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, verbose_name=_('Utilisateur'))
-    # managed_departments = models.TextField(blank=True, verbose_name=_('Départements gérés'))
-    admin_type = models.ForeignKey(AdminType, on_delete=models.SET_NULL, null=True, related_name='admins', verbose_name=_('Type d’admin'))
-
+    managed_departments = models.TextField(blank=True, verbose_name=_('Départements gérés'))
+    
     def __str__(self):
-        return f'{self.user.username} - {self.admin_type.name}'
+        return f'{self.user.username} - {self.managed_departments}'
     
 class TeacherProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, verbose_name=_('Utilisateur'))
     grade = models.CharField(max_length=50, blank=True, verbose_name=_('Grade'))
-    subjects = models.ManyToManyField(Subject, related_name='teachers', verbose_name=_("Matières enseignées"))
+    subjects = models.ManyToManyField('subjects.Subject', related_name='teachers', verbose_name=_("Matières enseignées"))
     
     def teaches_subject(self, subject):
         """vérifier si un enseignant enseigne un sujet spécifique."""
@@ -172,7 +158,7 @@ class StudentProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, verbose_name=_('Utilisateur'))
     student_id = models.CharField(max_length=20, null=True, blank=True, db_index=True, verbose_name=_('ID étudiant'))
     enrollment_status = models.CharField(max_length=20, choices=ENROLLMENT_CHOICES, default='active', verbose_name=_('Statut d’inscription'))
-    major = models.ForeignKey(DepartmentLevel, on_delete=models.CASCADE, related_name='students', verbose_name=_('Fillière d’étude'))
+    major = models.ForeignKey('courses.DepartmentLevel', on_delete=models.CASCADE, related_name='students', verbose_name=_('Fillière d’étude'))
     is_class_representative = models.BooleanField(default=False, verbose_name=_('Représentant de classe'))
 
     def __str__(self):

@@ -1,26 +1,33 @@
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import user_passes_test,login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-
+from apps.home.mixins import AdminTestMixin
 from apps.courses.forms import DepartmentForm, DepartmentLevelForm, LevelForm
 from apps.courses.models import Department, DepartmentLevel, Level
 
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import user_passes_test,login_required
-
-
 # CRUD for Department
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class DepartmentListView(ListView):
+class DepartmentListView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,ListView):
     model = Department
     template_name = 'courses/department_list.html'
+    permission_required= 'courses.view_department'
+    extra_context = {
+        'title': 'Liste des Filières',
+        'create_url': 'courses:department_add',
+        'edit_url': 'courses:department_edit',
+        'delete_url': 'courses:department_delete',
+    }
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class DepartmentCreateView(CreateView):
+class DepartmentCreateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,CreateView):
     model = Department
     form_class = DepartmentForm
     template_name = 'courses/form_template.html'
+    permission_required= 'courses.add_department'
     success_url = reverse_lazy('courses:department_list')
+    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -28,10 +35,11 @@ class DepartmentCreateView(CreateView):
         context['cancel_url'] = reverse_lazy('courses:department_list')
         return context
 
-class DepartmentUpdateView(UpdateView):
+class DepartmentUpdateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,UpdateView):
     model = Department
     form_class = DepartmentForm
     template_name = 'courses/form_template.html'
+    permission_required= 'courses.change_department'
     success_url = reverse_lazy('courses:department_list')
 
     def get_context_data(self, **kwargs):
@@ -40,10 +48,10 @@ class DepartmentUpdateView(UpdateView):
         context['cancel_url'] = reverse_lazy('courses:department_list')
         return context
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class DepartmentDeleteView(DeleteView):
+class DepartmentDeleteView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,DeleteView):
     model = Department
     template_name = 'courses/confirm_delete.html'
+    permission_required= 'courses.delete_department'
     success_url = reverse_lazy('courses:department_list')
 
     def get_context_data(self, **kwargs):
@@ -51,30 +59,36 @@ class DepartmentDeleteView(DeleteView):
         context['cancel_url'] = reverse_lazy('courses:department_list')
         return context
 
-
 # CRUD for Level
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class LevelListView(ListView):
+class LevelListView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,ListView):
     model = Level
     template_name = 'courses/level_list.html'
+    permission_required= 'courses.view_level'
+    extra_context = {
+        'title': 'Liste des Niveaux d\'Étude',
+        'create_url': 'courses:level_add',
+        'edit_url': 'courses:level_edit',
+        'delete_url': 'courses:level_delete',
+    }
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class LevelCreateView(CreateView):
+class LevelCreateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,CreateView):
     model = Level
     form_class = LevelForm
     template_name = 'courses/form_template.html'
+    permission_required= 'courses.add_level'
     success_url = reverse_lazy('courses:level_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Ajouter un Niveau'
+        context['title'] = 'Ajouter un Niveaux d\'Études'
         context['cancel_url'] = reverse_lazy('courses:level_list')
         return context
 
-class LevelUpdateView(UpdateView):
+class LevelUpdateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,UpdateView):
     model = Level
     form_class = LevelForm
     template_name = 'courses/form_template.html'
+    permission_required= 'courses.change_level'
     success_url = reverse_lazy('courses:level_list')
 
     def get_context_data(self, **kwargs):
@@ -83,9 +97,10 @@ class LevelUpdateView(UpdateView):
         context['cancel_url'] = reverse_lazy('courses:level_list')
         return context
 
-class LevelDeleteView(DeleteView):
+class LevelDeleteView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,DeleteView):
     model = Level
     template_name = 'courses/confirm_delete.html'
+    permission_required= 'courses.delete_level'
     success_url = reverse_lazy('courses:level_list')
 
     def get_context_data(self, **kwargs):
@@ -94,16 +109,22 @@ class LevelDeleteView(DeleteView):
         return context
 
 # CRUD for DepartmentLevel
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class DepartmentLevelListView(ListView):
+class DepartmentLevelListView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,ListView):
     model = DepartmentLevel
     template_name = 'courses/departmentlevel_list.html'
+    permission_required= 'courses.view_departmentlevel'
+    extra_context = {
+        'title': 'Liste des Filières par Niveau',
+        'create_url': 'courses:departmentlevel_add',
+        'edit_url': 'courses:departmentlevel_edit',
+        'delete_url': 'courses:departmentlevel_delete',
+    }
 
-@method_decorator([login_required, user_passes_test(lambda u: u.is_admin)], name='dispatch')
-class DepartmentLevelCreateView(CreateView):
+class DepartmentLevelCreateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,CreateView):
     model = DepartmentLevel
     form_class = DepartmentLevelForm
     template_name = 'courses/form_template.html'
+    permission_required= 'courses.add_departmentlevel'
     success_url = reverse_lazy('courses:departmentlevel_list')
 
     def get_context_data(self, **kwargs):
@@ -112,10 +133,11 @@ class DepartmentLevelCreateView(CreateView):
         context['cancel_url'] = reverse_lazy('courses:departmentlevel_list')
         return context
 
-class DepartmentLevelUpdateView(UpdateView):
+class DepartmentLevelUpdateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,UpdateView):
     model = DepartmentLevel
     form_class = DepartmentLevelForm
     template_name = 'courses/form_template.html'
+    permission_required= 'courses.change_departmentlevel'
     success_url = reverse_lazy('courses:departmentlevel_list')
 
     def get_context_data(self, **kwargs):
@@ -124,9 +146,10 @@ class DepartmentLevelUpdateView(UpdateView):
         context['cancel_url'] = reverse_lazy('courses:departmentlevel_list')
         return context
 
-class DepartmentLevelDeleteView(DeleteView):
+class DepartmentLevelDeleteView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,DeleteView):
     model = DepartmentLevel
     template_name = 'courses/confirm_delete.html'
+    permission_required= 'courses.delete_departmentlevel'
     success_url = reverse_lazy('courses:departmentlevel_list')
 
     def get_context_data(self, **kwargs):

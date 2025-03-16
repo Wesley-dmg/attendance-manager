@@ -6,8 +6,10 @@
       <div class="col-xl-12">
         <div class="card">
           <div class="card-header">
-            <h5>Liste des Matières</h5>
-            <a href=" {% url create_url %}" class="btn btn-primary float-right">Ajouter une Matière</a>
+            <h5>{{title}}</h5>
+            {% if perms.subjects.add_subject %}
+              <a href=" {% url create_url %}" class="btn btn-success float-right"><i class="fa fa-plus-circle"></i>Ajouter une Matière</a>
+            {% endif %}
           </div>
           <div class="card-block table-border-style">
             <div class="table-responsive">
@@ -27,8 +29,12 @@
                     <td>{{ subject.name }}</td>
                     <td>{{ subject.code }}</td>
                     <td>
-                      <a href="{% url edit_url subject.pk %}" class="btn btn-warning btn-sm">Modifier</a>
-                      <a href="{% url delete_url subject.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% if perms.subjects.change_subject %}
+                        <a href="{% url edit_url subject.pk %}" class="btn btn-warning btn-sm">Modifier</a>
+                      {% endif %}
+                      {% if perms.subjects.delete_subject %}
+                        <a href="{% url delete_url subject.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                      {% endif %}
                     </td>
                   </tr>
                   {% endfor %}

@@ -1,8 +1,12 @@
-
-from django.shortcuts import redirect, get_object_or_404
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import user_passes_test,login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from apps.home.mixins import AdminTestMixin
+from apps.home.utils import send_custom_message
 from django.views.generic import ListView, DetailView,CreateView, UpdateView, DeleteView 
 from django.views.generic.edit import FormView
-from apps.home.utils import send_custom_message
+
+from django.shortcuts import redirect, get_object_or_404
 from apps.timetable.models import CourseSession, Timetable, TimeSlot
 from .forms import CourseSessionAdditionalForm, CourseSessionCreationForm
 from django.http import HttpResponse
@@ -13,9 +17,10 @@ from django.utils.translation import gettext_lazy as _
 import logging
 
 
-class TimetableListView(ListView):
+class TimetableListView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,ListView):
     model = Timetable
     template_name = "timetable/admin/timetable_list.html"
+    permission_required = 'timetable.view_timetable'  # Accès réservé aux utilisateurs autorisés
     context_object_name = "timetables"
 
     def get_queryset(self):
@@ -31,7 +36,7 @@ class TimetableListView(ListView):
         context["download_url"] = "timetables:timetable_download"
         return context
     
-class TimetableDetailView(DetailView):
+class TimetableDetailView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,DetailView):
     model = Timetable
     template_name = 'timetable/detail.html'
     context_object_name = 'timetable'
@@ -67,8 +72,9 @@ class TimetableDetailView(DetailView):
         context['structured_sessions'] = structure
         return context
 
-class CourseSessionCreateView(FormView):
+class CourseSessionCreateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,FormView):
     template_name = 'timetable/admin/coursesession_form.html'
+    permission_required = 'timetable.add_timetable'
     form_class = CourseSessionCreationForm
 
     def dispatch(self, request, *args, **kwargs):
@@ -155,8 +161,9 @@ class CourseSessionCreateView(FormView):
 
         return redirect(reverse_lazy('timetables:timetable_list'))
 
-class CourseSessionUpdateView(FormView):
+class CourseSessionUpdateView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,FormView):
     template_name = 'timetable/admin/coursesession_form.html'
+    permission_required = 'timetable.change_timetable'
     form_class = CourseSessionCreationForm
 
     def get_object(self):
@@ -241,8 +248,9 @@ class CourseSessionUpdateView(FormView):
                 send_custom_message(self.request, _("✅ Session modifiée avec succès !"),'success')
 
         return redirect(reverse_lazy('timetables:timetable_list'))
-class CourseSessionAddMoreView(FormView):
+class CourseSessionAddMoreView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,FormView):
     template_name = 'timetable/admin/coursesession_add_more_form.html'
+    permission_required = 'timetable.add_timetable'
     form_class = CourseSessionAdditionalForm
     
     def get_initial(self):
@@ -291,7 +299,8 @@ class CourseSessionAddMoreView(FormView):
             return redirect(reverse_lazy('coursesessions:add_more', kwargs={'timetable_id': timetable_id}))
 
 
-class TimetableDeleteView(DeleteView):
+class TimetableDeleteView(LoginRequiredMixin,PermissionRequiredMixin,AdminTestMixin,DeleteView):
     model = Timetable
     template_name = 'timetable/timetable_confirm_delete.html'
+    permission_required = 'timetable.delete_timetable'
     success_url = reverse_lazy('timetables:list')
