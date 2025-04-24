@@ -218,6 +218,16 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 
+# from django.contrib.messages import constants as messages
+
+# MESSAGE_TAGS = {
+#     messages.DEBUG: 'secondary',
+#     messages.INFO: 'info',
+#     messages.SUCCESS: 'success',
+#     messages.WARNING: 'warning',
+#     messages.ERROR: 'danger',
+# }
+
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.gmail.com'
 # EMAIL_PORT = 587

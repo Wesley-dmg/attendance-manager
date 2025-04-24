@@ -1381,3 +1381,19 @@ Traceback (most recent call last):
     raise self.RelatedObjectDoesNotExist(
 apps.users.models.CustomUser.teacherprofile.RelatedObjectDoesNotExist: CustomUser has no teacherprofile.
 "GET /availability/teacher/availability/history/ HTTP/1.1" 500 97974
+Internal Server Error: /availability/teacher/availability/request/reject/9/
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/macbookpro/Desktop/Programs/django/hecm/Timelya/apps/availability/views.py", line 354, in reject_availability_request
+    response = get_object_or_404(AvailabilityResponse, request=availability_request, teacher=request.user.teacherprofile)
+                                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/django/utils/functional.py", line 253, in inner
+    return func(_wrapped, *args)
+           ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'AnonymousUser' object has no attribute 'teacherprofile'
+"GET /availability/teacher/availability/request/reject/9/ HTTP/1.1" 500 70367

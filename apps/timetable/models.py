@@ -52,6 +52,7 @@ class Timetable(models.Model):
         ordering = ['start_date']
         permissions = [
             ('config_recap_semaine', _("Peut configurer et imprimer le recapitulatif de l'emplois du temps et la repartition des salles de la semaine")),
+            
         ]
 
     def __str__(self):
@@ -121,7 +122,9 @@ class CourseSession(models.Model):
         verbose_name = _("Session de cours")
         verbose_name_plural = _("Sessions de cours")
         ordering = ['date', 'timeslot__start_time']
-        # unique_together = ('timetable', 'timeslot')  # Chaque TimeSlot n'est utilisé qu'une fois par Timetable
+        permissions = [
+            ('view_coursesession_recap', _("Peut voir le recapitulatif de l'emplois du temps et la repartition des salles de la semaine")),   
+        ]
 
     def __str__(self):
         return f"{self.subject.name} | {self.date.strftime('%A %d/%m/%Y')} | {self.timeslot}"

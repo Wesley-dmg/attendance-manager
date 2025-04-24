@@ -10,7 +10,10 @@
 
 <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
 
-{% comment %} <script src="{% static 'assets/data_table/jquery.dataTables.min.js' %}"></script> {% endcomment %}
+<!-- Notyf JS -->
+<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
+    
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
@@ -80,7 +83,7 @@
     });
 </script>
 
-<script>
+{% comment %} <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Action lorsque le bouton "Disponible" est cliqué
         document.querySelector('#accept-request').addEventListener('click', function(e) {
@@ -145,6 +148,96 @@
             .catch(error => {
                 // Gestion des erreurs
                 document.querySelector('#message').innerHTML = '<div class="alert alert-danger">Erreur lors du traitement de la demande.</div>';
+            });
+        });
+    });
+</script> {% endcomment %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Délégués pour tous les boutons dynamiquement présents sur la page
+        document.querySelectorAll('.btn-availability-action').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const action = this.getAttribute('data-action'); // 'accept' ou 'reject'
+                const requestId = this.getAttribute('data-id');
+                const url = action === 'accept'
+                    ? "{% url 'availability:accept_availability_request' 0 %}".replace('0', requestId)
+                    : "{% url 'availability:reject_availability_request' 0 %}".replace('0', requestId);
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const messageContainer = document.querySelector('#message');
+                    if (data.status === 'success') {
+                        messageContainer.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+                    } else {
+                        messageContainer.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+                    }
+
+                    // Rafraîchir dynamiquement la liste en fonction du filtre actif
+                    const currentStatus = new URLSearchParams(window.location.search).get('status') || 'pending';
+                    const fetchUrl = window.location.pathname + '?status=' + currentStatus;
+
+                    fetch(fetchUrl, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        const container = document.getElementById('request-list');
+                        container.innerHTML = ""; // Réinitialise le contenu
+                        data.requests.forEach(req => {
+                            let message = "";
+                            if (req.status === "pending") {
+                                message = `Êtes-vous disponible pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong> du ${req.period} ?`;
+                            } else if (req.status === "accepted") {
+                                message = `Vous avez notifié être <strong>disponible</strong> du ${req.period} pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong>.`;
+                            } else if (req.status === "rejected") {
+                                message = `Vous avez notifié être <strong>indisponible</strong> du ${req.period} pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong>.`;
+                            }
+
+                            let btnAccept = "";
+                            let btnReject = "";
+                            if (req.status === "pending") {
+                                btnAccept = `<a href="${req.url_accept}" class="btn btn-primary mr-2 btn-availability-action" data-action="accept" data-id="${req.id}">Disponible</a>`;
+                                btnReject = `<a href="${req.url_reject}" class="btn btn-secondary btn-availability-action" data-action="reject" data-id="${req.id}">Indisponible</a>`;
+                            } else if (req.status === "accepted") {
+                                btnAccept = `<a href="#" class="btn btn-primary disabled mr-2">Disponible</a>`;
+                                btnReject = `<a href="${req.url_reject}" class="btn btn-secondary btn-availability-action" data-action="reject" data-id="${req.id}">Indisponible</a>`;
+                            } else if (req.status === "rejected") {
+                                btnAccept = `<a href="${req.url_accept}" class="btn btn-primary btn-availability-action" data-action="accept" data-id="${req.id}">Disponible</a>`;
+                                btnReject = `<a href="#" class="btn btn-secondary disabled">Indisponible</a>`;
+                            }
+
+                            container.innerHTML += `
+                                <div class="notification p-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <p class="m-0">${message}</p>
+                                        <span style="font-size:0.8em; color:#999;">il y a ${req.created_at}</span>
+                                    </div>
+                                    <div class="action-buttons mt-2">
+                                        ${btnAccept}
+                                        ${btnReject}
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        // Rebind les nouveaux boutons (car ils sont injectés dynamiquement)
+                        document.querySelectorAll('.btn-availability-action').forEach(btn => btn.addEventListener('click', arguments.callee));
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors du rechargement des demandes :', error);
+                    });
+                })
+                .catch(error => {
+                    document.querySelector('#message').innerHTML = '<div class="alert alert-danger">Erreur lors du traitement de la demande.</div>';
+                });
             });
         });
     });

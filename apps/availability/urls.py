@@ -38,6 +38,7 @@ urlpatterns = [
     # Vues pour les enseignants
     path('teacher/availability/history/', TeacherAvailabilityRequestListView.as_view(), name='teacher_availability_request_list'),
     path('teacher/availability/pending/', TeacherAvailabilityPendingRequestView.as_view(), name='teacher_availability_pending_request_list'),
+    
     path('teacher/availability/request/accept/<int:request_id>/', accept_availability_request, name='accept_availability_request'),
     path('teacher/availability/request/reject/<int:request_id>/', reject_availability_request, name='reject_availability_request'),
 ]

@@ -11,6 +11,7 @@
       </a>
       <a class="mobile-menu" id="mobile-collapse" href="javascript:"><span></span></a>
     </div>
+    
     <div class="navbar-content scroll-div">
       <ul class="nav pcoded-inner-navbar">
         <li class="nav-item pcoded-menu-caption">
@@ -24,7 +25,7 @@
           </a>
         </li>
 
-      {% if user.is_admin %}
+        {% if user.is_admin %}
         {% if perms.users.view_customuser %}
           <!-- Section pour l'Admin -->
           <li class="nav-item pcoded-menu-caption"><label>Gestion des Utilisateurs</label></li>
@@ -299,21 +300,82 @@
 
         {% endif %}
 
-      {% endif %}
+        {% endif %}
 
-      {% if user.is_teacher %}
-        <!-- Section pour le Professeur -->
-        <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
-        <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>
-        <li class="nav-item"><a href="{% url 'courses:departmentlevel_add' %}" class="nav-link">Ajouter un emploi du temps</a></li>
-
-        <li class="nav-item pcoded-menu-caption"><label>Disponibilité</label></li>
-        <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des demandes</a></li>
-        <li class="nav-item"><a href="{% url 'courses:departmentlevel_add' %}" class="nav-link">Historique des demandes</a></li>
-
-        <li class="nav-item pcoded-menu-caption"><label>Absence</label></li>
-        <li class="nav-item"><a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des absences</a></li>
-        <li class="nav-item"><a href="{% url 'rooms:room_create' %}" class="nav-link">Ajouter une absence</a></li>
+        {% if user.is_teacher %}
+          <!-- Section pour le Professeur -->
+          {% if perms.timetable.view_timetable or perms.availability.view_availabilityresponse %}
+            <li class="nav-item pcoded-menu-caption"><label>Espace Temps</label></li>
+            
+            <!-- Menu des Disponibilité des profs   -->
+            {% if perms.availability.can_view_availabilityrequest_history or perms.availability.can_view_availabilityrequest_pending %}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-clock"></i></span>
+                  <span class="pcoded-mtext">Disponibilité</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% if perms.availability.can_view_availabilityrequest_pending %}
+                    <li class="nav-item">
+                      <a href="{% url 'availability:teacher_availability_pending_request_list' %}" class="nav-link">Demandes en attente</a>
+                    </li>
+                  {% endif %}
+              
+                  {% if perms.availability.can_view_availabilityrequest_history %}
+                    <li class="nav-item">
+                      <a href="{% url 'availability:teacher_availability_request_list' %}" class="nav-link">Historique Disponibilité</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </li>
+            {% endif %}
+          
+          <!-- Menu des Emplois du temps -->
+            {% if perms.timetable.view_timetable or perms.timetable.view_coursesession_recap %}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
+                  <span class="pcoded-mtext">Emplois du temps</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% if perms.timetable.view_timetable %}
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">Emplois du temps </a>
+                    </li>
+                  {% endif %}
+            
+                  {% if perms.timetable.view_coursesession_recap %}
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">Repartition des salles</a>
+                    </li>
+                  {% endif %}
+              </ul>
+            </li>
+          {% endif %}
+          
+          <!-- Menu Gestion des absences -->
+          {% comment %} {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %} {% endcomment %}
+            <li class="nav-item pcoded-hasmenu">
+              <a href="javascript:" class="nav-link ">
+                <span class="pcoded-micon"><i class="feather icon-user-check"></i></span>
+                <span class="pcoded-mtext">Cahier de presence</span>
+              </a>
+              <ul class="pcoded-submenu">
+                {% comment %} {% if perms.users.view_teacherprofile %} {% endcomment %}
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">Liste de présences</a>
+                  </li>  
+                {% comment %} {% endif %} {% endcomment %}
+            
+                {% comment %} {% if perms.users.add_teacherprofile %} {% endcomment %}
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">Suivie des Etudiants</a>
+                  </li>
+                {% comment %} {% endif %} {% endcomment %}
+              </ul>
+            </li>
+          {% comment %} {% endif %} {% endcomment %}
+          {% endif %}
         {% endif %}
 
         {% if user.is_student %}
@@ -334,13 +396,13 @@
         <li class="nav-item"><a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des absences</a></li>
         {% endif %}
 
-        {% comment %} <!-- Section Notification pour tous les utilisateurs -->
+        {% comment %}
+        <!-- Section Notification pour tous les utilisateurs -->
         <li class="nav-item pcoded-menu-caption"><label>Notifications</label></li>
-        <li class="nav-item"><a href="#" class="nav-link">Voir les notifications</a></li> {% endcomment %}
+        <li class="nav-item"><a href="#" class="nav-link">Voir les notifications</a></li> 
+        {% endcomment %}
 
-        
-      {% if user.is_superuser %}  
-          
+        {% if user.is_superuser %}  
         {% admin_get_menu as app_list %}
         {% if app_list %}
           {% for app in app_list %}
@@ -369,7 +431,7 @@
             {% endif %}
           {% endfor %}
         {% endif %}
-      {% endif %}
+        {% endif %}
       </ul>
     </div>
   </div>
