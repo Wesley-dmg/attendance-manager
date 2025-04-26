@@ -3,16 +3,11 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-
 class TimeSlot(models.Model):
     """
         Modèle TimeSlot (créneau horaire)
     """
-    label = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text=_("Label généré automatiquement, ex : '08:00 - 10:00'.")
-    )
+    label = models.CharField(max_length=50,blank=True,help_text=_("Label généré automatiquement, ex : '08:00 - 10:00'."))
     start_time = models.TimeField(verbose_name=_("Heure de début"))
     end_time = models.TimeField(verbose_name=_("Heure de fin"))
 
@@ -32,52 +27,69 @@ class TimeSlot(models.Model):
     def save(self, *args, **kwargs):
         if not self.label:
             self.label = f"{self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
+        self.full_clean()
         super().save(*args, **kwargs)
 
-class Timetable(models.Model):
+class SchedulePeriod(models.Model):
     """
-    Modèle Timetable (emploi du temps)
+    Période de validité commune à un ou plusieurs emplois du temps.
     """
-    department_levels = models.ManyToManyField(
-        'courses.DepartmentLevel',
-        related_name='timetables',
-        verbose_name=_("Départements - Niveaux")
-    )
+    name = models.CharField(max_length=100,blank=True,null=True,verbose_name=_("Nom de la période"),help_text=_("Ex : Trimestre 1, Semestre 2, etc."))
     start_date = models.DateField(verbose_name=_("Date de début"))
     end_date = models.DateField(verbose_name=_("Date de fin"))
 
     class Meta:
-        verbose_name = _("Emploi du temps")
-        verbose_name_plural = _("Emplois du temps")
+        unique_together = ('start_date', 'end_date')
+        verbose_name = _("Période de planification")
+        verbose_name_plural = _("Périodes de planification")
         ordering = ['start_date']
-        permissions = [
-            ('config_recap_semaine', _("Peut configurer et imprimer le recapitulatif de l'emplois du temps et la repartition des salles de la semaine")),
-            
-        ]
 
     def __str__(self):
-        return f"Emploi du temps (du {self.start_date} au {self.end_date})"
+        if self.name:
+            return self.name
+        return f"{self.start_date.strftime('%d/%m/%Y')} - {self.end_date.strftime('%d/%m/%Y')}"
 
     def clean(self):
         if self.start_date > self.end_date:
             raise ValidationError(_("La date de début doit être antérieure à la date de fin."))
 
+class Timetable(models.Model):
+    """
+    Modèle Timetable (emploi du temps)
+    """
+    department_levels = models.ManyToManyField('courses.DepartmentLevel',
+        related_name='timetables',
+        verbose_name=_("Départements - Niveaux"))
+    period = models.ForeignKey(SchedulePeriod,
+        on_delete=models.PROTECT,
+        verbose_name=_("Période de planification"),
+        related_name="timetables")
+    year = models.PositiveIntegerField(default=timezone.now().year, verbose_name=_("Année"))
+
+    class Meta:
+        verbose_name = _("Emploi du temps")
+        verbose_name_plural = _("Emplois du temps")
+        ordering = ['period__start_date']
+        permissions = [
+            ('config_recap_semaine', _("Peut configurer et imprimer le récapitulatif de l'emploi du temps et la répartition des salles de la semaine")),
+        ]
+
+    def __str__(self):
+        return f"Emploi du temps {self.year} (du {self.period.start_date} au {self.period.end_date})"
+
     def is_finished(self):
         """
-        Retourne True si l'emploi du temps est terminé (la date actuelle est postérieure à end_date).
+        Retourne True si l'emploi du temps est terminé.
         """
-        return timezone.now().date() > self.end_date
+        return timezone.now().date() > self.period.end_date
 
     def release_rooms(self):
         """
-        Parcourt toutes les sessions associées à ce Timetable et 
-        marque la salle associée comme disponible si l'emploi du temps est terminé.
-        Cette méthode doit être appelée par une tâche planifiée ou une vue spécifique.
+        Libère les salles une fois l'emploi du temps terminé.
         """
         if self.is_finished():
             for session in self.course_sessions.all():
                 room = session.room
-                # On ne réactive la disponibilité que si la salle est actuellement marquée indisponible
                 if not room.available:
                     room.available = True
                     room.save()
@@ -86,33 +98,28 @@ class CourseSession(models.Model):
     """
     Représente une session de cours appartenant à un Timetable.
     """
-    timetable = models.ForeignKey(
-        Timetable,
+    timetable = models.ForeignKey(Timetable,
         on_delete=models.CASCADE,
         related_name='course_sessions',
         verbose_name=_("Emploi du temps")
     )
-    subject = models.ForeignKey(
-        'subjects.Subject',
+    subject = models.ForeignKey('subjects.Subject',
         on_delete=models.CASCADE,
         related_name='course_sessions',
         verbose_name=_("Matière")
     )
-    teacher = models.ForeignKey(
-        'users.TeacherProfile',
+    teacher = models.ForeignKey('users.TeacherProfile',
         on_delete=models.CASCADE,
         related_name='course_sessions',
         verbose_name=_("Enseignant")
     )
-    room = models.ForeignKey(
-        'rooms.Room',
+    room = models.ForeignKey('rooms.Room',
         on_delete=models.CASCADE,
         related_name='course_sessions',
         verbose_name=_("Salle")
     )
     date = models.DateField(verbose_name=_("Date du cours"))
-    timeslot = models.ForeignKey(
-        TimeSlot,
+    timeslot = models.ForeignKey(TimeSlot,
         on_delete=models.CASCADE,
         related_name='course_sessions',
         verbose_name=_("Créneau horaire")
@@ -131,16 +138,14 @@ class CourseSession(models.Model):
 
     def clean(self):
         """
-        Vérifier que la date est dans la période du Timetable.
+        Vérifie que la date est dans la période de l'emploi du temps.
         """
-        if self.date < self.timetable.start_date or self.date > self.timetable.end_date:
+        period = self.timetable.period
+        if self.date < period.start_date or self.date > period.end_date:
             raise ValidationError(_("La date du cours doit être comprise dans la période de l'emploi du temps."))
 
     def save(self, *args, **kwargs):
-        # Logique métier pour la salle :
-        # Dès qu'une salle est attribuée à une session, on peut la marquer indisponible.
-        # Cette logique peut également être gérée via un signal.
-        if self.room and self.pk is None:  # Au moment de la création
+        if self.room and self.pk is None:
             self.room.available = False
             self.room.save()
         super().save(*args, **kwargs)

@@ -83,162 +83,61 @@
     });
 </script>
 
-{% comment %} <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Action lorsque le bouton "Disponible" est cliqué
-        document.querySelector('#accept-request').addEventListener('click', function(e) {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actions pour tous les boutons "Disponible"
+    document.querySelectorAll('#accept-request').forEach(button => {
+        button.addEventListener('click', function(e) {
             e.preventDefault();
-            var requestId = this.getAttribute('data-id');
-            
-            // Requête fetch pour accepter la demande
+            const requestId = this.getAttribute('data-id');
+
             fetch("{% url 'availability:accept_availability_request' 0 %}".replace('0', requestId), {
                 method: 'GET',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'  // Permet d'identifier une requête AJAX
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())  // On attend la réponse en JSON
+            .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Mise à jour du message de succès
+                    // Affiche le message (à toi de définir un conteneur avec l'id "message")
                     document.querySelector('#message').innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-
-                    // Recharger la page après un délai (par exemple, 1 seconde)
-                    setTimeout(function() {
-                        location.reload(); // Recharger la page pour afficher les données mises à jour
-                    }, 1000);  // Délai d'1 seconde
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    // Si la réponse est une erreur
                     document.querySelector('#message').innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
                 }
             })
             .catch(error => {
-                // Gestion des erreurs
-                document.querySelector('#message').innerHTML = '<div class="alert alert-danger">Erreur lors du traitement de la demande.</div>';
+                console.error('Erreur lors de la requête :', error);
             });
         });
+    });
 
-        // Action lorsque le bouton "Indisponible" est cliqué
-        document.querySelector('#reject-request').addEventListener('click', function(e) {
+    // Actions pour tous les boutons "Indisponible"
+    document.querySelectorAll('#reject-request').forEach(button => {
+        button.addEventListener('click', function(e) {
             e.preventDefault();
-            var requestId = this.getAttribute('data-id');
-            
-            // Requête fetch pour rejeter la demande
+            const requestId = this.getAttribute('data-id');
+
             fetch("{% url 'availability:reject_availability_request' 0 %}".replace('0', requestId), {
                 method: 'GET',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'  // Permet d'identifier une requête AJAX
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())  // On attend la réponse en JSON
+            .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Mise à jour du message de succès
                     document.querySelector('#message').innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-
-                    // Recharger la page après un délai (par exemple, 1 seconde)
-                    setTimeout(function() {
-                        location.reload(); // Recharger la page pour afficher les données mises à jour
-                    }, 1000);  // Délai d'1 seconde
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    // Si la réponse est une erreur
                     document.querySelector('#message').innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
                 }
             })
             .catch(error => {
-                // Gestion des erreurs
-                document.querySelector('#message').innerHTML = '<div class="alert alert-danger">Erreur lors du traitement de la demande.</div>';
+                console.error('Erreur lors de la requête :', error);
             });
         });
     });
-</script> {% endcomment %}
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Délégués pour tous les boutons dynamiquement présents sur la page
-        document.querySelectorAll('.btn-availability-action').forEach(button => {
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
-                const action = this.getAttribute('data-action'); // 'accept' ou 'reject'
-                const requestId = this.getAttribute('data-id');
-                const url = action === 'accept'
-                    ? "{% url 'availability:accept_availability_request' 0 %}".replace('0', requestId)
-                    : "{% url 'availability:reject_availability_request' 0 %}".replace('0', requestId);
-
-                fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    const messageContainer = document.querySelector('#message');
-                    if (data.status === 'success') {
-                        messageContainer.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-                    } else {
-                        messageContainer.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
-                    }
-
-                    // Rafraîchir dynamiquement la liste en fonction du filtre actif
-                    const currentStatus = new URLSearchParams(window.location.search).get('status') || 'pending';
-                    const fetchUrl = window.location.pathname + '?status=' + currentStatus;
-
-                    fetch(fetchUrl, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    })
-                    .then(resp => resp.json())
-                    .then(data => {
-                        const container = document.getElementById('request-list');
-                        container.innerHTML = ""; // Réinitialise le contenu
-                        data.requests.forEach(req => {
-                            let message = "";
-                            if (req.status === "pending") {
-                                message = `Êtes-vous disponible pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong> du ${req.period} ?`;
-                            } else if (req.status === "accepted") {
-                                message = `Vous avez notifié être <strong>disponible</strong> du ${req.period} pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong>.`;
-                            } else if (req.status === "rejected") {
-                                message = `Vous avez notifié être <strong>indisponible</strong> du ${req.period} pour faire cours aux filière(s) ${req.filieres.join(', ')} en <strong>${req.subject}</strong>.`;
-                            }
-
-                            let btnAccept = "";
-                            let btnReject = "";
-                            if (req.status === "pending") {
-                                btnAccept = `<a href="${req.url_accept}" class="btn btn-primary mr-2 btn-availability-action" data-action="accept" data-id="${req.id}">Disponible</a>`;
-                                btnReject = `<a href="${req.url_reject}" class="btn btn-secondary btn-availability-action" data-action="reject" data-id="${req.id}">Indisponible</a>`;
-                            } else if (req.status === "accepted") {
-                                btnAccept = `<a href="#" class="btn btn-primary disabled mr-2">Disponible</a>`;
-                                btnReject = `<a href="${req.url_reject}" class="btn btn-secondary btn-availability-action" data-action="reject" data-id="${req.id}">Indisponible</a>`;
-                            } else if (req.status === "rejected") {
-                                btnAccept = `<a href="${req.url_accept}" class="btn btn-primary btn-availability-action" data-action="accept" data-id="${req.id}">Disponible</a>`;
-                                btnReject = `<a href="#" class="btn btn-secondary disabled">Indisponible</a>`;
-                            }
-
-                            container.innerHTML += `
-                                <div class="notification p-3 mb-2">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <p class="m-0">${message}</p>
-                                        <span style="font-size:0.8em; color:#999;">il y a ${req.created_at}</span>
-                                    </div>
-                                    <div class="action-buttons mt-2">
-                                        ${btnAccept}
-                                        ${btnReject}
-                                    </div>
-                                </div>
-                            `;
-                        });
-
-                        // Rebind les nouveaux boutons (car ils sont injectés dynamiquement)
-                        document.querySelectorAll('.btn-availability-action').forEach(btn => btn.addEventListener('click', arguments.callee));
-                    })
-                    .catch(error => {
-                        console.error('Erreur lors du rechargement des demandes :', error);
-                    });
-                })
-                .catch(error => {
-                    document.querySelector('#message').innerHTML = '<div class="alert alert-danger">Erreur lors du traitement de la demande.</div>';
-                });
-            });
-        });
-    });
+});
 </script>
