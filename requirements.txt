@@ -90,3 +90,5 @@ whitenoise==6.7.0
     # via -r requirements.in
 yarl==1.20.1
     # via aiohttp
+
+dj_database_url
