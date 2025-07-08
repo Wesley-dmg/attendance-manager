@@ -17,7 +17,6 @@ from str2bool import str2bool
 
 from django.utils.translation import gettext_lazy as _
 
-# import django_dyn_dt
 
 load_dotenv()  # take environment variables from .env.
 
@@ -28,58 +27,54 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
-    SECRET_KEY = ''.join(random.choice( string.ascii_lowercase  ) for i in range( 32 ))
+    SECRET_KEY = "".join(random.choice(string.ascii_lowercase) for i in range(32))
 
 # Enable/Disable DEBUG Mode
-DEBUG = str2bool(os.environ.get('DEBUG'))
-#print(' DEBUG -> ' + str(DEBUG) ) 
+DEBUG = str2bool(os.environ.get("DEBUG"))
+# print(' DEBUG -> ' + str(DEBUG) )
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 # Add here your deployment HOSTS
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://localhost:5085', 'http://127.0.0.1:8000', 'http://127.0.0.1:5085']
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://localhost:5085",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:5085",
+]
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
 # RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-# if RENDER_EXTERNAL_HOSTNAME:    
+# if RENDER_EXTERNAL_HOSTNAME:
 #     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # Application definition
 
 INSTALLED_APPS = [
-    'admin_datta.apps.AdminDattaConfig',
+    "admin_datta.apps.AdminDattaConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    'django_select2',
-
-    'apps.availability',    # Application pour gérer la disponibilité
-    
-    'apps.common',       # Application pour gérer les  relations entre filière et matière 
-    
-    'apps.courses',         # Application pour gérer les filières
-    
-    "apps.home", # Application pour gérer les fonction de base de  l'application comme  les  notification systeme  d'alert et  autre  
-    
-    'apps.rooms',           # Application pour gérer les salles
-    
-    'apps.subjects',        # Application pour gérer les matières
-    
-    'apps.timetable',       # Application pour gérer l'emploi du temps
-    
-    'apps.users',           # Application pour gérer les utilisateurs
-    
+    "django_select2",
+    "apps.availability",  # Application pour gérer la disponibilité
+    "apps.common",  # Application pour gérer les  relations entre filière et matière
+    "apps.courses",  # Application pour gérer les filières
+    "apps.home",  # Application pour gérer les fonction de base de  l'application comme  les  notification systeme  d'alert et  autre
+    "apps.rooms",  # Application pour gérer les salles
+    "apps.subjects",  # Application pour gérer les matières
+    "apps.timetable",  # Application pour gérer l'emploi du temps
+    "apps.users",  # Application pour gérer les utilisateurs
+    "corsheaders",
     # # Tooling API-GEN
     # 'django_api_gen',            # Django API GENERATOR  # <-- NEW
-    # 'rest_framework',            # Include DRF           # <-- NEW 
-    # 'rest_framework.authtoken',  # Include DRF Auth      # <-- NEW     
+    # 'rest_framework',            # Include DRF           # <-- NEW
+    # 'rest_framework.authtoken',  # Include DRF Auth      # <-- NEW
 ]
 
 MIDDLEWARE = [
@@ -91,17 +86,18 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
 
-HOME_TEMPLATES      = os.path.join(BASE_DIR, 'templates') 
+HOME_TEMPLATES = os.path.join(BASE_DIR, "templates")
 # TEMPLATE_DIR_DATATB = os.path.join(BASE_DIR, "django_dyn_dt/templates") # <-- NEW: Dynamic_DT
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [HOME_TEMPLATES],                  # <-- UPD: Dynamic_DT
+        "DIRS": [HOME_TEMPLATES],  # <-- UPD: Dynamic_DT
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -120,29 +116,29 @@ WSGI_APPLICATION = "core.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DB_ENGINE   = os.getenv('DB_ENGINE'   , None)
-DB_USERNAME = os.getenv('DB_USERNAME' , None)
-DB_PASS     = os.getenv('DB_PASS'     , None)
-DB_HOST     = os.getenv('DB_HOST'     , None)
-DB_PORT     = os.getenv('DB_PORT'     , None)
-DB_NAME     = os.getenv('DB_NAME'     , None)
+DB_ENGINE = os.getenv("DB_ENGINE", None)
+DB_USERNAME = os.getenv("DB_USERNAME", None)
+DB_PASS = os.getenv("DB_PASS", None)
+DB_HOST = os.getenv("DB_HOST", None)
+DB_PORT = os.getenv("DB_PORT", None)
+DB_NAME = os.getenv("DB_NAME", None)
 
 if DB_ENGINE and DB_NAME and DB_USERNAME:
-    DATABASES = { 
-      'default': {
-        'ENGINE'  : 'django.db.backends.' + DB_ENGINE, 
-        'NAME'    : DB_NAME,
-        'USER'    : DB_USERNAME,
-        'PASSWORD': DB_PASS,
-        'HOST'    : DB_HOST,
-        'PORT'    : DB_PORT,
-        }, 
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends." + DB_ENGINE,
+            "NAME": DB_NAME,
+            "USER": DB_USERNAME,
+            "PASSWORD": DB_PASS,
+            "HOST": DB_HOST,
+            "PORT": DB_PORT,
+        },
     }
 else:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'db.sqlite3',
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": "db.sqlite3",
         }
     }
 
@@ -169,10 +165,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 LANGUAGES = [
-    ('fr', _('French')),
-    ('en', _('English')),
+    ("fr", _("French")),
+    ("en", _("English")),
 ]
-LANGUAGE_CODE = 'fr'  # Par défaut en français
+
+LANGUAGE_CODE = "fr"  # Par défaut en français
 
 
 TIME_ZONE = "UTC"
@@ -185,85 +182,58 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 import os
 
-MEDIA_URL = '/media/'  # URL accessible depuis le navigateur
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Répertoire de stockage des fichiers
+MEDIA_URL = "/media/"  # URL accessible depuis le navigateur
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # Répertoire de stockage des fichiers
 
-# MEDIA_URL = '/media/'  # URL pour accéder aux fichiers média
-# MEDIA_ROOT = BASE_DIR / 'media'  # Dossier où les fichiers sont stockés
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
-
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
-)
-
-#if not DEBUG:
-#    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if not DEBUG:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_URL = 'users:login'  
+LOGIN_URL = "users:login"
 # LOGIN_REDIRECT_URL = '/'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-########################################
-
-
-
-# from django.contrib.messages import constants as messages
-
-# MESSAGE_TAGS = {
-#     messages.DEBUG: 'secondary',
-#     messages.INFO: 'info',
-#     messages.SUCCESS: 'success',
-#     messages.WARNING: 'warning',
-#     messages.ERROR: 'danger',
-# }
-
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'ton_email@gmail.com'
-# EMAIL_HOST_PASSWORD = 'ton_mot_de_passe'
-
-# # Par exemple, pour les notifications SMS
-# TWILIO_ACCOUNT_SID = 'your_account_sid'
-# TWILIO_AUTH_TOKEN = 'your_auth_token'
-# TWILIO_PHONE_NUMBER = '+1234567890'
-
-# # Autres paramètres personnalisés
-# NOTIFY_ADMIN_ON_ERROR = True  # Si tu veux notifier un admin en cas d'erreur
-
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = "users.CustomUser"
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': 'django_error.log',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "file": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": "django_error.log",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'ERROR',
-            'propagate': True,
+    "loggers": {
+        "django": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": True,
         },
     },
 }
 
 # INTERNAL_IPS = [
 #     '127.0.0.1',
+# ]
+
+# Pour autoriser toutes les origines (à restreindre en prod)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Ou bien définir des origines spécifiques
+# CORS_ALLOWED_ORIGINS = [
+#    "https://monappmobile.com",
 # ]

@@ -1,4 +1,7 @@
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
 *.DS_Store
 *.egg*
 /dist/
@@ -6,11 +9,18 @@
 /docs/_build/
 /node_modules/
 build/
+t_env
+virtual
 env
 env__
 /staticfiles/
 
 #src
-# *.sqlite*
+*.sqlite*
 
-#.env
+.env
+
+
+
+
+*.log

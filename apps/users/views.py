@@ -464,6 +464,7 @@ class AdminDeleteView(UserDeleteView):
 class TeacherDeleteView(UserDeleteView):
     permission_required= 'users.delete_teacherprofile'
     success_url = 'users:teachers_list'
+
 class StudentDeleteView(UserDeleteView):
     permission_required= 'users.delete_studentprofile'
     success_url = 'users:students_list' 

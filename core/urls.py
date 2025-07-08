@@ -18,37 +18,35 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.authtoken.views import obtain_auth_token
 
-from core import settings # <-- NEW
+from core import settings  # <-- NEW
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('', include('apps.home.urls')),
+    path("", include("apps.home.urls")),
     path("admin/", admin.site.urls),
-    path('', include('admin_datta.urls')),
-    
-    path('', include('apps.users.urls')),  # Inclure les URLs de l'application users
-    
-    path('courses/', include(('apps.courses.urls', 'courses'), namespace='courses')),  # Inclure les URLs de l'app 'courses'
-    
-    path('subjects/', include(('apps.subjects.urls', 'subjects'), namespace='subjects')),  # Inclure les URLs de l'app 'subjects'
-    
-    path('common/', include(('apps.common.urls', 'common'), namespace='common')),  # Inclure les URLs de l'app 'common'
-    
-    path('rooms/', include(('apps.rooms.urls', 'rooms'), namespace='rooms')),  # Inclure les URLs de l'app 'rooms'
-    
-    path('availability/', include(('apps.availability.urls', 'availability'), namespace='availability')),  # Inclure les URLs de l'app 'availability'
-    
-    path('timetables/', include(('apps.timetable.urls', 'timetable'), namespace='timetable')),  # Inclure les URLs de l'app 'timetable'
-
+    # path('', include('admin_datta.urls')),
+    path("", include("apps.users.urls")),  # Inclure les URLs de l'application users
+    path(
+        "courses/", include(("apps.courses.urls", "courses"), namespace="courses")
+    ),  # Inclure les URLs de l'app 'courses'
+    path(
+        "subjects/", include(("apps.subjects.urls", "subjects"), namespace="subjects")
+    ),  # Inclure les URLs de l'app 'subjects'
+    path(
+        "common/", include(("apps.common.urls", "common"), namespace="common")
+    ),  # Inclure les URLs de l'app 'common'
+    path(
+        "rooms/", include(("apps.rooms.urls", "rooms"), namespace="rooms")
+    ),  # Inclure les URLs de l'app 'rooms'
+    path(
+        "availability/",
+        include(("apps.availability.urls", "availability"), namespace="availability"),
+    ),  # Inclure les URLs de l'app 'availability'
+    path(
+        "timetables/",
+        include(("apps.timetable.urls", "timetable"), namespace="timetable"),
+    ),  # Inclure les URLs de l'app 'timetable'
 ]
-
-# Lazy-load on routing is needed
-# During the first build, API is not yet generated
-# try:
-#     urlpatterns.append( path("api/"      , include("api.urls"))    )
-#     urlpatterns.append( path("login/jwt/", view=obtain_auth_token) )
-# except:
-#     pass
 
 # Servir les fichiers médias en mode développement
 if settings.DEBUG:

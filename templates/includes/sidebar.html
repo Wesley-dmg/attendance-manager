@@ -26,286 +26,287 @@
         </li>
 
         {% if user.is_admin %}
-        {% if perms.users.view_customuser %}
-          <!-- Section pour l'Admin -->
-          <li class="nav-item pcoded-menu-caption"><label>Gestion des Utilisateurs</label></li>
-          <!-- Menu des Admins -->
-          {% if perms.users.view_adminprofile or perms.users.add_adminprofile %}
-            <li class="nav-item pcoded-hasmenu">
-            <a href="javascript:" class="nav-link ">
-              <span class="pcoded-micon"><i class="feather icon-users"></i></span>
-              <span class="pcoded-mtext">Administrateurs</span>
-            </a>
-            <ul class="pcoded-submenu">
-              {% if perms.users.view_adminprofile %}
-                <li class="nav-item">
-                  <a href="{% url 'users:admins_list' %}" class="nav-link">Liste des admins</a>
-                </li>
-              {% endif %}
-              {% if perms.users.add_adminprofile %}
-                <li class="nav-item">
-                  <a href="{% url 'users:create_admin' %}" class="nav-link">Ajouter un admin</a>
-                </li>
-              {% endif %}              
-            </ul>
-            </li>
-          {% endif %}
-          
-          {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %}
-            <!-- Menu des Professeurs -->
-            <li class="nav-item pcoded-hasmenu">
-            <a href="javascript:" class="nav-link ">
-              <span class="pcoded-micon"><i class="feather icon-users"></i></span>
-              <span class="pcoded-mtext">Professeurs</span>
-            </a>
-            <ul class="pcoded-submenu">
-              {% if perms.users.view_teacherprofile %}
-                <li class="nav-item">
-                <a href="{% url 'users:teachers_list' %}" class="nav-link">Liste des professeurs</a>
-              </li>  
-            {% endif %}            
-              {% if perms.users.add_teacherprofile %}
-                <li class="nav-item">
-                  <a href="{% url 'users:create_teacher' %}" class="nav-link">Ajouter un professeur</a>
-                </li>
-              {% endif %}
-            </ul>
-            </li>
-          {% endif %}
-          
-          {% if perms.users.view_studentprofile or perms.users.add_studentprofile %}
-            <li class="nav-item pcoded-hasmenu">
+          {% if perms.users.view_customuser %}
+            <!-- Section pour l'Admin -->
+            <li class="nav-item pcoded-menu-caption"><label>Gestion des Utilisateurs</label></li>
+            <!-- Menu des Admins -->
+            {% if perms.users.view_adminprofile or perms.users.add_adminprofile %}
+              <li class="nav-item pcoded-hasmenu">
               <a href="javascript:" class="nav-link ">
                 <span class="pcoded-micon"><i class="feather icon-users"></i></span>
-                <span class="pcoded-mtext">Étudiants</span>
+                <span class="pcoded-mtext">Administrateurs</span>
               </a>
               <ul class="pcoded-submenu">
-                {% if perms.users.view_studentprofile %}
+                {% if perms.users.view_adminprofile %}
                   <li class="nav-item">
-                    <a href="{% url 'users:students_list' %}" class="nav-link">Liste des étudiants</a>
+                    <a href="{% url 'users:admins_list' %}" class="nav-link">Liste des admins</a>
+                  </li>
+                {% endif %}
+                {% if perms.users.add_adminprofile %}
+                  <li class="nav-item">
+                    <a href="{% url 'users:create_admin' %}" class="nav-link">Ajouter un admin</a>
                   </li>
                 {% endif %}              
-                {% if perms.users.add_studentprofile  %}
-                  <li class="nav-item">
-                    <a href="{% url 'users:create_student' %}" class="nav-link">Ajouter un étudiant</a>
-                  </li>
-                {% endif %}
               </ul>
-            </li>
-          {% endif %}
-
-          {% if perms.users.view_parentprofile or perms.users.add_parentprofile  %}
-            <!-- Menu des Parents -->
-            <li class="nav-item pcoded-hasmenu">
+              </li>
+            {% endif %}
+            
+            {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %}
+              <!-- Menu des Professeurs -->
+              <li class="nav-item pcoded-hasmenu">
               <a href="javascript:" class="nav-link ">
                 <span class="pcoded-micon"><i class="feather icon-users"></i></span>
-                <span class="pcoded-mtext">Parents</span>
-              </a>
-              <ul class="pcoded-submenu">
-                {% if perms.users.view_parentprofile %}
-                  <li class="nav-item">
-                    <a href="{% url 'users:parents_list' %}" class="nav-link">Liste des parents</a>
-                  </li>
-                {% endif %}
-                {% if perms.users.add_parentprofile  %}
-                  <li class="nav-item">
-                    <a href="{% url 'users:create_parent' %}" class="nav-link">Ajouter un parent</a>
-                  </li>
-                {% endif %}
-              </ul>
-            </li>
-          {% endif %}
-        {% endif %}
-
-        {% if perms.timetable.view_timetable or perms.availability.view_availabilityrequest %}
-          <li class="nav-item pcoded-menu-caption"><label>Planning</label></li>
-          <!-- Menu des Emplois du temps -->
-          {% if perms.timetable.view_timetable or perms.timetable.add_timetable%}
-            <li class="nav-item pcoded-hasmenu">
-              <a href="javascript:" class="nav-link ">
-                <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
-                <span class="pcoded-mtext">Emplois du temps</span>
-              </a>
-              <ul class="pcoded-submenu">
-                {% if perms.timetable.view_timetable %}
-                  <li class="nav-item">
-                    <a href="{% url 'timetables:list' %}" class="nav-link">Emplois du temps </a>
-                  </li>
-                {% endif %}
-            
-                {% if perms.timetable.add_timetable %}
-                  <li class="nav-item">
-                    <a href="{% url 'timetables:timetable_create' %}" class="nav-link">Ajouter un emplois du temps </a>
-                  </li>
-                {% endif %}
-                {% if perms.timetable.config_recap_semaine %}
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">Recapitulatif emplois du temps</a>
-                  </li>
-                {% endif %}
-              </ul>
-            </li>
-          {% endif %}
-          
-          <!-- Menu des Disponibilité des profs   -->
-          {% if perms.availability.view_availabilityrequest or perms.availability.add_availabilityrequest %}
-          <li class="nav-item pcoded-hasmenu">
-            <a href="javascript:" class="nav-link ">
-              <span class="pcoded-micon"><i class="feather icon-clock"></i></span>
-              <span class="pcoded-mtext">Planning des enseignants</span>
-            </a>
-            <ul class="pcoded-submenu">
-              {% if perms.availability.view_availabilityrequest %}
-                <li class="nav-item">
-                  <a href="{% url 'availability:availability_request_list' %}" class="nav-link">Liste des demandes</a>
-                </li>
-              {% endif %}
-              
-              {% if perms.availability.add_availabilityrequest %}
-                <li class="nav-item">
-                  <a href="{% url 'availability:create_request' %}" class="nav-link">Ajouter une demande</a>
-                </li>
-              {% endif %}
-            </ul>
-          </li>
-          {% endif %}
-          
-          <!-- Menu Gestion des absences -->
-          {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %}
-            <li class="nav-item pcoded-hasmenu">
-              <a href="javascript:" class="nav-link ">
-                <span class="pcoded-micon"><i class="feather icon-user-check"></i></span>
-                <span class="pcoded-mtext">Suivi des présences</span>
+                <span class="pcoded-mtext">Professeurs</span>
               </a>
               <ul class="pcoded-submenu">
                 {% if perms.users.view_teacherprofile %}
                   <li class="nav-item">
-                    <a href="#" class="nav-link">Liste de présences</a>
-                  </li>  
-                {% endif %}
-            
-            {% if perms.users.add_teacherprofile %}
-              <li class="nav-item">
-                <a href="#" class="nav-link">Rappoort & Statistique </a>
-              </li>
-            {% endif %}
-
-            {% if perms.users.view_teacherprofile %}
-              <li class="nav-item">
-                <a href="#" class="nav-link">Archives </a>
-              </li>  
-            {% endif %}
-            </ul>
-            </li>
-          {% endif %}
-          
-        {% endif %}
-
-        {% if perms.common.view_departmentlevelsubject or perms.courses.view_department or perms.rooms.view_room or perms.subjects.view_subject %}
-          <li class="nav-item pcoded-menu-caption">
-            <label>Apps & autres</label>
-          </li>
-          
-          <!-- Menu des des apps gestions des matières -->
-          {% if perms.subjects.view_subject or perms.subjects.add_subject %}
-            <li class="nav-item pcoded-hasmenu">
-              <a href="javascript:" class="nav-link ">
-                <span class="pcoded-micon"><i class="feather icon-book"></i></span>
-                <span class="pcoded-mtext">Matières</span>
-              </a>
-              <ul class="pcoded-submenu">
-                {% if perms.subjects.view_subject %}
+                  <a href="{% url 'users:teachers_list' %}" class="nav-link">Liste des professeurs</a>
+                </li>  
+              {% endif %}            
+                {% if perms.users.add_teacherprofile %}
                   <li class="nav-item">
-                    <a href="{% url 'subjects:subject_list' %}" class="nav-link">Liste des matières </a>
-                  </li>
-                {% endif %}
-            
-                {% if perms.subjects.add_subject %}
-                  <li class="nav-item">
-                    <a href="{% url 'subjects:subject_add' %}" class="nav-link">Ajouter une matière</a>
+                    <a href="{% url 'users:create_teacher' %}" class="nav-link">Ajouter un professeur</a>
                   </li>
                 {% endif %}
               </ul>
-            </li>
+              </li>
+            {% endif %}
+            
+            {% if perms.users.view_studentprofile or perms.users.add_studentprofile %}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                  <span class="pcoded-mtext">Étudiants</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% if perms.users.view_studentprofile %}
+                    <li class="nav-item">
+                      <a href="{% url 'users:students_list' %}" class="nav-link">Liste des étudiants</a>
+                    </li>
+                  {% endif %}              
+                  {% if perms.users.add_studentprofile  %}
+                    <li class="nav-item">
+                      <a href="{% url 'users:create_student' %}" class="nav-link">Ajouter un étudiant</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </li>
+            {% endif %}
+
+            {% if perms.users.view_parentprofile or perms.users.add_parentprofile  %}
+              <!-- Menu des Parents -->
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                  <span class="pcoded-mtext">Parents</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% if perms.users.view_parentprofile %}
+                    <li class="nav-item">
+                      <a href="{% url 'users:parents_list' %}" class="nav-link">Liste des parents</a>
+                    </li>
+                  {% endif %}
+                  {% if perms.users.add_parentprofile  %}
+                    <li class="nav-item">
+                      <a href="{% url 'users:create_parent' %}" class="nav-link">Ajouter un parent</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </li>
+            {% endif %}
           {% endif %}
-          
-          <!-- Menu des Filières -->
-          {% if perms.courses.view_department or perms.courses.add_department %}
-            <li class="nav-item pcoded-hasmenu">
-            <a href="javascript:" class="nav-link ">
-              <span class="pcoded-micon"><i class="feather icon-box"></i></span>
-              <span class="pcoded-mtext">Filières</span>
-            </a>
-            <ul class="pcoded-submenu">
-              {% if perms.courses.view_department %}
-                <li class="nav-item">
-                  <a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des Filières</a>
-                </li>
-              {% endif %}
+
+          {% if perms.timetable.view_timetable or perms.availability.view_availabilityrequest %}
+            <li class="nav-item pcoded-menu-caption"><label>Planning</label></li>
+            <!-- Menu des Emplois du temps -->
+            {% if perms.timetable.view_timetable or perms.timetable.add_timetable%}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
+                  <span class="pcoded-mtext">Emplois du temps</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% if perms.timetable.view_timetable %}
+                    <li class="nav-item">
+                      <a href="{% url 'timetables:list' %}" class="nav-link">Emplois du temps </a>
+                    </li>
+                  {% endif %}
               
-              {% if perms.courses.add_department %}
-                <li class="nav-item">
-                  <a href="{% url 'courses:departmentlevel_add' %}" class="nav-link">Ajouter une filières</a>
-                </li>
-              {% endif %}
-            </ul>
-            </li>
-          {% endif %}
-          
-          <!-- Menu des Matières/Filières -->
-          {% if perms.common.view_departmentlevelsubject or perms.common.add_departmentlevelsubject %}
-            <li class="nav-item pcoded-hasmenu">
-            <a href="javascript:" class="nav-link ">
-              <span class="pcoded-micon"><i class="feather icon-box"></i></span>
-              <span class="pcoded-mtext">Matières/Filières</span>
-            </a>
-            <ul class="pcoded-submenu">
-              {% if perms.common.view_departmentlevelsubject %}
-                <li class="nav-item">
-                  <a href="{% url 'common:departmentlevelsubject_list' %}" class="nav-link">Liste des Matières/Filières</a>
-                </li>
-              {% endif %}
+                  {% if perms.timetable.add_timetable %}
+                    <li class="nav-item">
+                      <a href="{% url 'timetables:timetable_create' %}" class="nav-link">Ajouter un emplois du temps </a>
+                    </li>
+                  {% endif %}
+                  {% if perms.timetable.config_recap_semaine %}
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">Recapitulatif emplois du temps</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </li>
+            {% endif %}
+            
+            <!-- Menu des Disponibilité des profs   -->
+            {% comment %} {% if perms.availability.view_availabilityrequest or perms.availability.add_availabilityrequest %}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-clock"></i></span>
+                  <span class="pcoded-mtext">Planning des enseignants</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% if perms.availability.view_availabilityrequest %}
+                    <li class="nav-item">
+                      <a href="{% url 'availability:availability_request_list' %}" class="nav-link">Liste des demandes</a>
+                    </li>
+                  {% endif %}
+                  
+                  {% if perms.availability.add_availabilityrequest %}
+                    <li class="nav-item">
+                      <a href="{% url 'availability:create_request' %}" class="nav-link">Ajouter une demande</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </li>
+            {% endif %} {% endcomment %}
+            
+            <!-- Menu Gestion des absences -->
+            {% comment %} {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %} {% endcomment %}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-user-check"></i></span>
+                  <span class="pcoded-mtext">Suivi des présences</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% comment %} {% if perms.users.view_teacherprofile %} {% endcomment %}
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">Liste de présences</a>
+                    </li>  
+                  {% comment %} {% endif %} {% endcomment %}
               
-              {% if perms.common.add_departmentlevelsubject %}
-                <li class="nav-item">
-                  <a href="{% url 'common:departmentlevelsubject_add' %}" class="nav-link">Ajouter une Matières/Filières</a>
-                </li>
-              {% endif %}
-            </ul>
-            </li>
+                  {% comment %} {% if perms.users.add_teacherprofile %} {% endcomment %}
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">Rappoort & Statistique </a>
+                    </li>
+                  {% comment %} {% endif %} {% endcomment %}
+
+                  {% comment %} {% if perms.users.view_teacherprofile %} {% endcomment %}
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">Archives </a>
+                    </li>  
+                  {% comment %} {% endif %} {% endcomment %}
+                </ul>
+              </li>
+            {% comment %} {% endif %} {% endcomment %}
+            
           {% endif %}
-          
-          <!-- Menu Gestion des salles -->
-          {% if perms.rooms.view_room or perms.rooms.add_room %}
-            <li class="nav-item pcoded-hasmenu">
+
+          {% if perms.common.view_departmentlevelsubject or perms.courses.view_department or perms.rooms.view_room or perms.subjects.view_subject %}
+            <li class="nav-item pcoded-menu-caption">
+              <label>Apps & autres</label>
+            </li>
+            
+            <!-- Menu des des apps gestions des matières -->
+            {% if perms.subjects.view_subject or perms.subjects.add_subject %}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-book"></i></span>
+                  <span class="pcoded-mtext">Matières</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% if perms.subjects.view_subject %}
+                    <li class="nav-item">
+                      <a href="{% url 'subjects:subject_list' %}" class="nav-link">Liste des matières </a>
+                    </li>
+                  {% endif %}
+              
+                  {% if perms.subjects.add_subject %}
+                    <li class="nav-item">
+                      <a href="{% url 'subjects:subject_add' %}" class="nav-link">Ajouter une matière</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </li>
+            {% endif %}
+            
+            <!-- Menu des Filières -->
+            {% if perms.courses.view_department or perms.courses.add_department %}
+              <li class="nav-item pcoded-hasmenu">
               <a href="javascript:" class="nav-link ">
                 <span class="pcoded-micon"><i class="feather icon-box"></i></span>
-                <span class="pcoded-mtext">Salles</span>
+                <span class="pcoded-mtext">Filières</span>
               </a>
               <ul class="pcoded-submenu">
-                {% if perms.rooms.view_room %}
+                {% if perms.courses.view_department %}
                   <li class="nav-item">
-                    <a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des salles</a>
-                  </li>  
+                    <a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des Filières</a>
+                  </li>
                 {% endif %}
-            
-            {% if perms.rooms.add_room %}
-              <li class="nav-item">
-                <a href="{% url 'rooms:room_create' %}" class="nav-link">Ajouter une Salles</a>
-              </li>  
+                
+                {% if perms.courses.add_department %}
+                  <li class="nav-item">
+                    <a href="{% url 'courses:departmentlevel_add' %}" class="nav-link">Ajouter une filières</a>
+                  </li>
+                {% endif %}
+              </ul>
+              </li>
             {% endif %}
-            </ul>
-            </li>
+            
+            <!-- Menu des Matières/Filières -->
+            {% if perms.common.view_departmentlevelsubject or perms.common.add_departmentlevelsubject %}
+              <li class="nav-item pcoded-hasmenu">
+              <a href="javascript:" class="nav-link ">
+                <span class="pcoded-micon"><i class="feather icon-box"></i></span>
+                <span class="pcoded-mtext">Matières/Filières</span>
+              </a>
+              <ul class="pcoded-submenu">
+                {% if perms.common.view_departmentlevelsubject %}
+                  <li class="nav-item">
+                    <a href="{% url 'common:departmentlevelsubject_list' %}" class="nav-link">Liste des Matières/Filières</a>
+                  </li>
+                {% endif %}
+                
+                {% if perms.common.add_departmentlevelsubject %}
+                  <li class="nav-item">
+                    <a href="{% url 'common:departmentlevelsubject_add' %}" class="nav-link">Ajouter une Matières/Filières</a>
+                  </li>
+                {% endif %}
+              </ul>
+              </li>
+            {% endif %}
+            
+            <!-- Menu Gestion des salles -->
+            {% if perms.rooms.view_room or perms.rooms.add_room %}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-box"></i></span>
+                  <span class="pcoded-mtext">Salles</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% if perms.rooms.view_room %}
+                    <li class="nav-item">
+                      <a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des salles</a>
+                    </li>  
+                  {% endif %}
+              
+              {% if perms.rooms.add_room %}
+                <li class="nav-item">
+                  <a href="{% url 'rooms:room_create' %}" class="nav-link">Ajouter une Salles</a>
+                </li>  
+              {% endif %}
+              </ul>
+              </li>
+            {% endif %}
+
           {% endif %}
 
         {% endif %}
 
-        {% endif %}
-
-        {% if user.is_teacher %}
+        {% comment %} {% if user.is_teacher %} {% endcomment %}
           <!-- Section pour le Professeur -->
           {% if perms.timetable.view_timetable or perms.availability.view_availabilityresponse %}
-            <li class="nav-item pcoded-menu-caption"><label>Espace Temps</label></li>
+            <li class="nav-item pcoded-menu-caption">
+              <label>Espace Temps</label></li>
             
             <!-- Menu des Disponibilité des profs   -->
             {% if perms.availability.can_view_availabilityrequest_history or perms.availability.can_view_availabilityrequest_pending %}
@@ -353,30 +354,30 @@
             </li>
           {% endif %}
           
-          <!-- Menu Gestion des absences -->
-          {% comment %} {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %} {% endcomment %}
-            <li class="nav-item pcoded-hasmenu">
-              <a href="javascript:" class="nav-link ">
-                <span class="pcoded-micon"><i class="feather icon-user-check"></i></span>
-                <span class="pcoded-mtext">Cahier de presence</span>
-              </a>
-              <ul class="pcoded-submenu">
-                {% comment %} {% if perms.users.view_teacherprofile %} {% endcomment %}
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">Liste de présences</a>
-                  </li>  
-                {% comment %} {% endif %} {% endcomment %}
-            
-                {% comment %} {% if perms.users.add_teacherprofile %} {% endcomment %}
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">Suivie des Etudiants</a>
-                  </li>
-                {% comment %} {% endif %} {% endcomment %}
-              </ul>
-            </li>
-          {% comment %} {% endif %} {% endcomment %}
+            <!-- Menu Gestion des absences -->
+            {% comment %} {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %} {% endcomment %}
+              <li class="nav-item pcoded-hasmenu">
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-user-check"></i></span>
+                  <span class="pcoded-mtext">Cahier de presence</span>
+                </a>
+                <ul class="pcoded-submenu">
+                  {% comment %} {% if perms.users.view_teacherprofile %} {% endcomment %}
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">Liste de présences</a>
+                    </li>  
+                  {% comment %} {% endif %} {% endcomment %}
+              
+                  {% comment %} {% if perms.users.add_teacherprofile %} {% endcomment %}
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">Suivie des Etudiants</a>
+                    </li>
+                  {% comment %} {% endif %} {% endcomment %}
+                </ul>
+              </li>
+            {% comment %} {% endif %} {% endcomment %}
           {% endif %}
-        {% endif %}
+        {% comment %} {% endif %} {% endcomment %}
 
         {% if user.is_student %}
         <!-- Section pour l'Etudiant -->

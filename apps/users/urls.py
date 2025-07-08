@@ -13,8 +13,8 @@ from .views import (
 app_name = 'users'  # Nom de l'application pour les URL inversées
 
 urlpatterns = [
+    path('', CustomLoginView, name='login'),
     path('register/', CustomregisterView, name='register'),  # Inscription
-    path('login/', CustomLoginView, name='login'),
     path('logout/', custom_logout, name='logout'),
   
     path('password_change/', CustomPasswordChangeView.as_view(), name='password_change'),  # Changement de mot de passe
