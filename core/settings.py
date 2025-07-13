@@ -55,13 +55,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_select2",
-    "apps.availability",  # Application pour gérer la disponibilité
     "apps.common",  # Application pour gérer les  relations entre filière et matière
     "apps.courses",  # Application pour gérer les filières
     "apps.home",  # Application pour gérer les fonction de base de  l'application comme  les  notification systeme  d'alert et  autre
-    "apps.rooms",  # Application pour gérer les salles
     "apps.subjects",  # Application pour gérer les matières
-    "apps.timetable",  # Application pour gérer l'emploi du temps
     "apps.users",  # Application pour gérer les utilisateurs
     "corsheaders",
     "rest_framework",  # Include DRF           # <-- NEW
@@ -111,6 +108,9 @@ if DATABASE_URL:
     DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
 else:
     raise ValueError("DATABASE_URL doit être défini dans l'environnement.")
+
+if not os.path.exists(BASE_DIR / ".env"):
+    print("⚠️  Fichier .env non trouvé ! Certaines variables risquent de manquer.")
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -180,19 +180,34 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 AUTH_USER_MODEL = "users.CustomUser"
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
+if not DEBUG:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "verbose": {
+                "format": "[{asctime}] {levelname} {name}: {message}",
+                "style": "{",
+            },
         },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "ERROR",
-    },
-}
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "verbose",
+            },
+        },
+        "root": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "loggers": {
+            "django": {
+                "handlers": ["console"],
+                "level": "WARNING",
+                "propagate": False,
+            },
+        },
+    }
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -205,3 +220,23 @@ CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ALLOWED_ORIGINS = [
 #    "https://monappmobile.com",
 # ]
+
+# import sentry_sdk
+# from sentry_sdk.integrations.django import DjangoIntegration
+
+# if not DEBUG:
+#     sentry_sdk.init(
+#         dsn=os.environ.get("SENTRY_DSN"),  # Ex: dans ton .env ou sur Render
+#         integrations=[DjangoIntegration()],
+#         traces_sample_rate=1.0,  # change selon besoin (0.1 = 10% des requêtes)
+#         send_default_pii=True,
+#     )
+
+# if not DEBUG:
+#     SECURE_SSL_REDIRECT = True
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
+
+#     SECURE_HSTS_SECONDS = 3600
+#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+#     SECURE_HSTS_PRELOAD = True

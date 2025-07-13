@@ -117,95 +117,34 @@
             {% endif %}
           {% endif %}
 
-          {% if perms.timetable.view_timetable or perms.availability.view_availabilityrequest %}
-            <li class="nav-item pcoded-menu-caption"><label>Planning</label></li>
-            <!-- Menu des Emplois du temps -->
-            {% if perms.timetable.view_timetable or perms.timetable.add_timetable%}
-              <li class="nav-item pcoded-hasmenu">
-                <a href="javascript:" class="nav-link ">
-                  <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
-                  <span class="pcoded-mtext">Emplois du temps</span>
-                </a>
-                <ul class="pcoded-submenu">
-                  {% if perms.timetable.view_timetable %}
-                    <li class="nav-item">
-                      <a href="{% url 'timetables:list' %}" class="nav-link">Emplois du temps </a>
-                    </li>
-                  {% endif %}
-              
-                  {% if perms.timetable.add_timetable %}
-                    <li class="nav-item">
-                      <a href="{% url 'timetables:timetable_create' %}" class="nav-link">Ajouter un emplois du temps </a>
-                    </li>
-                  {% endif %}
-                  {% if perms.timetable.config_recap_semaine %}
-                    <li class="nav-item">
-                      <a href="#" class="nav-link">Recapitulatif emplois du temps</a>
-                    </li>
-                  {% endif %}
-                </ul>
+          {% comment %} {% if perms.timetable.view_timetable or perms.availability.view_availabilityrequest %} {% endcomment %}
+              <li class="nav-item pcoded-menu-caption">
+                <label>Planning</label>
               </li>
-            {% endif %}
-            
-            <!-- Menu des Disponibilité des profs   -->
-            {% comment %} {% if perms.availability.view_availabilityrequest or perms.availability.add_availabilityrequest %}
-              <li class="nav-item pcoded-hasmenu">
-                <a href="javascript:" class="nav-link ">
-                  <span class="pcoded-micon"><i class="feather icon-clock"></i></span>
-                  <span class="pcoded-mtext">Planning des enseignants</span>
-                </a>
-                <ul class="pcoded-submenu">
-                  {% if perms.availability.view_availabilityrequest %}
-                    <li class="nav-item">
-                      <a href="{% url 'availability:availability_request_list' %}" class="nav-link">Liste des demandes</a>
-                    </li>
-                  {% endif %}
-                  
-                  {% if perms.availability.add_availabilityrequest %}
-                    <li class="nav-item">
-                      <a href="{% url 'availability:create_request' %}" class="nav-link">Ajouter une demande</a>
-                    </li>
-                  {% endif %}
-                </ul>
-              </li>
-            {% endif %} {% endcomment %}
-            
-            <!-- Menu Gestion des absences -->
-            {% comment %} {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %} {% endcomment %}
               <li class="nav-item pcoded-hasmenu">
                 <a href="javascript:" class="nav-link ">
                   <span class="pcoded-micon"><i class="feather icon-user-check"></i></span>
                   <span class="pcoded-mtext">Suivi des présences</span>
                 </a>
                 <ul class="pcoded-submenu">
-                  {% comment %} {% if perms.users.view_teacherprofile %} {% endcomment %}
                     <li class="nav-item">
                       <a href="#" class="nav-link">Liste de présences</a>
                     </li>  
-                  {% comment %} {% endif %} {% endcomment %}
-              
-                  {% comment %} {% if perms.users.add_teacherprofile %} {% endcomment %}
                     <li class="nav-item">
                       <a href="#" class="nav-link">Rappoort & Statistique </a>
                     </li>
-                  {% comment %} {% endif %} {% endcomment %}
-
-                  {% comment %} {% if perms.users.view_teacherprofile %} {% endcomment %}
                     <li class="nav-item">
                       <a href="#" class="nav-link">Archives </a>
-                    </li>  
-                  {% comment %} {% endif %} {% endcomment %}
+                    </li> 
                 </ul>
               </li>
-            {% comment %} {% endif %} {% endcomment %}
-            
-          {% endif %}
+          {% comment %} {% endif %} {% endcomment %}
 
           {% if perms.common.view_departmentlevelsubject or perms.courses.view_department or perms.rooms.view_room or perms.subjects.view_subject %}
             <li class="nav-item pcoded-menu-caption">
               <label>Apps & autres</label>
             </li>
-            
+
             <!-- Menu des des apps gestions des matières -->
             {% if perms.subjects.view_subject or perms.subjects.add_subject %}
               <li class="nav-item pcoded-hasmenu">
@@ -232,206 +171,81 @@
             <!-- Menu des Filières -->
             {% if perms.courses.view_department or perms.courses.add_department %}
               <li class="nav-item pcoded-hasmenu">
-              <a href="javascript:" class="nav-link ">
-                <span class="pcoded-micon"><i class="feather icon-box"></i></span>
-                <span class="pcoded-mtext">Filières</span>
-              </a>
-              <ul class="pcoded-submenu">
-                {% if perms.courses.view_department %}
-                  <li class="nav-item">
-                    <a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des Filières</a>
-                  </li>
-                {% endif %}
+                <a href="javascript:" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-box"></i></span>
+                  <span class="pcoded-mtext">Filières</span>
+                </a>
+
+                <ul class="pcoded-submenu">
+                  {% if perms.courses.view_department %}
+                    <li class="nav-item">
+                      <a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des Filières</a>
+                    </li>
+                  {% endif %}
                 
-                {% if perms.courses.add_department %}
-                  <li class="nav-item">
-                    <a href="{% url 'courses:departmentlevel_add' %}" class="nav-link">Ajouter une filières</a>
-                  </li>
-                {% endif %}
-              </ul>
+                  {% if perms.courses.add_department %}
+                    <li class="nav-item">
+                      <a href="{% url 'courses:departmentlevel_add' %}" class="nav-link">Ajouter une filières</a>
+                    </li>
+                  {% endif %}
+                </ul>
               </li>
             {% endif %}
             
             <!-- Menu des Matières/Filières -->
             {% if perms.common.view_departmentlevelsubject or perms.common.add_departmentlevelsubject %}
               <li class="nav-item pcoded-hasmenu">
-              <a href="javascript:" class="nav-link ">
-                <span class="pcoded-micon"><i class="feather icon-box"></i></span>
-                <span class="pcoded-mtext">Matières/Filières</span>
-              </a>
-              <ul class="pcoded-submenu">
-                {% if perms.common.view_departmentlevelsubject %}
-                  <li class="nav-item">
-                    <a href="{% url 'common:departmentlevelsubject_list' %}" class="nav-link">Liste des Matières/Filières</a>
-                  </li>
-                {% endif %}
-                
-                {% if perms.common.add_departmentlevelsubject %}
-                  <li class="nav-item">
-                    <a href="{% url 'common:departmentlevelsubject_add' %}" class="nav-link">Ajouter une Matières/Filières</a>
-                  </li>
-                {% endif %}
-              </ul>
-              </li>
-            {% endif %}
-            
-            <!-- Menu Gestion des salles -->
-            {% if perms.rooms.view_room or perms.rooms.add_room %}
-              <li class="nav-item pcoded-hasmenu">
                 <a href="javascript:" class="nav-link ">
                   <span class="pcoded-micon"><i class="feather icon-box"></i></span>
-                  <span class="pcoded-mtext">Salles</span>
+                  <span class="pcoded-mtext">Matières/Filières</span>
                 </a>
                 <ul class="pcoded-submenu">
-                  {% if perms.rooms.view_room %}
+                  {% if perms.common.view_departmentlevelsubject %}
                     <li class="nav-item">
-                      <a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des salles</a>
-                    </li>  
-                  {% endif %}
-              
-              {% if perms.rooms.add_room %}
-                <li class="nav-item">
-                  <a href="{% url 'rooms:room_create' %}" class="nav-link">Ajouter une Salles</a>
-                </li>  
-              {% endif %}
-              </ul>
-              </li>
-            {% endif %}
-
-          {% endif %}
-
-        {% endif %}
-
-        {% comment %} {% if user.is_teacher %} {% endcomment %}
-          <!-- Section pour le Professeur -->
-          {% if perms.timetable.view_timetable or perms.availability.view_availabilityresponse %}
-            <li class="nav-item pcoded-menu-caption">
-              <label>Espace Temps</label></li>
-            
-            <!-- Menu des Disponibilité des profs   -->
-            {% if perms.availability.can_view_availabilityrequest_history or perms.availability.can_view_availabilityrequest_pending %}
-              <li class="nav-item pcoded-hasmenu">
-                <a href="javascript:" class="nav-link ">
-                  <span class="pcoded-micon"><i class="feather icon-clock"></i></span>
-                  <span class="pcoded-mtext">Disponibilité</span>
-                </a>
-                <ul class="pcoded-submenu">
-                  {% if perms.availability.can_view_availabilityrequest_pending %}
-                    <li class="nav-item">
-                      <a href="{% url 'availability:teacher_availability_pending_request_list' %}" class="nav-link">Demandes en attente</a>
+                      <a href="{% url 'common:departmentlevelsubject_list' %}" class="nav-link">Liste des Matières/Filières</a>
                     </li>
                   {% endif %}
-              
-                  {% if perms.availability.can_view_availabilityrequest_history %}
+                  
+                  {% if perms.common.add_departmentlevelsubject %}
                     <li class="nav-item">
-                      <a href="{% url 'availability:teacher_availability_request_list' %}" class="nav-link">Historique Disponibilité</a>
+                      <a href="{% url 'common:departmentlevelsubject_add' %}" class="nav-link">Ajouter une Matières/Filières</a>
                     </li>
                   {% endif %}
                 </ul>
               </li>
             {% endif %}
-          
-          <!-- Menu des Emplois du temps -->
-            {% if perms.timetable.view_timetable or perms.timetable.view_coursesession_recap %}
-              <li class="nav-item pcoded-hasmenu">
-                <a href="javascript:" class="nav-link ">
-                  <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
-                  <span class="pcoded-mtext">Emplois du temps</span>
-                </a>
-                <ul class="pcoded-submenu">
-                  {% if perms.timetable.view_timetable %}
-                    <li class="nav-item">
-                      <a href="#" class="nav-link">Emplois du temps </a>
-                    </li>
-                  {% endif %}
-            
-                  {% if perms.timetable.view_coursesession_recap %}
-                    <li class="nav-item">
-                      <a href="#" class="nav-link">Repartition des salles</a>
-                    </li>
-                  {% endif %}
-              </ul>
-            </li>
           {% endif %}
-          
-            <!-- Menu Gestion des absences -->
-            {% comment %} {% if perms.users.view_teacherprofile or perms.users.add_teacherprofile %} {% endcomment %}
-              <li class="nav-item pcoded-hasmenu">
-                <a href="javascript:" class="nav-link ">
-                  <span class="pcoded-micon"><i class="feather icon-user-check"></i></span>
-                  <span class="pcoded-mtext">Cahier de presence</span>
-                </a>
-                <ul class="pcoded-submenu">
-                  {% comment %} {% if perms.users.view_teacherprofile %} {% endcomment %}
-                    <li class="nav-item">
-                      <a href="#" class="nav-link">Liste de présences</a>
-                    </li>  
-                  {% comment %} {% endif %} {% endcomment %}
-              
-                  {% comment %} {% if perms.users.add_teacherprofile %} {% endcomment %}
-                    <li class="nav-item">
-                      <a href="#" class="nav-link">Suivie des Etudiants</a>
-                    </li>
-                  {% comment %} {% endif %} {% endcomment %}
-                </ul>
-              </li>
-            {% comment %} {% endif %} {% endcomment %}
-          {% endif %}
-        {% comment %} {% endif %} {% endcomment %}
-
-        {% if user.is_student %}
-        <!-- Section pour l'Etudiant -->
-        <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
-        <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>
-
-        <li class="nav-item pcoded-menu-caption"><label>Absence</label></li>
-        <li class="nav-item"><a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des absences</a></li>
         {% endif %}
-
-        {% if user.is_parent %}
-        <!-- Section pour le Parent -->
-        <li class="nav-item pcoded-menu-caption"><label>Emplois du temps</label></li>
-        <li class="nav-item"><a href="{% url 'courses:departmentlevel_list' %}" class="nav-link">Liste des emplois du temps</a></li>
-
-        <li class="nav-item pcoded-menu-caption"><label>Absence</label></li>
-        <li class="nav-item"><a href="{% url 'rooms:room_list' %}" class="nav-link">Liste des absences</a></li>
-        {% endif %}
-
-        {% comment %}
-        <!-- Section Notification pour tous les utilisateurs -->
-        <li class="nav-item pcoded-menu-caption"><label>Notifications</label></li>
-        <li class="nav-item"><a href="#" class="nav-link">Voir les notifications</a></li> 
-        {% endcomment %}
 
         {% if user.is_superuser %}  
-        {% admin_get_menu as app_list %}
-        {% if app_list %}
-          {% for app in app_list %}
-            {% if app.has_perms and not app.pinned %}
-              <li data-username="basic components Button Alert Badges breadcrumb Paggination progress Tooltip popovers Carousel Cards Collapse Tabs pills Modal Grid System Typography Extra Shadows Embeds"
-                class="nav-item pcoded-hasmenu"
-              >
-                <a href="javascript:" class="nav-link ">
-                  <span class="pcoded-micon"><i class=" {% if app.icon %}{{ app.icon }} {% else %} feather icon-box {% endif %}"></i></span>
-                  <span class="pcoded-mtext">{{ app.label|slice:10 }}{% if app.label|length > 10 %}..{% endif %}</span>
-                </a>
-                {% if app.models %}
-                  <ul class="pcoded-submenu">
-                    {% for model in app.models %}
-                      {% if model.url %}
-                        <li class="nav-item {% if 'bootstrap-tables' in segment or model.url in request.path|urlencode %} active {% endif %}">
-                          <a class="nav-link" href="{{ model.url }}">{{ model.label }}</a>
-                        </li>
-                      {% else %}
-                        <li class="nav-item">{{ model.label }}</li>
-                      {% endif %}
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-              </li>
-            {% endif %}
-          {% endfor %}
-        {% endif %}
+          {% admin_get_menu as app_list %}
+          {% if app_list %}
+            {% for app in app_list %}
+              {% if app.has_perms and not app.pinned %}
+                <li data-username="basic components Button Alert Badges breadcrumb Paggination progress Tooltip popovers Carousel Cards Collapse Tabs pills Modal Grid System Typography Extra Shadows Embeds"
+                  class="nav-item pcoded-hasmenu"
+                >
+                  <a href="javascript:" class="nav-link ">
+                    <span class="pcoded-micon"><i class=" {% if app.icon %}{{ app.icon }} {% else %} feather icon-box {% endif %}"></i></span>
+                    <span class="pcoded-mtext">{{ app.label|slice:10 }}{% if app.label|length > 10 %}..{% endif %}</span>
+                  </a>
+                  {% if app.models %}
+                    <ul class="pcoded-submenu">
+                      {% for model in app.models %}
+                        {% if model.url %}
+                          <li class="nav-item {% if 'bootstrap-tables' in segment or model.url in request.path|urlencode %} active {% endif %}">
+                            <a class="nav-link" href="{{ model.url }}">{{ model.label }}</a>
+                          </li>
+                        {% else %}
+                          <li class="nav-item">{{ model.label }}</li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </li>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
         {% endif %}
       </ul>
     </div>

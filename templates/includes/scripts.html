@@ -24,6 +24,7 @@
 <script src="{% static 'assets/js/datatable-all-option.js' %}" defer></script>
 
 <script src="{% static 'assets/js/bootstrap-notify.js' %}" defer></script>
+
 <script type="text/javascript">
     $(document).ready(function() {
         {% for message in messages %}
@@ -72,6 +73,7 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
     $(document).ready(function() {
     // Initialisation de select2 pour le sélecteur de matières
@@ -81,63 +83,4 @@
         width: '100%'
     });
     });
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Actions pour tous les boutons "Disponible"
-    document.querySelectorAll('#accept-request').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const requestId = this.getAttribute('data-id');
-
-            fetch("{% url 'availability:accept_availability_request' 0 %}".replace('0', requestId), {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Affiche le message (à toi de définir un conteneur avec l'id "message")
-                    document.querySelector('#message').innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    document.querySelector('#message').innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Erreur lors de la requête :', error);
-            });
-        });
-    });
-
-    // Actions pour tous les boutons "Indisponible"
-    document.querySelectorAll('#reject-request').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const requestId = this.getAttribute('data-id');
-
-            fetch("{% url 'availability:reject_availability_request' 0 %}".replace('0', requestId), {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    document.querySelector('#message').innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    document.querySelector('#message').innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Erreur lors de la requête :', error);
-            });
-        });
-    });
-});
 </script>
