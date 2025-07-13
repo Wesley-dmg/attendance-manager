@@ -6,8 +6,6 @@ from . import views
 app_name = "home"  # Namespace for this application
 
 urlpatterns = [
-    path("Administration/", views.AdminDashboardView, name="admin_dashboard"),
-    path("teacher/", views.TeacherDashboardView, name="teacher_dashboard"),
-    path("AdminDashboard/", views.index, name="index"),
-    # path(   'ma_vue/'    , views.ma_vue,  name='ma_vue'),
+    path("Administration/", views.index, name="dashboard"),
+    path("dashboard/", views.admin, name="index"),
 ]

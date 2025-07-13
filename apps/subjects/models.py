@@ -6,10 +6,15 @@ class Subject(models.Model):
     """
     Représente une matière enseignée dans le cadre d'un département et d'un niveau d'étude.
     """
-    name = models.CharField(max_length=100, verbose_name=_("Nom de la matière"),unique=True)
+    name = models.CharField(max_length=100, verbose_name=_("Nom de la matière"), unique=True)
     code = models.CharField(max_length=10, unique=True, verbose_name=_("Code de la matière"))
     
-    department_levels = models.ManyToManyField('courses.DepartmentLevel', through='common.DepartmentLevelSubject', related_name='subjects', verbose_name=_("Niveaux et départements"))
+    department_levels = models.ManyToManyField(
+        'courses.DepartmentLevel',
+        through='common.DepartmentLevelSubject',
+        related_name='subjects',
+        verbose_name=_("Niveaux et départements")
+    )
 
     def is_assigned_to_level_and_department(self, level, department):
         """
@@ -30,3 +35,9 @@ class Subject(models.Model):
         if not self.code.isalnum():
             raise ValidationError(_("Le code de la matière doit être alphanumérique."))
         super().clean()
+
+    def save(self, *args, **kwargs):
+        # Capitaliser automatiquement le nom
+        if self.name:
+            self.name = self.name.capitalize()
+        super().save(*args, **kwargs)

@@ -3,7 +3,6 @@ import random
 import string
 from django.shortcuts import render
 
-from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from django.shortcuts import get_object_or_404
@@ -98,8 +97,7 @@ def CustomregisterView(request):
 
 # Ajoute les redirections pour chaque rôle dans un dictionnaire pour plus de lisibilité
 ROLE_REDIRECTS = {
-    "admin": "home:admin_dashboard",
-    "teacher": "home:teacher_dashboard",
+    "admin": "home:dashboard",
 }
 
 
@@ -150,7 +148,6 @@ def CustomLoginView(request):
     return render(
         request, "accounts/auth-signin.html", {"form": form, "next": next_url}
     )
-
 
 # Vue pour le changement de mot de passe
 class CustomPasswordChangeView(PasswordChangeView):
@@ -220,7 +217,6 @@ class CustomPasswordResetView(PasswordResetView):
 
         return redirect(self.success_url)
 
-
 # Vue pour réinitialiser le mot de passe
 class CustomPasswordResetConfirmView(FormView):
     template_name = "accounts/auth-password-reset-confirm.html"
@@ -267,7 +263,6 @@ class CustomPasswordResetConfirmView(FormView):
         del self.request.session["reset_user_id"]  # Nettoie la session pour la sécurité
         return super().form_valid(form)
 
-
 class PasswordResetCodeView(View):
     template_name = "accounts/password_reset_code.html"
     form_class = PasswordResetCodeForm
@@ -306,10 +301,8 @@ def custom_logout(request):
     send_custom_message(request, _("Vous êtes déconnecté avec succès."), "success")
     return redirect(reverse("users:login"))
 
-
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = "users/profiles.html"
-    # permission_required= 'users.view_profile'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -322,28 +315,28 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             context["profile"] = get_object_or_404(StudentProfile, user=user)
         elif user.is_parent:
             context["profile"] = get_object_or_404(ParentProfile, user=user)
+        elif user.is_admin:
+            context["profile"] = get_object_or_404(AdminProfile, user=user)
         else:
-            context["profile"] = None  # Admins ou autres rôles sans profil spécifique
+            context["profile"] = None  # Aucun profil associé
 
         # Ajouter le formulaire de mise à jour dans le contexte
         context["form"] = UserUpdateForm(instance=user)
         return context
 
 
-class ProfileUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class ProfileUpdateView(LoginRequiredMixin,UpdateView):
     model = CustomUser
     form_class = UserUpdateForm
     template_name = "users/profiles.html"
-    permission_required = "users.change_profile"
     success_url = reverse_lazy("users:profiles")
 
     def get_object(self, queryset=None):
         return self.request.user
 
-
 # Liste
 class UserListView(
-    LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, ListView
+    LoginRequiredMixin, AdminTestMixin, ListView
 ):
     model = CustomUser
     context_object_name = "users"

@@ -20,9 +20,8 @@ class ParentProfileAdmin(admin.ModelAdmin):
 
 class AdminProfileAdmin(admin.ModelAdmin):
     # Affiche les champs dans la liste des objets du modèle
-    list_display = ('user','managed_departments')
-    search_fields = ('user__username', 'user__email',  'managed_departments')
-    list_filter = ('managed_departments',)
+    list_display = ('user',)
+    search_fields = ('user__username', 'user__email') 
     ordering = ('user',)
     
     

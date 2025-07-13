@@ -19,8 +19,8 @@
         </li>
 
         <!-- Tableau de bord accessible par tous les utilisateurs -->
-        <li class="nav-item {% if 'index' in segment %}active{% endif %}">
-          <a href=" " class="nav-link ">
+        <li class="nav-item active">
+          <a href="{% url "home:dashboard" %}" class="nav-link ">
             <span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Tableau de bord</span>
           </a>
         </li>
@@ -116,6 +116,18 @@
               </li>
             {% endif %}
           {% endif %}
+            
+          <li class="nav-item active">
+            <a href="{% url 'home:dashboard' %}" class="nav-link ">
+              <span class="pcoded-micon"><i class="feather icon-bell"></i></span>
+              <span class="pcoded-mtext">
+                Notification
+                {% if notification_count > 0 %}
+                  <span class="badge badge-danger">{{ notification_count }}</span>
+                {% endif %}
+              </span>
+            </a>
+          </li>
 
           {% comment %} {% if perms.timetable.view_timetable or perms.availability.view_availabilityrequest %} {% endcomment %}
               <li class="nav-item pcoded-menu-caption">
@@ -216,6 +228,7 @@
             {% endif %}
           {% endif %}
         {% endif %}
+
 
         {% if user.is_superuser %}  
           {% admin_get_menu as app_list %}

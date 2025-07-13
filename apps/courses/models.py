@@ -19,7 +19,13 @@ class Department(models.Model):
     
     def __str__(self):
         return self.name
-        
+    
+    def save(self, *args, **kwargs):
+        # Met le name en majuscules avant sauvegarde
+        if self.name:
+            self.name = self.name.upper()
+        super().save(*args, **kwargs)
+
 class Level(models.Model):
     """
     Représente un niveau d'étude dans le cursus (Licence 1, Master 2, etc.).
@@ -28,8 +34,6 @@ class Level(models.Model):
         ('L1', _('Licence 1')),
         ('L2', _('Licence 2')),
         ('L3', _('Licence 3')),
-        ('M1', _('Master 1')),
-        ('M2', _('Master 2')),
     )
 
     name = models.CharField(max_length=2, choices=LEVEL_CHOICES, unique=True, verbose_name=_('Niveau'))
@@ -46,6 +50,7 @@ class DepartmentLevel(models.Model):
     Relation entre un département et un niveau d'étude. 
     Un département peut avoir plusieurs niveaux d'études, et un niveau peut appartenir à plusieurs départements.
     """
+    
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='department_levels', verbose_name=_('Département'))
     level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name='department_levels', verbose_name=_('Niveau'))
 

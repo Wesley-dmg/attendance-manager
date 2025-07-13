@@ -8,9 +8,8 @@ from django.db import transaction
 from django.apps import apps
 
 phone_number_validator = RegexValidator(
-    regex=r"^(?:\+229|00229|\d{10})[\s-]?(\d{2,})[\s-]?(\d{2,})[\s-]?(\d{2,})[\s-]?(\d{2,})[\s-]?(\d{2,})$",
-    message="Numéro de téléphone non valide.",
-)
+    regex=r'^(\d{8}|\d{10}|(\d{2}( \d{2}){3})|(\d{2}( \d{2}){4}))$',
+    message="Numéro invalide. Format accepté : 8 ou 10 chiffres ex : 97011234,97 01 12 34 ou 01 97 01 12 34")
 
 
 class CustomUser(AbstractUser):
@@ -51,16 +50,7 @@ class CustomUser(AbstractUser):
     last_login = models.DateTimeField(
         null=True, blank=True, verbose_name=_("Dernier login")
     )
-    preferred_contact_method = models.CharField(
-        max_length=20,
-        choices=[
-            ("email", _("Email")),
-            ("sms", _("SMS")),
-            ("none", _("Aucun")),
-        ],
-        default="email",
-        verbose_name=_("Méthode de contact préférée"),
-    )
+    
     gender = models.CharField(
         max_length=10,
         choices=GENDER_CHOICES,
@@ -86,7 +76,6 @@ class CustomUser(AbstractUser):
         max_length=6, blank=True, null=True, verbose_name=_("Code de réinitialisation")
     )
 
-    # Ajout des related_name pour éviter les conflits
     groups = models.ManyToManyField(
         Group, related_name="customuser_groups", blank=True, verbose_name=_("Groupes")
     )
@@ -101,11 +90,7 @@ class CustomUser(AbstractUser):
         verbose_name = _("Utilisateur personnalisé")
         verbose_name_plural = _("Utilisateurs personnalisés")
         ordering = ["-date_joined"]
-        permissions = [
-            ("view_profile", "Peut voir son profil"),
-            ("change_profile", "Peut modifier son profil"),
-        ]
-
+        
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
 
@@ -135,19 +120,6 @@ class CustomUser(AbstractUser):
                     ]
                 )
 
-    def needs_password_change(self):
-        """Vérifie si l'utilisateur doit changer son mot de passe."""
-        if self.first_login or self.password_updated_at is None:
-            return True
-        days_since_last_update = (timezone.now() - self.password_updated_at).days
-        return days_since_last_update >= 90
-
-    def mark_password_as_changed(self):
-        """Marquer le mot de passe comme changé et mettre à jour la date."""
-        self.password_changed = True
-        self.password_updated_at = timezone.now()
-        self.first_login = False
-
     def has_role(self, role):
         if not self.is_authenticated:
             return False
@@ -174,9 +146,9 @@ class AdminProfile(models.Model):
     user = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, verbose_name=_("Utilisateur")
     )
-    managed_departments = models.TextField(
-        blank=True, verbose_name=_("Départements gérés")
-    )
+    # managed_departments = models.TextField(
+    #     blank=True, verbose_name=_("Départements gérés")
+    # )
 
     def __str__(self):
         return f"Administrateur: {self.user.get_full_name()}"
@@ -237,30 +209,9 @@ class StudentProfile(models.Model):
         related_name="students",
         verbose_name=_("Fillière d’étude"),
     )
-    is_class_representative = models.BooleanField(
-        default=False, verbose_name=_("Représentant de classe")
-    )
-
+    
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} - {self.major}"
-
-    def save(self, *args, **kwargs):
-        # Limiter à 3 responsables par niveau
-        if self.is_class_representative:
-            num_representatives = (
-                StudentProfile.objects.filter(
-                    major=self.major, is_class_representative=True
-                )
-                .exclude(pk=self.pk)
-                .count()
-            )
-            if num_representatives >= 3:
-                raise ValidationError(
-                    _(
-                        f"Il ne peut pas y avoir plus de trois représentants dans le niveau {self.major}. Actuellement : {num_representatives}."
-                    )
-                )
-        super().save(*args, **kwargs)
 
     def get_enrollment_status(self):
         """Retourne le statut d'inscription de l'étudiant"""
