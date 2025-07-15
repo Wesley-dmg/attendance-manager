@@ -1,13 +1,15 @@
+import hashlib
 from django.core.cache import cache
 import random
 import string
 from django.shortcuts import render
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404
 
 from apps.home.mixins import AdminTestMixin
+from apps.users.utils import generate_reset_code
 
 from .forms import UserUpdateForm
 from django.contrib.auth import login, authenticate, update_session_auth_hash
@@ -64,6 +66,7 @@ def generate_password():
 
 
 # Vue pour l'inscription
+# @user_passes_test(lambda u: u.is_authenticated and u.is_superuser)
 def CustomregisterView(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
@@ -94,7 +97,6 @@ def CustomregisterView(request):
         form = CustomUserCreationForm()
     return render(request, "accounts/auth-signup.html", {"form": form})
 
-
 # Ajoute les redirections pour chaque rôle dans un dictionnaire pour plus de lisibilité
 ROLE_REDIRECTS = {
     "admin": "home:dashboard",
@@ -117,6 +119,10 @@ def CustomLoginView(request):
 
             user = authenticate(request, username=username, password=password)
             if user is not None:
+                if user.role != "admin":
+                    send_custom_message(request, _("Accès refusé. Vous n'êtes pas un administrateur."), "error")
+                    return redirect("users:login")
+                
                 if user.first_login:
                     user.first_login = False
                     user.first_login_date = timezone.now()
@@ -136,6 +142,7 @@ def CustomLoginView(request):
                 send_custom_message(
                     request, _("Nom d'utilisateur ou mot de passe incorrect."), "error"
                 )
+            
         else:
             send_custom_message(
                 request,
@@ -164,7 +171,6 @@ class CustomPasswordChangeView(PasswordChangeView):
         )
         return super().form_valid(form)
 
-
 # Vue pour la demande de réinitialisation du mot de passe
 class CustomPasswordResetView(PasswordResetView):
     form_class = CustomPasswordResetForm
@@ -181,24 +187,16 @@ class CustomPasswordResetView(PasswordResetView):
             )
             return self.form_invalid(form)
 
-        # Génération du code de validation à 6 chiffres
-        reset_code = "".join(random.choices("0123456789", k=6))
+        # ✅ Génération sécurisée du code
+        code, hashed_code = generate_reset_code()
+        user.reset_code = hashed_code
+        user.reset_code_expiry = timezone.now() + timezone.timedelta(minutes=5)
+        user.save(update_fields=["reset_code", "reset_code_expiry"])
 
-        # Vérification de l'unicité (non nécessaire si c'est un code aléatoire mais peut être ajouté pour la sécurité)
-        existing_code_user = CustomUser.objects.filter(reset_code=reset_code).first()
-        while existing_code_user:
-            reset_code = "".join(random.choices("0123456789", k=6))
-            existing_code_user = CustomUser.objects.filter(
-                reset_code=reset_code
-            ).first()
-
-        user.reset_code = reset_code
-        user.save()
-
-        # Envoie du code par email
+        # ✅ Envoie du code par email
         send_mail(
             "Code de réinitialisation de votre mot de passe",
-            f"Votre code de réinitialisation est : {reset_code}",
+            f"Votre code de réinitialisation est : {code}",
             "from@example.com",
             [email],
             fail_silently=False,
@@ -209,11 +207,6 @@ class CustomPasswordResetView(PasswordResetView):
             _("Un code de réinitialisation a été envoyé par email."),
             "success",
         )
-
-        # Stocke le code dans le cache avec une expiration
-        cache.set(
-            f"reset_code_{user.id}", reset_code, timeout=160
-        )  # 160 secondes = 3 minutes
 
         return redirect(self.success_url)
 
@@ -274,27 +267,38 @@ class PasswordResetCodeView(View):
     def post(self, request):
         form = self.form_class(request.POST)
         if form.is_valid():
-            code = form.cleaned_data["code"]
-            user = CustomUser.objects.filter(reset_code=code).first()
+            code = form.cleaned_data["code"].upper()
+            now = timezone.now()
+
+            # ✅ Vérifie le hash du code
+            hashed_code = hashlib.sha256(code.encode()).hexdigest()
+            user = CustomUser.objects.filter(reset_code=hashed_code).first()
+
             if user:
-                # Code validé - on stocke l'ID de l'utilisateur pour la réinitialisation
+                if user.reset_code_expiry and user.reset_code_expiry < now:
+                    send_custom_message(
+                        request, _("Le code a expiré. Veuillez en redemander un nouveau."), "error"
+                    )
+                    return render(request, self.template_name, {"form": form})
+
+                # ✅ Code valide
                 request.session["reset_user_id"] = user.id
-                user.reset_code = None  # Supprime le code pour la sécurité
-                user.save()
+                user.reset_code = None
+                user.reset_code_expiry = None
+                user.save(update_fields=["reset_code", "reset_code_expiry"])
+
                 send_custom_message(
-                    self.request,
-                    _(
-                        "Code validé. Vous pouvez maintenant définir un nouveau mot de passe."
-                    ),
+                    request,
+                    _("Code validé. Vous pouvez maintenant définir un nouveau mot de passe."),
                     "success",
                 )
                 return redirect("users:password_reset_confirm")
             else:
                 send_custom_message(
-                    self.request, _("Code de réinitialisation invalide."), "error"
+                    request, _("Code de réinitialisation invalide."), "error"
                 )
-        return render(request, self.template_name, {"form": form})
 
+        return render(request, self.template_name, {"form": form})
 
 def custom_logout(request):
     logout(request)
@@ -323,7 +327,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         # Ajouter le formulaire de mise à jour dans le contexte
         context["form"] = UserUpdateForm(instance=user)
         return context
-
 
 class ProfileUpdateView(LoginRequiredMixin,UpdateView):
     model = CustomUser
@@ -355,7 +358,6 @@ class AdminListView(UserListView):
 
     def get_queryset(self):
         return CustomUser.objects.filter(role="admin")
-
 
 class TeacherListView(UserListView):
     template_name = "users/admin/teachers_list.html"
@@ -401,7 +403,6 @@ class ParentListView(UserListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role="parent")
 
-
 # Create
 class UserCreateView(
     LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, CreateView
@@ -409,42 +410,32 @@ class UserCreateView(
     template_name = "users/admin/user_form.html"
 
     def form_valid(self, form):
-        # Vérification si un utilisateur existe déjà avec cet email ou nom d'utilisateur
-        username = form.cleaned_data["email"].split("@")[0]
-        email = form.cleaned_data["email"]
+        phone = form.cleaned_data.get("phone_number")
+
+        if not phone:
+            form.add_error("phone_number", "Le numéro de téléphone est requis.")
+            return self.form_invalid(form)
 
         User = get_user_model()
-        if User.objects.filter(username=username).exists():
-            form.add_error(
-                "email", "Un utilisateur avec ce nom d'utilisateur existe déjà."
-            )
+
+        if User.objects.filter(username=phone).exists():
+            form.add_error("phone_number", "Un utilisateur avec ce numéro existe déjà.")
             return self.form_invalid(form)
 
-        if User.objects.filter(email=email).exists():
-            form.add_error("email", "Un utilisateur avec cet email existe déjà.")
-            return self.form_invalid(form)
+        # # ➤ Utiliser le numéro de téléphone comme username
+        # form.instance.username = phone
+        form.instance.set_unusable_password()  # Pas de mot de passe
 
-        # Générer un nom d'utilisateur et mot de passe
-        form.instance.username = form.cleaned_data["email"].split("@")[0]
-        password = generate_password()
-        form.instance.set_password(password)
-
-        # Sauvegarder l'utilisateur et envoyer l'email
         user = form.save()
-        send_mail(
-            "Bienvenue",
-            f'Nom d’utilisateur: {user.username}\nMot de passe: {password}\nLien: {self.request.build_absolute_uri(reverse_lazy("users:login"))}',
-            "admin@exemple.com",
-            [user.email],
-            fail_silently=False,
-        )
+
+        # ➤ Message de succès
         send_custom_message(
             self.request,
-            _(f"{user.role.capitalize()} créé avec succès et email envoyé."),
+            _(f"{user.role.capitalize()} créé avec succès."),
             "success",
         )
-        return super().form_valid(form)
 
+        return super().form_valid(form)
 
 class AdminCreateView(UserCreateView):
     form_class = AdminForm
@@ -542,7 +533,6 @@ class UserUpdateView(
 
     def get_initial(self):
         initial = super().get_initial()
-        # Convertit la date de naissance en format ISO pour être compatible avec le champ date
         if self.object.date_of_birth:
             initial["date_of_birth"] = self.object.date_of_birth.strftime("%Y-%m-%d")
         return initial
@@ -550,6 +540,22 @@ class UserUpdateView(
     def get_success_url(self):
         return self.extra_context["cancel_url"]
 
+    def form_valid(self, form):
+        phone = form.cleaned_data.get("phone_number")
+
+        if not phone:
+            form.add_error("phone_number", "Le numéro de téléphone est requis.")
+            return self.form_invalid(form)
+
+        User = get_user_model()
+        qs = User.objects.filter(phone_number=phone).exclude(pk=self.object.pk)
+        if qs.exists():
+            form.add_error("phone_number", "Ce numéro est déjà utilisé.")
+            return self.form_invalid(form)
+
+        # # Toujours garder username = phone_number
+        # form.instance.username = phone
+        return super().form_valid(form)
 
 class AdminUpdateView(UserUpdateView):
     form_class = AdminUpdateForm  # Utilisez AdminUpdateForm au lieu de AdminForm

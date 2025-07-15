@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",  # Include DRF           # <-- NEW
     "rest_framework.authtoken",  # Include DRF Auth      # <-- NEW
+    "attendance_api",
 ]
 
 MIDDLEWARE = [
@@ -217,6 +218,17 @@ INTERNAL_IPS = [
 # Pour autoriser toutes les origines (à restreindre en prod)
 CORS_ALLOW_ALL_ORIGINS = True
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_WHATSAPP_SANDBOX_NUMBER = os.getenv("TWILIO_WHATSAPP_SANDBOX_NUMBER")
+
 # Ou bien définir des origines spécifiques
 # CORS_ALLOWED_ORIGINS = [
 #    "https://monappmobile.com",
@@ -241,3 +253,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 #     SECURE_HSTS_SECONDS = 3600
 #     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 #     SECURE_HSTS_PRELOAD = True
+
+

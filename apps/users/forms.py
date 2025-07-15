@@ -11,11 +11,6 @@ import string
 
 # Formulaire d'inscription pour les administrateurs uniquement
 class CustomUserCreationForm(UserCreationForm):
-    # admin_type = forms.ChoiceField(
-    #     choices=AdminType.ADMIN_TYPE_CHOICES,
-    #     label=_("Type d'administrateur"),
-    #     widget=forms.Select(attrs={'class': 'form-control'})
-    # )
     password1 = forms.CharField(
         label=_("Mot de passe"),
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Mot de passe'}),
@@ -182,14 +177,25 @@ class PasswordResetCodeForm(forms.Form):
 class BaseUserForm(forms.ModelForm):
     first_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Prénom'}))
     last_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom'}))
-    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
+    email = forms.EmailField(required=False,widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),label="Email")
     date_of_birth = forms.DateField(
     widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'placeholder': 'AAAA-MM-JJ'}, format='%Y-%m-%d'),required=False)
     gender = forms.ChoiceField(choices=CustomUser.GENDER_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}), required=False)
-
+    phone_number = forms.CharField( required=True, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Téléphone'}), label="Téléphone")
+    
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'date_of_birth', 'gender']
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'date_of_birth', 'gender']
+    
+    def clean_phone_number(self):
+        phone = self.cleaned_data['phone_number']
+        qs = CustomUser.objects.filter(phone_number=phone)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
+        return phone
+
 
 # Formulaire pour les administrateurs
 class AdminForm(BaseUserForm):
@@ -226,10 +232,14 @@ class TeacherForm(BaseUserForm):
             user.save()
             teacher_profile, created = TeacherProfile.objects.get_or_create(user=user)
             teacher_profile.subjects.set(self.cleaned_data['subjects'])
-            # teacher_profile.department_levels.set(self.cleaned_data['department_levels'])
-        
+                
         return user
-
+    
+    def clean_phone_number(self):
+        phone = self.cleaned_data['phone_number']
+        if CustomUser.objects.filter(phone_number=phone).exists():
+            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
+        return phone
 
 # Formulaire pour les étudiants
 class StudentForm(BaseUserForm):
@@ -307,6 +317,15 @@ class TeacherUpdateForm(BaseUserForm):
             
             teacher_profile.save()
         return user
+    
+    def clean_phone_number(self):
+        phone = self.cleaned_data['phone_number']
+        qs = CustomUser.objects.filter(phone_number=phone)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
+        return phone
 
 class StudentUpdateForm(BaseUserForm):
     major = forms.ModelChoiceField(queryset=DepartmentLevel.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}), required=True)

@@ -114,13 +114,10 @@
                   <i class="feather icon-user"></i>Profile
                 </a>
               </li>
-              <li>
-                <a href="#" class="dropdown-item"><i class="feather icon-lock"></i> Lock
-                  Screen</a></li>
               {% if request.user.is_authenticated %}
               <li>
                 {% if request.user.is_superuser %}
-                <a href="{% url 'users:password_change' %}" class="dropdown-item">
+                <a href="{% url 'users:password_reset' %}" class="dropdown-item">
                 {% else %}
                 <a href="{% url 'users:password_change' %}" class="dropdown-item">
                 {% endif %}

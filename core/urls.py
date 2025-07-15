@@ -6,7 +6,6 @@ from core import settings  # <-- NEW
 from django.conf.urls.static import static
 
 urlpatterns = [
-    
     path("", include("apps.home.urls")),
     
     path("admin/", admin.site.urls),
@@ -20,6 +19,9 @@ urlpatterns = [
     path("subjects/", include(("apps.subjects.urls", "subjects"), namespace="subjects")),  # Inclure les URLs de l'app 'subjects'
     
     path("common/", include(("apps.common.urls", "common"), namespace="common")),  # Inclure les URLs de l'app 'common'
+    
+    path("api/", include("attendance_api.urls")),
+
 ]
 
 # Servir les fichiers médias en mode développement
