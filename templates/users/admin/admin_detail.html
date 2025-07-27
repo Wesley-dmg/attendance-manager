@@ -1,0 +1,35 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card mx-auto shadow" style="max-width: 600px;">
+        <div class="card-header  text-center">
+            <h5 class="mb-0">Détails de l'Administrateur</h5>
+        </div>
+        <div class="card-body text-center">
+            <!-- Image de profil -->
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="Photo de profil" class="img-thumbnail rounded-circle mb-3" style="width: 120px; height: 120px;">
+            {% else %}
+                <img src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="Photo par défaut" class="img-thumbnail rounded-circle mb-3" style="width: 120px; height: 120px;">
+            {% endif %}
+
+            <!-- Infos utilisateur -->
+            <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+        <p class="d-flex my-4 justify-content-between"><strong class="mx-1">Email :</strong> {{ user_obj.email }}</p>
+        <p class="d-flex my-4 justify-content-between"><strong class="mx-1">Téléphone :</strong> {{ user_obj.phone_number }}</p>
+          {% if user.address %}
+            <p class="d-flex my-4 justify-content-between"><strong class="mx-1">Adresse :</strong> {{ user.address }}</p>
+          {% endif %}
+          {% if user.gender %}
+            <p class="d-flex my-4 justify-content-between"><strong class="mx-1">Genre :</strong> {{ user.get_gender_display }}</p>
+          {% endif %}
+          {% if user.date_of_birth %}
+              <p class="d-flex my-4 justify-content-between"><strong class="mx-1">Date de naissance :</strong> {{ user.date_of_birth|date:"d M Y" }}</p>
+          {% endif %}
+          <p class="d-flex my-4 justify-content-between"><strong class="mx-1">Rôle :</strong> {{ user_obj.get_role_display }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,10 +1,11 @@
 from django.utils import timezone
 from apps.users.models import StudentArchiveHistory, StudentProfile
-from attendance_api.serializers.students import StudentSerializer
+from api.serializers.students import StudentSerializer
 from rest_framework.response import Response
 
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+
 
 class StudentsByDepartmentsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -14,9 +15,14 @@ class StudentsByDepartmentsView(APIView):
         if not isinstance(department_ids, list) or not department_ids:
             return Response({"error": "Liste de filières invalide."}, status=400)
 
-        students = StudentProfile.objects.filter(major__id__in=department_ids, archived=False).select_related("user").order_by("user__last_name")
+        students = (
+            StudentProfile.objects.filter(major__id__in=department_ids, archived=False)
+            .select_related("user")
+            .order_by("user__last_name")
+        )
         serializer = StudentSerializer(students, many=True)
         return Response(serializer.data)
+
 
 def archive_student(student, reason="Trop d’absences"):
     student.archived = True
@@ -24,7 +30,9 @@ def archive_student(student, reason="Trop d’absences"):
     student.archived_reason = reason
     student.save(update_fields=["archived", "archived_at", "archived_reason"])
 
-    StudentArchiveHistory.objects.create(student=student, action="archived", reason=reason)
+    StudentArchiveHistory.objects.create(
+        student=student, action="archived", reason=reason
+    )
 
 
 def unarchive_student(student, reason="Réintégration manuelle"):
@@ -33,5 +41,6 @@ def unarchive_student(student, reason="Réintégration manuelle"):
     student.archived_reason = None
     student.save(update_fields=["archived", "archived_at", "archived_reason"])
 
-    StudentArchiveHistory.objects.create(student=student, action="unarchived", reason=reason)
-
+    StudentArchiveHistory.objects.create(
+        student=student, action="unarchived", reason=reason
+    )

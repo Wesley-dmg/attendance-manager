@@ -1,0 +1,65 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card mx-auto shadow" style="max-width: 700px;">
+        <div class="card-header text-center">
+            <h5 class="mb-0">Détails du Parent</h5>
+        </div>
+        <div class="card-body text-center">
+
+            {% if user_obj.profile_picture %}
+                <img src="{{ user_obj.profile_picture.url }}" alt="Photo de profil"
+                     class="img-thumbnail rounded-circle mb-3"
+                     style="width: 120px; height: 120px;">
+            {% else %}
+                <img src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="Photo par défaut"
+                     class="img-thumbnail rounded-circle mb-3"
+                     style="width: 120px; height: 120px;">
+            {% endif %}
+
+            <h4>{{ user_obj.first_name }} {{ user_obj.last_name }}</h4>
+
+            <p class="d-flex justify-content-between"><strong>Email :</strong> {{ user_obj.email }}</p>
+            <p class="d-flex justify-content-between"><strong>Téléphone :</strong> {{ user_obj.phone_number }}</p>
+            {% if user_obj.gender %}
+                <p class="d-flex justify-content-between"><strong>Genre :</strong> {{ user_obj.get_gender_display }}</p>
+            {% endif %}
+            {% if user_obj.date_of_birth %}
+                <p class="d-flex justify-content-between"><strong>Date de naissance :</strong> {{ user_obj.date_of_birth|date:"d M Y" }}</p>
+            {% endif %}
+            {% if user_obj.address %}
+                <p class="d-flex justify-content-between"><strong>Adresse :</strong> {{ user_obj.address }}</p>
+            {% endif %}
+
+            <p class="d-flex justify-content-between"><strong>Rôle :</strong> {{ user_obj.get_role_display }}</p>
+
+            {% if parent_profile %}
+                <hr>
+                <h5 class="text-primary mt-3">Lien parental</h5>
+                <p class="d-flex justify-content-between"><strong>Relation avec l'enfant :</strong> {{ parent_profile.get_relation_display }}</p>
+            {% endif %}
+
+            {% if children %}
+                <hr>
+                <h5 class="text-primary mt-3">Enfants associés</h5>
+                <ul class="list-group text-start">
+                    {% for child in children %}
+                        <li class="list-group-item">
+                            <strong>{{ child.user.get_full_name }}</strong><br>
+                            {% if child.student_id %}
+                                <small>ID : {{ child.student_id }} — </small>
+                            {% endif %}
+                            <small>{{ child.major }} | {{ child.get_enrollment_status_display }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="mt-3 text-muted">Aucun enfant associé.</p>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

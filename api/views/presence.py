@@ -4,8 +4,12 @@ from rest_framework.permissions import IsAuthenticated
 
 from apps.subjects.models import Subject
 from apps.users.models import StudentProfile, TeacherProfile
-from attendance_api.models import Attendance
-from attendance_api.serializers.presence import AttendanceCreateSerializer, SubjectSerializer
+from api.models import Attendance
+from api.serializers.presence import (
+    AttendanceCreateSerializer,
+    SubjectSerializer,
+)
+
 
 class TeacherSubjectsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -13,8 +17,10 @@ class TeacherSubjectsView(APIView):
     def get(self, request):
         user = request.user
         if not user.is_teacher:
-            return Response({"error": "Accès refusé. Réservé aux enseignants."}, status=403)
-        
+            return Response(
+                {"error": "Accès refusé. Réservé aux enseignants."}, status=403
+            )
+
         try:
             teacher_profile = TeacherProfile.objects.get(user=user)
         except TeacherProfile.DoesNotExist:
@@ -23,6 +29,7 @@ class TeacherSubjectsView(APIView):
         subjects = teacher_profile.subjects.all()
         serializer = SubjectSerializer(subjects, many=True)
         return Response(serializer.data)
+
 
 class CreateAttendanceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -34,7 +41,10 @@ class CreateAttendanceView(APIView):
 
         user = request.user
         if not user.is_teacher:
-            return Response({"error": "Seuls les enseignants peuvent enregistrer une présence."}, status=403)
+            return Response(
+                {"error": "Seuls les enseignants peuvent enregistrer une présence."},
+                status=403,
+            )
 
         data = serializer.validated_data
         subject_id = data["subject_id"]
@@ -50,7 +60,7 @@ class CreateAttendanceView(APIView):
 
         students = StudentProfile.objects.filter(
             major__id__in=department_ids,
-            archived=False  # ⚠️ important : n’inclure que les actifs
+            archived=False,  # ⚠️ important : n’inclure que les actifs
         ).select_related("user")
 
         created, updated = 0, 0
@@ -62,7 +72,7 @@ class CreateAttendanceView(APIView):
                 teacher=teacher_profile,
                 subject=subject,
                 date=date,
-                defaults={"status": status}
+                defaults={"status": status},
             )
 
             if not is_created and obj.status != status:
@@ -72,11 +82,14 @@ class CreateAttendanceView(APIView):
             elif is_created:
                 created += 1
 
-        return Response({
-            "message": f"Présence enregistrée.",
-            "absents": len(absent_ids),
-            "présents": students.count() - len(absent_ids),
-            "créés": created,
-            "modifiés": updated,
-            "total": students.count()
-        }, status=201)
+        return Response(
+            {
+                "message": f"Présence enregistrée.",
+                "absents": len(absent_ids),
+                "présents": students.count() - len(absent_ids),
+                "créés": created,
+                "modifiés": updated,
+                "total": students.count(),
+            },
+            status=201,
+        )

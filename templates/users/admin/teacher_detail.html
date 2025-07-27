@@ -1,0 +1,57 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container ">
+    <div class="card mx-auto shadow" style="max-width: 600px;">
+        <div class="card-header text-center">
+            <h5 class="mb-0">{{ title }}</h5>
+        </div>
+        <div class="card-body text-center">
+            <!-- Image de profil -->
+            {% if user_obj.profile_picture %}
+                <img src="{{ user_obj.profile_picture.url }}" alt="Photo de profil" class="img-thumbnail rounded-circle mb-3" style="width: 120px; height: 120px;">
+            {% else %}
+                <img src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="Photo par défaut" class="img-thumbnail rounded-circle mb-3" style="width: 120px; height: 120px;">
+            {% endif %}
+
+            <!-- Infos générales -->
+            <h4>{{ user_obj.first_name }} {{ user_obj.last_name }}</h4>
+            <p class="d-flex my-1 justify-content-between"><strong class="mx-1">Email :</strong> {{ user_obj.email }}</p>
+            <p class="d-flex my-1 justify-content-between"><strong class="mx-1">Téléphone :</strong> {{ user_obj.phone_number }}</p>
+            {% if user_obj.address %}
+                <p class="d-flex my-1 justify-content-between"><strong class="mx-1">Adresse :</strong> {{ user_obj.address }}</p>
+            {% endif %}
+            {% if user_obj.gender %}
+                <p class="d-flex my-2 justify-content-between"><strong class="mx-1">Genre :</strong> {{ user_obj.get_gender_display }}</p>
+            {% endif %}
+            {% if user_obj.date_of_birth %}
+                <p class="d-flex my-2 justify-content-between"><strong class="mx-1">Date de naissance :</strong> {{ user_obj.date_of_birth|date:"d M Y" }}</p>
+            {% endif %}
+            <p class="d-flex my-2 justify-content-between"><strong class="mx-1">Rôle :</strong> {{ user_obj.get_role_display }}</p>
+
+            <!-- Infos spécifiques : Profil enseignant -->
+            <hr>
+            <h5 class="mt-4">Informations pédagogiques</h5>
+            <p class="d-flex my-2 justify-content-between"><strong class="mx-1">Grade :</strong> {{ teacher_profile.grade }}</p>
+            <p class="d-flex my-2 justify-content-between"><strong class="mx-1">Matières enseignées :</strong>
+                {% if teacher_profile.subjects.all %}
+                    <span class="list-unstyled mb-0">
+                        {% for subject in teacher_profile.subjects.all %}
+                            <i>{{ subject.name }}</i>
+                        {% endfor %}
+                    </span>
+                {% else %}
+                    <span>Aucune matière renseignée</span>
+                {% endif %}
+            </p>
+
+            <!-- Boutons -->
+            <div class="mt-4">
+                
+                <a href="{{ cancel_url }}" class="btn btn-secondary">Retour</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -13,7 +13,7 @@ load_dotenv()  # take environment variables from .env.
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECURITY WA RNING: keep the secret key used in production secret!
 # SECRET_KEY = os.environ.get("SECRET_KEY")
 # if not SECRET_KEY:
 #     SECRET_KEY = "".join(random.choice(string.ascii_lowercase) for i in range(32))
@@ -60,10 +60,11 @@ INSTALLED_APPS = [
     "apps.home",  # Application pour gérer les fonction de base de  l'application comme  les  notification systeme  d'alert et  autre
     "apps.subjects",  # Application pour gérer les matières
     "apps.users",  # Application pour gérer les utilisateurs
-    "corsheaders",
-    "rest_framework",  # Include DRF           # <-- NEW
-    "rest_framework.authtoken",  # Include DRF Auth      # <-- NEW
-    "attendance_api",
+    "apps.attendance",  # Application pour gérer les Présence
+    # "corsheaders",
+    # "rest_framework",  # Include DRF           # <-- NEW
+    # "rest_framework.authtoken",  # Include DRF Auth      # <-- NEW
+    "api",
 ]
 
 MIDDLEWARE = [
@@ -219,11 +220,11 @@ INTERNAL_IPS = [
 CORS_ALLOW_ALL_ORIGINS = True
 
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
+# REST_FRAMEWORK = {
+#     "DEFAULT_AUTHENTICATION_CLASSES": (
+#         "rest_framework_simplejwt.authentication.JWTAuthentication",
+#     ),
+# }
 
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
@@ -253,5 +254,3 @@ TWILIO_WHATSAPP_SANDBOX_NUMBER = os.getenv("TWILIO_WHATSAPP_SANDBOX_NUMBER")
 #     SECURE_HSTS_SECONDS = 3600
 #     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 #     SECURE_HSTS_PRELOAD = True
-
-

@@ -7,7 +7,7 @@
         <div class="b-bg">
           <i class="feather icon-trending-up"></i>
         </div>
-        <span class="b-title">Timelya</span>
+        <span class="b-title">GestPrésence</span>
       </a>
       <a class="mobile-menu" id="mobile-collapse" href="javascript:"><span></span></a>
     </div>
@@ -140,17 +140,24 @@
                 </a>
                 <ul class="pcoded-submenu">
                     <li class="nav-item">
-                      <a href="#" class="nav-link">Liste de présences</a>
+                      <a href="{% url "home:abs" %}" class="nav-link">Liste de présences</a>
                     </li>  
                     <li class="nav-item">
-                      <a href="#" class="nav-link">Rappoort & Statistique </a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="#" class="nav-link">Archives </a>
+                      <a href="{% url "home:archives" %}" class="nav-link">Archives </a>
                     </li> 
                 </ul>
               </li>
           {% comment %} {% endif %} {% endcomment %}
+              {% comment %} <li class="nav-item">
+                <a href="{% url "home:stat" %}" class="nav-link"> </a>
+              </li> {% endcomment %}
+
+              <li class="nav-item">
+                <a href="{% url "home:stat" %}" class="nav-link ">
+                  <span class="pcoded-micon"><i class="feather icon-bar-chart"></i></span>
+                  <span class="pcoded-mtext"> Rappoort & Statistique</span>
+                </a>
+              </li>
 
           {% if perms.common.view_departmentlevelsubject or perms.courses.view_department or perms.rooms.view_room or perms.subjects.view_subject %}
             <li class="nav-item pcoded-menu-caption">

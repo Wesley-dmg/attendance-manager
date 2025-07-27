@@ -1,0 +1,81 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Liste de Présence des Étudiants</h5>
+        <form method="get" class="form-inline">
+
+          <!-- Filtre Filière -->
+          <div class="btn-group mb-2 mr-2">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+              {{ request.GET.filiere|default:"Filière" }}
+            </button>
+            <div class="dropdown-menu">
+              <button type="submit" name="filiere" value="informatique" class="dropdown-item">Informatique</button>
+              <button type="submit" name="filiere" value="maths" class="dropdown-item">Mathématiques</button>
+              <button type="submit" name="filiere" value="physique" class="dropdown-item">Physique</button>
+              <button type="submit" name="filiere" value="toutes" class="dropdown-item">Toutes</button>
+            </div>
+          </div>
+
+          <!-- Filtre Statut -->
+          <div class="btn-group mb-2 mr-2">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+              {{ request.GET.statut|default:"Statut" }}
+            </button>
+            <div class="dropdown-menu">
+              <button type="submit" name="statut" value="present" class="dropdown-item">Présents</button>
+              <button type="submit" name="statut" value="absent" class="dropdown-item">Absents</button>
+              <button type="submit" name="statut" value="archive" class="dropdown-item">Archivés</button>
+              <button type="submit" name="statut" value="tous" class="dropdown-item">Tous</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-block table-responsive p-3">
+        {% if liste_etudiants %}
+          <table class="table table-hover table-bordered">
+            <thead class="thead-light">
+              <tr>
+                <th>Nom</th>
+                <th>Filière</th>
+                <th>Statut</th>
+                <th>Détail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for etu in liste_etudiants %}
+              <tr>
+                <td>{{ etu.nom }}</td>
+                <td>{{ etu.filiere }}</td>
+                <td>
+                  <span class="badge badge-pill
+                    {% if etu.statut == 'Présent' %}badge-success
+                    {% elif etu.statut == 'Absent' %}badge-danger
+                    {% elif etu.statut == 'Archivé' %}badge-secondary
+                    {% else %}badge-light{% endif %}">
+                    {{ etu.statut }}
+                  </span>
+                </td>
+                <td><a href="" class="btn btn-sm btn-outline-info">Détail</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info text-center">
+            Aucune donnée disponible pour les filtres sélectionnés.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

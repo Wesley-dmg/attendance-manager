@@ -7,21 +7,20 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("", include("apps.home.urls")),
-    
     path("admin/", admin.site.urls),
-    
     # path('', include('admin_datta.urls')),
-    
     path("", include("apps.users.urls")),  # Inclure les URLs de l'application users
-    
-    path("courses/", include(("apps.courses.urls", "courses"), namespace="courses")),  # Inclure les URLs de l'app 'courses'
-    
-    path("subjects/", include(("apps.subjects.urls", "subjects"), namespace="subjects")),  # Inclure les URLs de l'app 'subjects'
-    
-    path("common/", include(("apps.common.urls", "common"), namespace="common")),  # Inclure les URLs de l'app 'common'
-    
-    path("api/", include("attendance_api.urls")),
-
+    path(
+        "courses/", include(("apps.courses.urls", "courses"), namespace="courses")
+    ),  # Inclure les URLs de l'app 'courses'
+    path(
+        "subjects/", include(("apps.subjects.urls", "subjects"), namespace="subjects")
+    ),  # Inclure les URLs de l'app 'subjects'
+    path(
+        "common/", include(("apps.common.urls", "common"), namespace="common")
+    ),  # Inclure les URLs de l'app 'common'
+    # path("api/", include("attendance_api.urls")),
+    path("teachers/", include("apps.attendance.urls")),
 ]
 
 # Servir les fichiers médias en mode développement

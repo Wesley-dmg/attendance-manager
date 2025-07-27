@@ -1,0 +1,68 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Statistiques des Absences</h5>
+        <form method="get" class="form-inline">
+          <!-- Filtre Période -->
+          <div class="btn-group mb-2 mr-2">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+              {{ request.GET.periode|default:"Période" }}
+            </button>
+            <div class="dropdown-menu">
+              <button type="submit" name="periode" value="semaine" class="dropdown-item">Cette semaine</button>
+              <button type="submit" name="periode" value="mois" class="dropdown-item">Ce mois</button>
+              <button type="submit" name="periode" value="annee" class="dropdown-item">Cette année</button>
+            </div>
+          </div>
+
+          <!-- Filtre Type -->
+          <div class="btn-group mb-2 mr-2">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+              {{ request.GET.vue|default:"Vue par" }}
+            </button>
+            <div class="dropdown-menu">
+              <button type="submit" name="vue" value="filiere" class="dropdown-item">Par Filière</button>
+              <button type="submit" name="vue" value="matiere" class="dropdown-item">Par Matière</button>
+              <button type="submit" name="vue" value="matiere_filiere" class="dropdown-item">Par Matière / Filière</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-block table-responsive p-3">
+        {% if tableau %}
+          <table class="table table-hover table-bordered">
+            <thead class="thead-light">
+              <tr>
+                {% for col in tableau.headers %}
+                  <th>{{ col }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for ligne in tableau.rows %}
+                <tr>
+                  {% for cellule in ligne %}
+                    <td>{{ cellule }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info text-center m-3">
+            Aucune donnée disponible pour les filtres sélectionnés.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

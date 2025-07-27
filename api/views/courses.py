@@ -4,7 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.subjects.models import Subject
-from attendance_api.serializers.courses import DepartmentLevelSerializer
+from api.serializers.courses import DepartmentLevelSerializer
+
 
 class SubjectDepartmentsView(APIView):
     permission_classes = [IsAuthenticated]

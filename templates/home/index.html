@@ -4,224 +4,214 @@
 {% block breadcrumbs %}{% endblock breadcrumbs %}
 
 {% block content %}
+<!-- [ Main Content ] start -->
+<div class="row">
 
-  <!-- [ Main Content ] start -->
-  
-  <div class="row">
-
-      <!-- Actions Rapides -->
-      <div class="col-xl-12">
-        <div class="card">
-          <div class="card-header">
-            <h5>Actions Rapides</h5>
+  <!-- Actions Rapides -->
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Actions Rapides</h5>
+      </div>
+      <div class="card-block">
+        <div class="row">
+          <div class="col-md-4 m-b-10">
+            <a href="{% url "home:stat" %}" class="btn btn-info btn-block">📊 Statistiques & Pourcentages</a>
           </div>
-          <div class="card-block">
-            <div class="row">
-              <div class="col-md-4 m-b-10">
-                <a href="#" class=" btn btn-info btn-block">📊 Statistiques & Pourcentages</a>
-              </div>
-              
-              <div class="col-md-4 m-b-10">
-                <a href="#" class=" btn btn-warning btn-block">📆 Absents de la Semaine</a>
-              </div>
-              
-              <div class="col-md-4 m-b-10">
-                <a href="#" class=" btn btn-primary btn-block">🧾 Exporter les Rapports</a>
-              </div>
-              <div class="col-md-4 m-b-10">
-                <a href="#" class=" btn btn-secondary btn-block">🗃️ Voir les Archives</a>
-              </div>
-              <div class="col-md-4 m-b-10">
-                <a href="#" class=" btn btn-success btn-block">📥 Importer des Données</a>
-              </div>
-            </div>
+          <div class="col-md-4 m-b-10">
+            <a href="{% url "home:archives" %}" class="btn btn-secondary btn-block">🗃️ Voir les Archives</a>
           </div>
-        </div>
-    </div>
-    
-    <!-- Statistiques Principales -->
-    <div class="col-md-6 col-xl-4">
-      <div class="card daily-sales">
-        <div class="card-block">
-          <h6 class="mb-4">Absents Aujourd’hui</h6>
-          <div class="row d-flex align-items-center">
-            <div class="col-9">
-              <h3 class="f-w-300 d-flex align-items-center m-b-0">
-                <i class="feather icon-user-x text-c-red f-30 m-r-10"></i> 8
-              </h3>
-            </div>
-            <div class="col-3 text-right">
-              <p class="m-b-0">24%</p>
-            </div>
-          </div>
-          <div class="progress m-t-30" style="height: 7px;">
-            <div class="progress-bar progress-c-theme" style="width: 24%;"></div>
+          <div class="col-md-4 m-b-10">
+            <a href="{% url "home:import" %}" class="btn btn-success btn-block">📥 Importer des Données</a>
           </div>
         </div>
       </div>
     </div>
-  
-    
-    <div class="col-md-6 col-xl-4">
-      <div class="card Monthly-sales">
-        <div class="card-block">
-          <h6 class="mb-4">Absents Ce Mois</h6>
-          <div class="row d-flex align-items-center">
-            <div class="col-9">
-              <h3 class="f-w-300 d-flex align-items-center m-b-0">
-                <i class="feather icon-calendar text-c-blue f-30 m-r-10"></i> 37
-              </h3>
-            </div>
-            <div class="col-3 text-right">
-              <p class="m-b-0">60%</p>
-            </div>
-          </div>
-          <div class="progress m-t-30" style="height: 7px;">
-            <div class="progress-bar progress-c-theme2" style="width: 60%;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <div class="col-md-12 col-xl-4">
-      <div class="card yearly-sales">
-        <div class="card-block">
-          <h6 class="mb-4">Alertes Critiques</h6>
-          <div class="row d-flex align-items-center">
-            <div class="col-9">
-              <h3 class="f-w-300 d-flex align-items-center m-b-0">
-                <i class="feather icon-alert-triangle text-c-orange f-30 m-r-10"></i> 3 rouges / 5 oranges
-              </h3>
-            </div>
-            <div class="col-3 text-right">
-              <p class="m-b-0">Suivi</p>
-            </div>
-          </div>
-          <div class="progress m-t-30" style="height: 7px;">
-            <div class="progress-bar progress-c-theme" style="width: 80%;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Absents Récents -->
-    <div class="col-xl-8 col-md-6">
-      <div class="card Recent-Users">
-        <div class="card-header">
-          <h5>Absents Récents</h5>
-        </div>
-        <div class="card-block px-0 py-3">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <tbody>
-                <tr class="unread">
-                  <td><img class="rounded-circle" style="width:40px;" src="assets/images/user/avatar-1.jpg"></td>
-                  <td><h6 class="mb-1">Ali K.</h6><p class="m-0">Info L3 - 24 Juin</p></td>
-                  <td><h6 class="text-muted"><i class="feather icon-clock"></i> 14:30</h6></td>
-                  <td><a href="#" class="label theme-bg2 text-white f-12">Voir</a></td>
-                </tr>
-                <tr class="unread">
-                  <td><img class="rounded-circle" style="width:40px;" src="assets/images/user/avatar-2.jpg"></td>
-                  <td><h6 class="mb-1">Sarah M.</h6><p class="m-0">Maths L2 - 24 Juin</p></td>
-                  <td><h6 class="text-muted"><i class="feather icon-clock"></i> 10:15</h6></td>
-                  <td><a href="#" class="label theme-bg2 text-white f-12">Voir</a></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Archives Récentes -->
-    <div class="col-xl-4 col-md-6">
-      <div class="card Recent-Users">
-        <div class="card-header">
-          <h5>Archives Récentes</h5>
-        </div>
-        <div class="card-block px-0 py-3">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <tbody>
-                <tr class="unread">
-                  <td><img class="rounded-circle" style="width:40px;" src="assets/images/user/avatar-3.jpg"></td>
-                  <td><h6 class="mb-1">Mohamed S.</h6><p class="m-0">Physique L1 - 23 Juin</p></td>
-                  <td><h6 class="text-muted"><i class="feather icon-archive"></i> 16:02</h6></td>
-                  <td><a href="#" class="label theme-bg text-white f-12">Détail</a></td>
-                </tr>
-                <tr class="unread">
-                  <td><img class="rounded-circle" style="width:40px;" src="assets/images/user/avatar-4.jpg"></td>
-                  <td><h6 class="mb-1">Lina G.</h6><p class="m-0">Chimie L2 - 22 Juin</p></td>
-                  <td><h6 class="text-muted"><i class="feather icon-archive"></i> 11:30</h6></td>
-                  <td><a href="#" class="label theme-bg text-white f-12">Détail</a></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Graphique 1 : Évolution hebdomadaire -->
-    <div class="col-xl-6 col-md-12">
-      <div class="card">
-        <div class="card-header">
-          <h5>Évolution des Absences (7 derniers jours)</h5>
-        </div>
-        <div class="card-block">
-          <canvas id="lineChart" style="height: 300px;"></canvas>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Graphique 2 : Répartition par filière -->
-    <div class="col-xl-6 col-md-12">
-      <div class="card">
-        <div class="card-header">
-          <h5>Répartition des Absences par Filière</h5>
-        </div>
-        <div class="card-block">
-          <canvas id="pieChart" style="height: 300px;"></canvas>
-        </div>
-      </div>
-    </div>  
   </div>
-  <!-- [ Main Content ] end -->
 
+  <!-- Statistiques Principales -->
+  <div class="col-md-6 col-xl-4">
+    <div class="card daily-sales">
+      <div class="card-block">
+        <h6 class="mb-4">Absents Aujourd’hui</h6>
+        <div class="row d-flex align-items-center">
+          <div class="col-9">
+            <h3 class="f-w-300 d-flex align-items-center m-b-0">
+              <i class="feather icon-user-x text-c-red f-30 m-r-10"></i> 8
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-4">
+    <div class="card Monthly-sales">
+      <div class="card-block">
+        <h6 class="mb-4">Absents Ce Mois</h6>
+        <div class="row d-flex align-items-center">
+          <div class="col-9">
+            <h3 class="f-w-300 d-flex align-items-center m-b-0">
+              <i class="feather icon-calendar text-c-blue f-30 m-r-10"></i> 37
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-4">
+    <div class="card Monthly-sales">
+      <div class="card-block">
+        <h6 class="mb-2">Alertes Critiques</h6>
+        <div class="row d-flex align-items-center">
+          <div class="col-9">
+            <h4 class="f-w-300 d-flex align-items-center m-b-0">
+              <i class="feather icon-alert-triangle text-c-orange f-30 m-r-10"></i> 14 archivés/5 en cours 
+            </h4>
+          </div>
+          <div class="col-3 text-right">
+            <p class="m-b-0">Suivi</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Absents Récents -->
+  <div class="col-xl-8 col-md-6">
+    <div class="card Recent-Users">
+      <div class="card-header">
+        <h5>Absents Récents</h5>
+      </div>
+      <div class="card-block px-0 py-3">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <tbody>
+              <tr class="unread">
+                <td><h6 class="mb-1">Ali K.</h6><p class="m-0">Info L3 - 24 Juin</p></td>
+                <td><h6 class="text-muted"><i class="feather icon-clock"></i> 14:30</h6></td>
+                <td><a href="#" class="label theme-bg2 text-white f-12">Voir</a></td>
+              </tr>
+              <tr>
+                <td><h6 class="mb-1">Sarah M.</h6><p class="m-0">Maths L2 - 24 Juin</p></td>
+                <td><h6 class="text-muted"><i class="feather icon-clock"></i> 10:15</h6></td>
+                <td><a href="#" class="label theme-bg2 text-white f-12">Voir</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Archives Récentes -->
+  <div class="col-xl-4 col-md-6">
+    <div class="card Recent-Users">
+      <div class="card-header">
+        <h5>Archives Récentes</h5>
+      </div>
+      <div class="card-block px-0 py-3">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <tbody>
+              <tr class="unread">
+                <td><h6 class="mb-1">Mohamed S.</h6><p class="m-0">Physique L1 - 23 Juin</p></td>
+                <td><h6 class="text-muted"><i class="feather icon-archive"></i> 16:02</h6></td>
+                <td><a href="#" class="label theme-bg text-white f-12">Détail</a></td>
+              </tr>
+              <tr class="unread">
+                <td><h6 class="mb-1">Lina G.</h6><p class="m-0">Chimie L2 - 22 Juin</p></td>
+                <td><h6 class="text-muted"><i class="feather icon-archive"></i> 11:30</h6></td>
+                <td><a href="#" class="label theme-bg text-white f-12">Détail</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau : Absences par Filière -->
+  <div class="col-xl-6 col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Absences par Filière</h5>
+      </div>
+      <div class="card-block px-0 py-3">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead class="bg-light">
+              <tr>
+                <th>Filière</th>
+                <th>Absences</th>
+                <th>Pourcentage</th>
+                <th>Archivés</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for filiere in absences_par_filiere %}
+              <tr>
+                <td>{{ filiere.nom }}</td>
+                <td>{{ filiere.absences }}</td>
+                <td>
+                  <span class="badge badge-pill {% if filiere.pourcentage > 50 %}badge-danger{% elif filiere.pourcentage > 25 %}badge-warning{% else %}badge-success{% endif %}">
+                    {{ filiere.pourcentage }}%
+                  </span>
+                </td>
+                <td>{{ filiere.archives }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center">Aucune donnée</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau : Absences par Matière -->
+  <div class="col-xl-6 col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Absences par Matière</h5>
+      </div>
+      <div class="card-block px-0 py-3">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead class="bg-light">
+              <tr>
+                <th>Matière</th>
+                <th>Absences</th>
+                <th>Pourcentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for matiere in absences_par_matiere %}
+              <tr>
+                <td>{{ matiere.nom }}</td>
+                <td>{{ matiere.absences }}</td>
+                <td>
+                  <span class="badge badge-pill {% if matiere.pourcentage > 50 %}badge-danger{% elif matiere.pourcentage > 25 %}badge-warning{% else %}badge-success{% endif %}">
+                    {{ matiere.pourcentage }}%
+                  </span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center">Aucune donnée</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- [ Main Content ] end -->
 {% endblock content %}
 
 {% block extra_js %}
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  // Line Chart
-  const ctxLine = document.getElementById('lineChart');
-  new Chart(ctxLine, {
-    type: 'line',
-    data: {
-      labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-      datasets: [{
-        label: 'Absences',
-        data: [5, 8, 4, 7, 6, 3, 2],
-        borderColor: 'rgba(54, 162, 235, 1)',
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        tension: 0.3,
-      }]
-    }
-  });
-
-  // Pie Chart
-  const ctxPie = document.getElementById('pieChart');
-  new Chart(ctxPie, {
-    type: 'pie',
-    data: {
-      labels: ['Informatique', 'Maths', 'Physique', 'Chimie'],
-      datasets: [{
-        data: [35, 25, 20, 20],
-        backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0']
-      }]
-    }
-  });
-</script>
-
+<!-- Aucun script nécessaire pour les tableaux -->
 {% endblock extra_js %}

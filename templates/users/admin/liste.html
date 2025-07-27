@@ -1,0 +1,47 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+    <!-- En-tête : titre, recherche et bouton -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h5 class="mb-0" style="font-size: 1.6rem; font-weight: 600;">{{ title }}</h5>
+
+        <input type="text" id="search-input" value="{{ request.GET.q }}" class="form-control w-50" placeholder="Rechercher par nom, prénom ou téléphone">
+
+        <a href="{{ create_url }}" class="btn btn-primary d-flex align-items-center">
+            <i class="feather icon-plus mr-2"></i> Ajouter
+        </a>
+    </div>
+
+    <!-- Zone des cartes utilisateurs (AJAX update ici) -->
+    <div class="row mt-3" id="user-cards">
+        {% include "users/partials/_user_cards.html" %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("search-input");
+    const userContainer = document.getElementById("user-cards");
+    const role = "{{ role|default:'' }}";
+
+    searchInput.addEventListener("keyup", function () {
+        const query = this.value.trim();
+
+        fetch(`/users/search/?q=${encodeURIComponent(query)}&role=${encodeURIComponent(role)}`)
+            .then(response => {
+                if (!response.ok) throw new Error("Erreur lors du chargement");
+                return response.json();
+            })
+            .then(data => {
+                userContainer.innerHTML = data.html;
+            })
+            .catch(error => {
+                console.error("Erreur AJAX :", error);
+            });
+    });
+});
+</script>
+{% endblock %}
