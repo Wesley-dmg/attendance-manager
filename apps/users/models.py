@@ -22,13 +22,11 @@ class CustomUser(AbstractUser):
         ("parent", _("Parent")),
         ("admin", _("Administrateur")),
     )
-
     GENDER_CHOICES = [
         ("male", _("Masculin")),
         ("female", _("Féminin")),
         ("other", _("Autre")),
     ]
-
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, verbose_name=_("Rôle"))
     phone_number = models.CharField(
         max_length=15,
@@ -68,22 +66,12 @@ class CustomUser(AbstractUser):
     password_changed = models.BooleanField(
         default=False, verbose_name=_("Mot de passe modifié")
     )
-
     reset_code = models.CharField(
         max_length=6, blank=True, null=True, verbose_name=_("Code de réinitialisation")
     )
     reset_code_expiry = models.DateTimeField(
         blank=True, null=True, verbose_name=_("Expiration du code")
     )
-
-    # OTP pour enseignants (WhatsApp)
-    otp_code = models.CharField(
-        max_length=6, blank=True, null=True, verbose_name=_("Code OTP")
-    )
-    otp_code_expiry = models.DateTimeField(
-        blank=True, null=True, verbose_name=_("Expiration OTP")
-    )
-
     groups = models.ManyToManyField(
         Group, related_name="customuser_groups", blank=True, verbose_name=_("Groupes")
     )
@@ -181,25 +169,6 @@ class CustomUser(AbstractUser):
         else:
             return f"whatsapp:+229{phone}"
 
-    def generate_otp_code(self, length=6, expire_minutes=5):
-        if (
-            self.otp_code
-            and self.otp_code_expiry
-            and timezone.now() < self.otp_code_expiry
-        ):
-            raise ValidationError(_("Un code OTP est déjà actif. Veuillez attendre."))
-
-        self.otp_code = f"{random.randint(0, 999999):06d}"
-        self.otp_code_expiry = timezone.now() + timedelta(minutes=expire_minutes)
-        self.save(update_fields=["otp_code", "otp_code_expiry"])
-
-    def is_otp_valid(self, code):
-        return (
-            self.otp_code == code
-            and self.otp_code_expiry
-            and timezone.now() <= self.otp_code_expiry
-        )
-
     def anonymize(self):
         self.first_name = "Anonyme"
         self.last_name = ""
@@ -230,8 +199,38 @@ class TeacherProfile(models.Model):
         verbose_name=_("Matières enseignées"),
     )
 
+    # Champs OTP déplacés ici
+    otp_code = models.CharField(
+        max_length=6, blank=True, null=True, verbose_name=_("Code OTP")
+    )
+    otp_code_expiry = models.DateTimeField(
+        blank=True, null=True, verbose_name=_("Expiration OTP")
+    )
+
     def __str__(self):
         return f"Enseignant: {self.user.get_full_name()}"
+
+    def generate_otp_code(self, length=6, expire_minutes=5):
+        if (
+            self.otp_code
+            and self.otp_code_expiry
+            and timezone.now() < self.otp_code_expiry
+        ):
+            raise ValidationError(_("Un code OTP est déjà actif. Veuillez attendre."))
+
+        self.otp_code = f"{random.randint(0, 999999):06d}"
+        self.otp_code_expiry = timezone.now() + timedelta(minutes=expire_minutes)
+        self.save(update_fields=["otp_code", "otp_code_expiry"])
+
+    def is_otp_valid(self, code):
+        return (
+            self.otp_code == code
+            and self.otp_code_expiry
+            and timezone.now() <= self.otp_code_expiry
+        )
+
+    def teaches_subject(self, subject):
+        return subject in self.subjects.all()
 
     def teaches_subject(self, subject):
         return subject in self.subjects.all()
@@ -296,7 +295,6 @@ class StudentArchiveHistory(models.Model):
     action = models.CharField(
         max_length=10, choices=[("archived", "Archivé"), ("unarchived", "Désarchivé")]
     )
-    # reason = models.TextField(blank=True, null=True)
     performed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

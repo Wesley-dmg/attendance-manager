@@ -1,1 +1,65 @@
-okays ca marche 
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="row mb-4">
+  <div class="col-6">
+    <div class="card text-center border-success">
+      <div class="card-body">
+        <h6 class="card-title text-muted">Abs enregistrées</h6>
+        <h3 class="card-text">{{ total_absences|default:"00" }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-6">
+    <div class="card text-center border-primary">
+      <div class="card-body">
+        <h6 class="card-title text-muted">Filières concernées</h6>
+        <h3 class="card-text">{{ total_streams|default:"00" }}</h3>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-12">
+    <div class="card text-center border-info">
+      <div class="card-body">
+        <h6 class="card-title text-muted">Étudiants concernés</h6>
+        <h3 class="card-text"> {{ total_students |default:"00" }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-sm-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Mes Matières</h5>
+      </div>
+      <div class="card-body">
+        {% if subjects %}
+          <div class="row">
+            {% for subject in subjects %}
+              <div class="col-md-4 mb-4">
+                <div class=" rounded h-100 d-flex flex-column justify-content-center ">
+                    <div>
+                        <a href="{% url 'attendance:subject_departments' subject.pk %}" class="btn btn-outline-primary btn-sm w-100" title="Voir les filières associées" data-bs-toggle="tooltip">
+                            {{ subject.name }}
+                        </a>
+                    </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info mb-0">
+            Aucune matière n’est associée à votre profil pour le moment.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

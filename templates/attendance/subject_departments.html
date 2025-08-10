@@ -1,0 +1,46 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-sm-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Gérer la présence pour la matière : <span class="text-info">{{ subject.name }}</span></h5>
+      </div>
+      <div class="card-body">
+        <form method="post" class="mb-4">
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+          <div class="row">
+            {% for checkbox in form.department_levels %}
+              <div class="col-md-4 mb-2">
+                <div class="form-check">
+                  {{ checkbox.tag }} {{ checkbox.choice_label }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary mt-3">Voir les étudiants</button>
+        </form>
+        
+
+
+        {% comment %} {% if students %}
+          <hr>
+          <h5>Étudiants concernés :</h5>
+          <ul class="list-group mt-3">
+            {% for student in students %}
+              <li class="list-group-item">
+                {{ student.user.get_full_name }} - {{ student.department_level }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %} {% endcomment %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

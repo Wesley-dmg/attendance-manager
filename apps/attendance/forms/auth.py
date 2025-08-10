@@ -15,8 +15,8 @@ class RequestOTPForm(forms.Form):
 
 
 class VerifyOTPForm(forms.Form):
-    phone = forms.CharField(widget=forms.HiddenInput())
-    otp = forms.CharField(
+    phone = forms.CharField(widget=forms.HiddenInput(), required=False)
+    code = forms.CharField(
         label="Code OTP",
         widget=forms.TextInput(
             attrs={

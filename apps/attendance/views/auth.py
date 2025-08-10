@@ -1,9 +1,7 @@
 from django.urls import reverse
 from django.views.generic import FormView
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import login, get_user_model
 from django.shortcuts import redirect
-from django.utils import timezone
-
 from apps.attendance.forms.auth import RequestOTPForm, VerifyOTPForm
 from apps.attendance.utils import set_otp_for_user
 from apps.home.utils import send_custom_message
@@ -17,81 +15,68 @@ class RequestOTPView(FormView):
 
     def form_valid(self, form):
         phone = form.cleaned_data["phone"]
+
         try:
             user = User.objects.get(phone_number=phone, role="teacher")
-            set_otp_for_user(user)
-            # url = (
-            #     reverse("attendance:verify-otp")
-            #     + f"?phone={phone}&next=/teachers/dashboard/"
-            # )
-
-            next_url = self.request.GET.get("next", "/teachers/dashboard/")
-            url = f"{reverse('attendance:verify-otp')}?phone={phone}&next={next_url}"
-
-            return redirect(url)
         except User.DoesNotExist:
-            form.add_error("phone", "Numéro introuvable ou non autorisé")
+            form.add_error("phone", "Numéro introuvable ou non autorisé.")
             return self.form_invalid(form)
 
+        set_otp_for_user(user)  # Génère et stocke un OTP
+        self.request.session["phone"] = phone
 
-def normalize_phone(phone):
-    phone = phone.strip()
-    if not phone.startswith("+"):
-        phone = "+" + phone
-    return phone
+        next_url = self.request.GET.get("next", "/teachers/dashboard/")
+        return redirect(f"{reverse('attendance:verify-otp')}?next={next_url}")
 
 
 class VerifyOTPView(FormView):
     template_name = "attendance/auth/verify_otp.html"
     form_class = VerifyOTPForm
 
+    def get_phone(self):
+        return self.request.session.get("phone") or self.request.GET.get("phone")
+
     def get_initial(self):
-        phone = self.request.GET.get("phone")
-        print(f"Numéro dans get_initial: {phone}")
-        return {"phone": self.request.GET.get("phone")}
+        initial = super().get_initial()
+        initial["phone"] = self.get_phone()
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["phone"] = self.get_phone()
+        return context
 
     def form_valid(self, form):
-        phone = normalize_phone(form.cleaned_data["phone"])
-        print(f"Numéro dans form_valid: {phone}")
-        try:
-            print("form_valide")
-            phone = form.cleaned_data["phone"]
-            otp = form.cleaned_data["otp"]
-            user = User.objects.get(phone_number=phone, role="teacher")
+        phone = self.get_phone()
 
-            if not user.otp_code or not user.otp_code_expiry:
-                form.add_error("otp", "Aucun code généré")
-                return self.form_invalid(form)
-
-            if timezone.now() > user.otp_code_expiry:
-                form.add_error("otp", "Code OTP expiré")
-                return self.form_invalid(form)
-
-            if user.otp_code != otp:
-                form.add_error("otp", "Code invalide")
-                return self.form_invalid(form)
-
-            user.otp_code = None
-            user.otp_code_expiry = None
-            user.save(update_fields=["otp_code", "otp_code_expiry"])
-            login(self.request, user)
-
-            print(f"Utilisateur connecté ? {self.request.user.is_authenticated}")
-
-            # print avant le message
-            print("Avant send_custom_message")
-            send_custom_message(self.request, "Connexion réussie.", "success")
-
-            print("Après send_custom_message")
-
-            next_url = self.request.GET.get("next") or reverse("attendance:dashboard")
-
-            print("Redirection vers:", next_url)
-            return redirect(next_url)
-        except Exception as e:
-            print("Erreur dans form_valid:", e)
-            import traceback
-
-            traceback.print_exc()
-            form.add_error(None, "Une erreur inattendue est survenue.")
+        if not phone:
+            form.add_error("code", "Aucun numéro de téléphone trouvé.")
             return self.form_invalid(form)
+
+        code = form.cleaned_data["code"]
+        user = User.objects.filter(
+            phone_number__endswith=phone[-9:], role="teacher"
+        ).first()
+
+        if not user:
+            form.add_error("code", "Utilisateur introuvable.")
+            return self.form_invalid(form)
+
+        if not user.teacherprofile.is_otp_valid(code):
+            form.add_error("code", "Code incorrect ou expiré.")
+            return self.form_invalid(form)
+
+        if not user.teacherprofile.otp_code or user.teacherprofile.otp_code != code:
+            form.add_error("code", "Code incorrect ou expiré.")
+            return self.form_invalid(form)
+
+        # Authentifie l'utilisateur
+        login(self.request, user)
+
+        # Redirection vers l'URL suivante ou tableau de bord par défaut
+        next_url = self.request.GET.get("next", "/teachers/dashboard/")
+        return redirect(next_url)
+
+    def form_invalid(self, form):
+        print("Formulaire OTP invalide")
+        return super().form_invalid(form)

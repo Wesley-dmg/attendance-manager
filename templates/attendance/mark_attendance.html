@@ -1,0 +1,58 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<h5 class="mb-3">Marquer la présence</h5>
+
+<h2>Présence pour la matière : {{ subject.name }}</h2>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="subject" value="{{ subject.id }}">
+  {% for dep_id in department_ids %}
+    <input type="hidden" name="department_ids" value="{{ dep_id }}">
+  {% endfor %}
+
+  <ul>
+    {% for student in students %}
+      <li>
+        <label>
+          <input type="checkbox" name="absent_students" value="{{ student.id }}">
+          {{ student.user.get_full_name }}
+        </label>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <button type="submit" class="btn btn-primary">Enregistrer</button>
+</form>
+
+
+
+<style>
+  .btn input[type="checkbox"] {
+    display: none;
+  }
+
+  .btn.btn-danger {
+    color: #fff;
+  }
+</style>
+
+
+
+<script>
+  document.querySelectorAll('.checkbox-absent').forEach(cb => {
+    cb.addEventListener('change', function() {
+      const label = document.getElementById("label-" + this.dataset.student);
+      if (this.checked) {
+        label.classList.remove('btn-outline-success');
+        label.classList.add('btn-danger');
+      } else {
+        label.classList.add('btn-outline-success');
+        label.classList.remove('btn-danger');
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -20,7 +20,12 @@
 
         <!-- Tableau de bord accessible par tous les utilisateurs -->
         <li class="nav-item active">
-          <a href="{% url "home:dashboard" %}" class="nav-link ">
+          <a href="
+            {% if  user.is_admin %} 
+              {% url "home:dashboard" %}
+            {% else %}
+              {% url "attendance:dashboard" %}
+            {% endif %}" class="nav-link ">
             <span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Tableau de bord</span>
           </a>
         </li>

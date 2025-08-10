@@ -37,7 +37,7 @@
         <div class="row d-flex align-items-center">
           <div class="col-9">
             <h3 class="f-w-300 d-flex align-items-center m-b-0">
-              <i class="feather icon-user-x text-c-red f-30 m-r-10"></i> 8
+              <i class="feather icon-user-x text-c-red f-30 m-r-10"></i> {{ absents_aujourdhui }}
             </h3>
           </div>
         </div>
@@ -52,7 +52,7 @@
         <div class="row d-flex align-items-center">
           <div class="col-9">
             <h3 class="f-w-300 d-flex align-items-center m-b-0">
-              <i class="feather icon-calendar text-c-blue f-30 m-r-10"></i> 37
+              <i class="feather icon-calendar text-c-blue f-30 m-r-10"></i> {{ absents_mois }}
             </h3>
           </div>
         </div>
@@ -67,7 +67,7 @@
         <div class="row d-flex align-items-center">
           <div class="col-9">
             <h4 class="f-w-300 d-flex align-items-center m-b-0">
-              <i class="feather icon-alert-triangle text-c-orange f-30 m-r-10"></i> 14 archivés/5 en cours 
+              <i class="feather icon-alert-triangle text-c-orange f-30 m-r-10"></i> {{ alertes_archives }} archivés / {{ alertes_cours }} en cours
             </h4>
           </div>
           <div class="col-3 text-right">
@@ -79,7 +79,7 @@
   </div>
 
   <!-- Absents Récents -->
-  <div class="col-xl-8 col-md-6">
+  <div class="col-xl-6 col-sm-12">
     <div class="card Recent-Users">
       <div class="card-header">
         <h5>Absents Récents</h5>
@@ -88,16 +88,13 @@
         <div class="table-responsive">
           <table class="table table-hover">
             <tbody>
+              {% for absent in absents_recents %}
               <tr class="unread">
-                <td><h6 class="mb-1">Ali K.</h6><p class="m-0">Info L3 - 24 Juin</p></td>
-                <td><h6 class="text-muted"><i class="feather icon-clock"></i> 14:30</h6></td>
-                <td><a href="#" class="label theme-bg2 text-white f-12">Voir</a></td>
+                <td><h6 class="mb-1">{{ absent.student.user.get_full_name }}</h6><p class="m-0">{{ absent.student.major}} - {{ absent.date|date:"d M" }}</p></td>
+                <td><h6 class="text-muted"><i class="feather icon-clock"></i> {{ absent.date|date:"H:i" }} </h6></td>
+                <td><a href="{% url "users:student_detail" absent.student.user.pk %}" class="label theme-bg2 text-white f-12">Voir</a></td>
               </tr>
-              <tr>
-                <td><h6 class="mb-1">Sarah M.</h6><p class="m-0">Maths L2 - 24 Juin</p></td>
-                <td><h6 class="text-muted"><i class="feather icon-clock"></i> 10:15</h6></td>
-                <td><a href="#" class="label theme-bg2 text-white f-12">Voir</a></td>
-              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -106,7 +103,7 @@
   </div>
 
   <!-- Archives Récentes -->
-  <div class="col-xl-4 col-md-6">
+  <div class="col-xl-6 col-sm-12">
     <div class="card Recent-Users">
       <div class="card-header">
         <h5>Archives Récentes</h5>
@@ -115,16 +112,17 @@
         <div class="table-responsive">
           <table class="table table-hover">
             <tbody>
-              <tr class="unread">
-                <td><h6 class="mb-1">Mohamed S.</h6><p class="m-0">Physique L1 - 23 Juin</p></td>
-                <td><h6 class="text-muted"><i class="feather icon-archive"></i> 16:02</h6></td>
-                <td><a href="#" class="label theme-bg text-white f-12">Détail</a></td>
-              </tr>
-              <tr class="unread">
-                <td><h6 class="mb-1">Lina G.</h6><p class="m-0">Chimie L2 - 22 Juin</p></td>
-                <td><h6 class="text-muted"><i class="feather icon-archive"></i> 11:30</h6></td>
-                <td><a href="#" class="label theme-bg text-white f-12">Détail</a></td>
-              </tr>
+              {% if archives_recent %}
+                {% for archive in archives_recent %}
+                  <tr class="unread">
+                    <td><h6 class="mb-1"> {{ archive.student.user.get_full_name }}</h6><p class="m-0"> {{ archive.student.major }} - {{ archive.archived_at|date:"d M" }}</p></td>
+                    <td><h6 class="text-muted"><i class="feather icon-archive"></i>  {{ archive.archived_at|date:"H:i" }}</h6></td>
+                    <td><a href="{% url "users:student_detail" archive.student.user.pk %}" class="label theme-bg text-white f-12">Détail</a></td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+              <p class=" d-flex align-items-center justify-content-center py-3 text-c-red">Aucun étudiant archiver pour le moment </p>
+              {% endif %}
             </tbody>
           </table>
         </div>
@@ -149,7 +147,7 @@
                 <th>Archivés</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="filiere-table-body">
               {% for filiere in absences_par_filiere %}
               <tr>
                 <td>{{ filiere.nom }}</td>
@@ -165,6 +163,13 @@
               <tr><td colspan="4" class="text-center">Aucune donnée</td></tr>
               {% endfor %}
             </tbody>
+            {% comment %} {% if absences_par_filiere|length > 5 %}
+              <div class="text-center mt-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="toggleRows(this)">Afficher tout</button>
+              </div>
+            {% endif %} {% endcomment %}
+
+
           </table>
         </div>
       </div>
@@ -210,8 +215,16 @@
 
 </div>
 <!-- [ Main Content ] end -->
-{% endblock content %}
+{% comment %} {% block extra_js %}
+  <script>
+    function toggleRows(btn) {
+      const rows = document.querySelectorAll('.extra-row');
+      const isHidden = rows[0].classList.contains('d-none');
 
-{% block extra_js %}
-<!-- Aucun script nécessaire pour les tableaux -->
-{% endblock extra_js %}
+      rows.forEach(row => row.classList.toggle('d-none'));
+      btn.textContent = isHidden ? 'Réduire' : 'Afficher tout';
+    }
+  </script>
+{% endblock extra_js %} {% endcomment %}
+
+{% endblock content %}

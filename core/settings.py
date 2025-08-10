@@ -13,11 +13,6 @@ load_dotenv()  # take environment variables from .env.
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WA RNING: keep the secret key used in production secret!
-# SECRET_KEY = os.environ.get("SECRET_KEY")
-# if not SECRET_KEY:
-#     SECRET_KEY = "".join(random.choice(string.ascii_lowercase) for i in range(32))
-
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("La variable SECRET_KEY doit être définie !")
@@ -61,10 +56,6 @@ INSTALLED_APPS = [
     "apps.subjects",  # Application pour gérer les matières
     "apps.users",  # Application pour gérer les utilisateurs
     "apps.attendance",  # Application pour gérer les Présence
-    # "corsheaders",
-    # "rest_framework",  # Include DRF           # <-- NEW
-    # "rest_framework.authtoken",  # Include DRF Auth      # <-- NEW
-    "api",
 ]
 
 MIDDLEWARE = [
@@ -176,8 +167,8 @@ STATICFILES_STORAGE = (
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_URL = "users:login"
-# LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = "users:login"  # fallback utilisé si @login_required est appelé sans redirection personnalisée
+# LOGIN_REDIRECT_URL = ("/redirect-after-login/")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
@@ -219,21 +210,14 @@ INTERNAL_IPS = [
 # Pour autoriser toutes les origines (à restreindre en prod)
 CORS_ALLOW_ALL_ORIGINS = True
 
-
-# REST_FRAMEWORK = {
-#     "DEFAULT_AUTHENTICATION_CLASSES": (
-#         "rest_framework_simplejwt.authentication.JWTAuthentication",
-#     ),
-# }
-
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_WHATSAPP_SANDBOX_NUMBER = os.getenv("TWILIO_WHATSAPP_SANDBOX_NUMBER")
-
 # Ou bien définir des origines spécifiques
 # CORS_ALLOWED_ORIGINS = [
 #    "https://monappmobile.com",
 # ]
+
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_WHATSAPP_SANDBOX_NUMBER = os.getenv("TWILIO_WHATSAPP_SANDBOX_NUMBER")
 
 # import sentry_sdk
 # from sentry_sdk.integrations.django import DjangoIntegration

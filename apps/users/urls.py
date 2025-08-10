@@ -3,6 +3,7 @@ from django.contrib.auth.views import LogoutView
 
 from django.urls import path
 
+from apps.home.views import redirect_after_login
 from apps.users.utils import UserSearchView
 from .views import (
     AdminDetailView,
@@ -96,4 +97,5 @@ urlpatterns = [
     path("teachers/<int:pk>/", TeacherDetailView.as_view(), name="teacher_detail"),
     path("students/<int:pk>/", StudentDetailView.as_view(), name="student_detail"),
     path("parents/<int:pk>/", ParentDetailView.as_view(), name="parent_detail"),
+    path("redirect-after-login/", redirect_after_login, name="redirect-after-login"),
 ]

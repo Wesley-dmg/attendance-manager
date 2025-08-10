@@ -1,5 +1,5 @@
+from apps.attendance.models import Attendance
 from apps.users.models import StudentProfile
-from api.models import Attendance
 
 
 def should_archive_student(student: StudentProfile, threshold: int = 10):
