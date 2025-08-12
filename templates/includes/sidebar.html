@@ -3,7 +3,11 @@
 <nav class="pcoded-navbar">
   <div class="navbar-wrapper">
     <div class="navbar-brand header-logo">
-      <a href="" class="b-brand">
+      <a href="{% if  user.is_admin %} 
+              {% url "home:dashboard" %}
+            {% else %}
+              {% url "attendance:dashboard" %}
+            {% endif %}" class="b-brand">
         <div class="b-bg">
           <i class="feather icon-trending-up"></i>
         </div>
@@ -20,8 +24,7 @@
 
         <!-- Tableau de bord accessible par tous les utilisateurs -->
         <li class="nav-item active">
-          <a href="
-            {% if  user.is_admin %} 
+          <a href="{% if  user.is_admin %} 
               {% url "home:dashboard" %}
             {% else %}
               {% url "attendance:dashboard" %}
@@ -122,7 +125,7 @@
             {% endif %}
           {% endif %}
             
-          <li class="nav-item">
+          {% comment %} <li class="nav-item">
             <a href="{% url 'home:dashboard' %}" class="nav-link ">
               <span class="pcoded-micon"><i class="feather icon-bell"></i></span>
               <span class="pcoded-mtext">
@@ -132,7 +135,7 @@
                 {% endif %}
               </span>
             </a>
-          </li>
+          </li> {% endcomment %}
 
           {% comment %} {% if perms.timetable.view_timetable or perms.availability.view_availabilityrequest %} {% endcomment %}
               <li class="nav-item pcoded-menu-caption">
@@ -153,10 +156,6 @@
                 </ul>
               </li>
           {% comment %} {% endif %} {% endcomment %}
-              {% comment %} <li class="nav-item">
-                <a href="{% url "home:stat" %}" class="nav-link"> </a>
-              </li> {% endcomment %}
-
               <li class="nav-item">
                 <a href="{% url "home:stat" %}" class="nav-link ">
                   <span class="pcoded-micon"><i class="feather icon-bar-chart"></i></span>
@@ -271,6 +270,14 @@
               {% endif %}
             {% endfor %}
           {% endif %}
+        {% endif %}
+        {% if request.user.is_authenticated %}
+          <li class="nav-item">
+            <a href="{% url 'users:logout'%}" class="nav-link ">
+              <span class="pcoded-micon">
+                <i class="feather icon-log-out"></i></span><span class="pcoded-mtext">Se Déconnecter</span>
+            </a>
+          </li>
         {% endif %}
       </ul>
     </div>

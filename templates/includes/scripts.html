@@ -35,25 +35,25 @@
             // Définir une icône en fonction du type de message
             var icon = '';
             if (messageType === 'success') {
-                icon = 'check-circle';
+                icon = 'icon-check-circle';
             } else if (messageType === 'error') {
-                icon = 'x-circle';
+                icon = 'icon-x-circle';
             } else if (messageType === 'warning') {
-                icon = 'alert-circle';
+                icon = 'icon-alert-circle';
             } else {
-                icon = 'info';
+                icon = 'icon-info';
             }
 
             // Affichage du message avec Bootstrap Notify
             $.notify({
-                icon: '<i data-feather="' + icon + '" class="notify-icon"></i>', // Icône Feather avec taille contrôlée
+                icon: '<i class="feather  '+ icon +' notify-icon"></i>', // Icône Feather avec taille contrôlée
                 message: messageContent
             }, {
                 type: messageType, // 'success', 'info', 'warning', 'danger'
                 delay: 5000, // Durée de l'affichage (en ms)
                 placement: {
                     from: 'top', 
-                    align: 'center' 
+                    align: 'left' 
                 },
                 z_index: 9999, // Assurez-vous que la notification apparaisse au-dessus du contenu
                 animate: {

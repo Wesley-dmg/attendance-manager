@@ -11,8 +11,9 @@ def send_whatsapp_message(user, message):
         response = client.messages.create(
             body=message,
             from_=settings.TWILIO_WHATSAPP_SANDBOX_NUMBER,
-            # to=user.whatsapp_number
             to="whatsapp:+22997064433",
+            # from_=settings.TWILIO_WHATSAPP_NUMBER,
+            # to=f"whatsapp:{user.whatsapp_number}",
         )
         print(f"[TWILIO] Message envoyé à {user.whatsapp_number} (sid={response.sid})")
         return True, response.sid

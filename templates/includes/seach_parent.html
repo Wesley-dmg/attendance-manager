@@ -1,0 +1,90 @@
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const phoneField = document.querySelector("#id_phone_number");
+    const firstNameField = document.querySelector("#id_first_name");
+    const lastNameField = document.querySelector("#id_last_name");
+    const emailField = document.querySelector("#id_email");
+    const dobField = document.querySelector("#id_date_of_birth");
+    const genderField = document.querySelector("#id_gender");
+    const relationField = document.querySelector("#id_relation");
+    const childrenField = document.querySelector("#id_children");
+
+    // Message d'info utilisateur (à injecter dans le DOM)
+    let infoBanner = document.createElement("div");
+    infoBanner.style.margin = "10px 0";
+    infoBanner.style.padding = "8px";
+    infoBanner.style.borderRadius = "4px";
+    infoBanner.style.fontWeight = "bold";
+    infoBanner.style.display = "none";
+    phoneField.parentNode.insertBefore(infoBanner, phoneField.nextSibling);
+
+    let timeout = null;
+    phoneField.addEventListener("input", function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            const phone = phoneField.value.trim();
+            if (phone.length < 6) {
+                infoBanner.style.display = "none";
+                unlockFields();
+                clearFields();
+                return;
+            }
+
+            fetch(`/check-parent-phone/?phone=${encodeURIComponent(phone)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        infoBanner.textContent = "Parent existant trouvé, formulaire pré-rempli.";
+                        infoBanner.style.backgroundColor = "#d4edda";
+                        infoBanner.style.color = "#155724";
+                        infoBanner.style.display = "block";
+
+                        // Pré-remplir et verrouiller les champs sauf enfants
+                        firstNameField.value = data.first_name;
+                        lastNameField.value = data.last_name;
+                        emailField.value = data.email;
+                        dobField.value = data.date_of_birth;
+                        genderField.value = data.gender;
+                        relationField.value = data.relation;
+
+                        lockFields();
+                    } else {
+                        infoBanner.textContent = "Nouveau parent. Veuillez remplir le formulaire.";
+                        infoBanner.style.backgroundColor = "#fff3cd";
+                        infoBanner.style.color = "#856404";
+                        infoBanner.style.display = "block";
+
+                        unlockFields();
+                        clearFields();
+                    }
+                })
+                .catch(() => {
+                    infoBanner.style.display = "none";
+                    unlockFields();
+                    clearFields();
+                });
+        }, 500); // délai anti-spam
+    });
+
+    function lockFields() {
+        [firstNameField, lastNameField, emailField, dobField, genderField, relationField]
+            .forEach(f => f.setAttribute("readonly", true));
+        // Pour les select (gender, relation), on disable plutôt
+        genderField.setAttribute("disabled", true);
+        relationField.setAttribute("disabled", true);
+    }
+
+    function unlockFields() {
+        [firstNameField, lastNameField, emailField, dobField]
+            .forEach(f => f.removeAttribute("readonly"));
+        genderField.removeAttribute("disabled");
+        relationField.removeAttribute("disabled");
+    }
+
+    function clearFields() {
+        [firstNameField, lastNameField, emailField, dobField].forEach(f => f.value = "");
+        genderField.value = "";
+        relationField.value = "guardian";
+    }
+});
+</script>

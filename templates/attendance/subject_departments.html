@@ -27,17 +27,6 @@
         
 
 
-        {% comment %} {% if students %}
-          <hr>
-          <h5>Étudiants concernés :</h5>
-          <ul class="list-group mt-3">
-            {% for student in students %}
-              <li class="list-group-item">
-                {{ student.user.get_full_name }} - {{ student.department_level }}
-              </li>
-            {% endfor %}
-          </ul>
-        {% endif %} {% endcomment %}
       </div>
     </div>
   </div>

@@ -212,3 +212,23 @@ CORS_ALLOW_ALL_ORIGINS = True
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_WHATSAPP_SANDBOX_NUMBER = os.getenv("TWILIO_WHATSAPP_SANDBOX_NUMBER")
+
+# import sentry_sdk
+# from sentry_sdk.integrations.django import DjangoIntegration
+
+# if not DEBUG:
+#     sentry_sdk.init(
+#         dsn=os.environ.get("SENTRY_DSN"),  # Ex: dans ton .env ou sur Render
+#         integrations=[DjangoIntegration()],
+#         traces_sample_rate=1.0,  # change selon besoin (0.1 = 10% des requêtes)
+#         send_default_pii=True,
+#     )
+
+# if not DEBUG:
+#     SECURE_SSL_REDIRECT = True
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
+
+#     SECURE_HSTS_SECONDS = 3600
+#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+#     SECURE_HSTS_PRELOAD = True

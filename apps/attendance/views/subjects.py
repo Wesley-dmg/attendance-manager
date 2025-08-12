@@ -1,8 +1,10 @@
+from django.utils.translation import gettext as _
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import TemplateView, DetailView, FormView
 from apps.attendance.models import Attendance
 from apps.courses.models import Department, DepartmentLevel
+from apps.home.utils import send_custom_message
 from apps.users.models import StudentProfile, TeacherProfile
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -98,12 +100,22 @@ class SubjectDepartmentSelectionView(LoginRequiredMixin, FormView):
         return context
 
     def form_valid(self, form):
+        send_custom_message(
+            self.request,
+            _("Formulaire validé."),
+            "success",
+        )
         return self.render_to_response(self.get_context_data(form=form))
 
     def form_valid(self, form):
         selected_department_levels = self.request.POST.getlist("department_levels")
         if not selected_department_levels:
             form.add_error(None, "Veuillez sélectionner au moins une filière.")
+            send_custom_message(
+                self.request,
+                _("Veuillez sélectionner au moins une filière."),
+                "warning",
+            )
             return self.form_invalid(form)
 
         # Construit une URL avec les paramètres GET

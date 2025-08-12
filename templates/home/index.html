@@ -86,7 +86,7 @@
       </div>
       <div class="card-block px-0 py-3">
         <div class="table-responsive">
-          <table class="table table-hover">
+          <table class="table">
             <tbody>
               {% for absent in absents_recents %}
               <tr class="unread">
@@ -110,7 +110,7 @@
       </div>
       <div class="card-block px-0 py-3">
         <div class="table-responsive">
-          <table class="table table-hover">
+          <table class="table">
             <tbody>
               {% if archives_recent %}
                 {% for archive in archives_recent %}
@@ -138,8 +138,8 @@
       </div>
       <div class="card-block px-0 py-3">
         <div class="table-responsive">
-          <table class="table table-bordered table-hover">
-            <thead class="bg-light">
+          <table class="table ">
+            <thead >
               <tr>
                 <th>Filière</th>
                 <th>Absences</th>
@@ -163,13 +163,6 @@
               <tr><td colspan="4" class="text-center">Aucune donnée</td></tr>
               {% endfor %}
             </tbody>
-            {% comment %} {% if absences_par_filiere|length > 5 %}
-              <div class="text-center mt-2">
-                <button class="btn btn-sm btn-outline-primary" onclick="toggleRows(this)">Afficher tout</button>
-              </div>
-            {% endif %} {% endcomment %}
-
-
           </table>
         </div>
       </div>
@@ -184,8 +177,8 @@
       </div>
       <div class="card-block px-0 py-3">
         <div class="table-responsive">
-          <table class="table table-bordered table-hover">
-            <thead class="bg-light">
+          <table class="table">
+            <thead >
               <tr>
                 <th>Matière</th>
                 <th>Absences</th>
@@ -215,16 +208,4 @@
 
 </div>
 <!-- [ Main Content ] end -->
-{% comment %} {% block extra_js %}
-  <script>
-    function toggleRows(btn) {
-      const rows = document.querySelectorAll('.extra-row');
-      const isHidden = rows[0].classList.contains('d-none');
-
-      rows.forEach(row => row.classList.toggle('d-none'));
-      btn.textContent = isHidden ? 'Réduire' : 'Afficher tout';
-    }
-  </script>
-{% endblock extra_js %} {% endcomment %}
-
 {% endblock content %}

@@ -1,10 +1,8 @@
-from django.views.generic import TemplateView
-from django.contrib.auth.views import LogoutView
-
 from django.urls import path
+from django.views.generic import TemplateView
 
 from apps.home.views import redirect_after_login
-from apps.users.utils import UserSearchView
+from apps.users.utils import FilterByFiliereView, UserSearchView, check_parent_phone
 from .views import (
     AdminDetailView,
     CustomregisterView,
@@ -71,7 +69,6 @@ urlpatterns = [
     path("students/liste/", StudentListView.as_view(), name="students_list"),
     path("parents/liste/", ParentListView.as_view(), name="parents_list"),
     # vues de details
-    # urls.py
     path("admins/<int:pk>/", AdminDetailView.as_view(), name="admin_detail"),
     # Vues de création
     path("create/admin/", AdminCreateView.as_view(), name="create_admin"),
@@ -92,10 +89,12 @@ urlpatterns = [
         "delete/student/<int:pk>/", StudentDeleteView.as_view(), name="delete_student"
     ),
     path("delete/parent/<int:pk>/", ParentDeleteView.as_view(), name="delete_parent"),
-    path("search/", UserSearchView.as_view(), name="user_search"),
     path("admins/<int:pk>/", AdminDetailView.as_view(), name="admin_detail"),
     path("teachers/<int:pk>/", TeacherDetailView.as_view(), name="teacher_detail"),
     path("students/<int:pk>/", StudentDetailView.as_view(), name="student_detail"),
     path("parents/<int:pk>/", ParentDetailView.as_view(), name="parent_detail"),
+    path("check-parent-phone/", check_parent_phone, name="check_parent_phone"),
     path("redirect-after-login/", redirect_after_login, name="redirect-after-login"),
+    path("search/", UserSearchView.as_view(), name="user_search"),
+    path("filter-by-filiere/", FilterByFiliereView.as_view(), name="filter_by_filiere"),
 ]

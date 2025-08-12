@@ -10,9 +10,10 @@ from django.utils.text import slugify
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
-# from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404
 
+from apps.attendance.models import Attendance
+from apps.courses.models import DepartmentLevel
 from apps.home.mixins import AdminTestMixin
 from apps.users.utils import generate_reset_code, generate_unique_username
 
@@ -57,6 +58,7 @@ from apps.users.models import (
     AdminProfile,
     CustomUser,
     ParentProfile,
+    StudentArchiveHistory,
     StudentProfile,
     TeacherProfile,
 )
@@ -433,9 +435,13 @@ class StudentListView(UserListView):
     def get_queryset(self):
         return CustomUser.objects.filter(role="student")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["filieres"] = DepartmentLevel.objects.all()
+        return context
+
 
 class ParentListView(UserListView):
-    # template_name = "users/admin/parents_list.html"
     permission_required = "users.view_parentprofile"
     extra_context = {
         "role": "parent",
@@ -496,9 +502,23 @@ class StudentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
         student_profile = getattr(self.object, "studentprofile", None)
         context["student_profile"] = student_profile
 
-        # Récupérer les parents associés
+        # Parents associés
         parents = ParentProfile.objects.filter(children=student_profile)
         context["parents"] = parents
+
+        # Absences de l'étudiant
+        if student_profile:
+            absences = Attendance.objects.filter(student=student_profile).order_by(
+                "-date"
+            )
+            context["attendances"] = absences
+
+            # Historique d'archivage
+            archive_history = StudentArchiveHistory.objects.filter(
+                student=student_profile
+            ).order_by("-performed_at")
+            context["archive_history"] = archive_history
+
         return context
 
 
@@ -533,6 +553,7 @@ class UserCreateView(
     def form_valid(self, form):
         phone = form.cleaned_data.get("phone_number")
         first_name = form.cleaned_data.get("first_name")
+        role = getattr(form.instance, "role", None) or form.cleaned_data.get("role")
 
         if not phone:
             form.add_error("phone_number", "Le numéro de téléphone est requis.")
@@ -540,7 +561,8 @@ class UserCreateView(
 
         User = get_user_model()
 
-        if User.objects.filter(phone_number=phone).exists():
+        # Bloquer uniquement si un autre utilisateur avec ce numéro existe ET ce n'est pas un parent
+        if User.objects.filter(phone_number=phone).exists() and role != "parent":
             form.add_error("phone_number", "Un utilisateur avec ce numéro existe déjà.")
             return self.form_invalid(form)
 
@@ -665,14 +687,52 @@ class ParentCreateView(UserCreateView):
                 kwargs["student_instance"] = student
             except StudentProfile.DoesNotExist:
                 pass
+
+        # Autoriser le numéro de téléphone existant (utile pour mise à jour parent)
+        kwargs["allow_existing_phone"] = True
+
         return kwargs
+
+    def form_valid(self, form):
+        phone = form.cleaned_data.get("phone_number")
+        User = get_user_model()
+
+        try:
+            existing_user = User.objects.get(phone_number=phone, role="parent")
+
+            # Un parent existe déjà avec ce numéro, on met à jour ses enfants et relation
+            parent_profile, created = ParentProfile.objects.get_or_create(
+                user=existing_user
+            )
+
+            # On ajoute les enfants sans dupliquer (set() pourrait écraser, add() ajoute)
+            for child in form.cleaned_data["children"]:
+                parent_profile.children.add(child)
+
+            parent_profile.relation = form.cleaned_data["relation"]
+            parent_profile.save()
+
+            send_custom_message(
+                self.request,
+                _("Parent existant mis à jour avec les nouveaux enfants."),
+                "success",
+            )
+            return redirect(self.get_success_url())
+
+        except User.DoesNotExist:
+            # Aucun parent existant, on crée un nouveau parent normalement
+            response = super().form_valid(form)
+            send_custom_message(
+                self.request,
+                _("Nouveau parent créé avec succès."),
+                "success",
+            )
+            return response
 
     def form_invalid(self, form):
         send_custom_message(
             self.request,
-            _(
-                "Erreur dans le formulaire. Un profil parent pour cet utilisateur existe déjà."
-            ),
+            _("Erreur dans le formulaire."),
             "error",
         )
         return super().form_invalid(form)

@@ -4,8 +4,9 @@
 {% block content %}
 <div class="container mt-4">
 
-    <!-- Statistiques rapides -->
-    <div class="row mb-4">
+    <div class="row">
+        <!-- Statistiques rapides -->
+    <div class="row mb-4 col-12">
         <div class="col-md-4">
             <div class="card shadow-sm text-center border-0">
                 <div class="card-body">
@@ -37,7 +38,7 @@
     </div>
 
     <!-- Informations personnelles -->
-    <div class="card mb-4 shadow-sm">
+    <div class="card mb-4 shadow-sm col-6">
         <div class="card-header bg-primary text-white">
             <h6 class="mb-0">Informations personnelles</h6>
         </div>
@@ -59,20 +60,7 @@
         </div>
     </div>
 
-    <!-- Informations académiques -->
-    {% if student_profile %}
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-info text-white">
-            <h6 class="mb-0">Informations académiques</h6>
-        </div>
-        <div class="card-body">
-            {% if student_profile.student_id %}<p><strong>ID Étudiant :</strong> {{ student_profile.student_id }}</p>{% endif %}
-            <p><strong>Statut d'inscription :</strong> {{ student_profile.get_enrollment_status_display }}</p>
-            <p><strong>Filière :</strong> {{ student_profile.major }}</p>
-        </div>
-    </div>
-    {% endif %}
-
+    
     <!-- Parents associés -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-secondary text-white">
@@ -93,6 +81,20 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Informations académiques -->
+    {% if student_profile %}
+    <div class="card mb-4 shadow-sm col-12">
+        <div class="card-header bg-info text-white">
+            <h6 class="mb-0">Informations académiques</h6>
+        </div>
+        <div class="card-body">
+            {% if student_profile.student_id %}<p><strong>ID Étudiant :</strong> {{ student_profile.student_id }}</p>{% endif %}
+            <p><strong>Statut d'inscription :</strong> {{ student_profile.get_enrollment_status_display }}</p>
+            <p><strong>Filière :</strong> {{ student_profile.major }}</p>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Historique des absences -->
     <div class="card mb-4 shadow-sm">
@@ -160,5 +162,6 @@
         </div>
     </div>
 
+    </div>
 </div>
 {% endblock %}

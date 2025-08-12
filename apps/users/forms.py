@@ -6,7 +6,6 @@ from django.contrib.auth.forms import (
     PasswordResetForm,
     SetPasswordForm,
     UsernameField,
-    # UserChangeForm,
 )
 from apps.courses.models import DepartmentLevel
 from apps.subjects.models import Subject
@@ -299,7 +298,6 @@ class BaseUserForm(forms.ModelForm):
 
 # Formulaire pour les administrateurs
 class AdminForm(BaseUserForm):
-    # admin_type = forms.ModelChoiceField(queryset=AdminType.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}), required=True)
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -397,8 +395,11 @@ class ParentForm(BaseUserForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.student_instance = kwargs.pop("student_instance", None)
-        super().__init__(*args, **kwargs)
+        self.student_instance = kwargs.pop(
+            "student_instance", None
+        )  # récupère et retire l'argument
+        self.allow_existing_phone = kwargs.pop("allow_existing_phone", False)
+        super().__init__(*args, **kwargs)  # appelle init parent sans cet argument
 
         if self.student_instance:
             self.fields["children"].initial = [self.student_instance]
@@ -422,7 +423,8 @@ class ParentForm(BaseUserForm):
         qs = CustomUser.objects.filter(phone_number=phone)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
+
+        if qs.exists() and not self.allow_existing_phone:
             raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
         return phone
 
@@ -432,8 +434,6 @@ class AdminUpdateForm(BaseUserForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # if self.instance and hasattr(self.instance, 'adminprofile'):
-        #     self.fields['admin_type'].initial = self.instance.adminprofile.admin_type
 
     def save(self, commit=True):
         user = super().save(commit=False)
