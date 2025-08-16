@@ -13,9 +13,9 @@ load_dotenv()  # take environment variables from .env.
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
-if not SECRET_KEY:
-    raise ValueError("La variable SECRET_KEY doit être définie !")
+# SECRET_KEY = os.environ.get("SECRET_KEY")
+# if not SECRET_KEY:
+#     raise ValueError("La variable SECRET_KEY doit être définie !")
 
 # Enable/Disable DEBUG Mode
 DEBUG = str2bool(os.environ.get("DEBUG", "False"))

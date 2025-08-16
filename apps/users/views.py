@@ -80,20 +80,13 @@ def CustomregisterView(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Vérifie si le profil admin existe déjà
-            admin_profile = AdminProfile.objects.filter(user=user).first()
-            if admin_profile is None:
-                # Créez un nouvel admin profile uniquement si ce n'est pas déjà créé
-                AdminProfile.objects.create(user=user)
-                send_custom_message(
-                    request,
-                    _(
-                        "Compte administrateur créé avec succès. Vous pouvez maintenant vous connecter."
-                    ),
-                    "success",
-                )
-            else:
-                send_custom_message(request, _("Ce profil existe déjà."), "info")
+            send_custom_message(
+                request,
+                _(
+                    "Compte administrateur créé avec succès. Vous pouvez maintenant vous connecter."
+                ),
+                "success",
+            )
             return redirect("users:login")
         else:
             send_custom_message(
@@ -667,15 +660,76 @@ class StudentCreateView(UserCreateView):
         return super().form_invalid(form)
 
 
-class ParentCreateView(UserCreateView):
+# class ParentCreateView(
+#     LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, CreateView
+# ):
+#     form_class = ParentForm
+#     template_name = "users/admin/user_form.html"
+#     permission_required = "users.add_parentprofile"
+
+#     extra_context = {
+#         "title": "Créer Parent",
+#         "cancel_url": reverse_lazy("users:parents_list"),
+#         "succes_url": reverse_lazy("users:students_list"),
+#     }
+
+#     def get_form_kwargs(self):
+#         kwargs = super().get_form_kwargs()
+#         student_id = self.request.GET.get("student_id")
+#         if student_id:
+#             try:
+#                 student = StudentProfile.objects.get(pk=student_id)
+#                 kwargs["student_instance"] = student
+#             except StudentProfile.DoesNotExist:
+#                 pass
+
+#             # Autoriser le numéro de téléphone existant (utile pour mise à jour parent)
+#             kwargs["allow_existing_phone"] = True
+
+#             return kwargs
+
+#     def form_valid(self, form):
+#         phone = form.cleaned_data.get("phone_number")
+#         User = get_user_model()
+
+#         try:
+#             # Si un parent existe déjà avec ce numéro
+#             existing_user = User.objects.get(phone_number=phone, role="parent")
+#             parent_profile, _ = ParentProfile.objects.get_or_create(user=existing_user)
+
+#             # On ajoute les enfants choisis
+#             new_children = form.cleaned_data["children"]
+#             parent_profile.children.add(*new_children)
+
+#             parent_profile.relation = form.cleaned_data["relation"]
+#             parent_profile.save()
+
+#             send_custom_message(
+#                 self.request,
+#                 _("Parent existant mis à jour avec les nouveaux enfants."),
+#                 "success",
+#             )
+#             return redirect(self.get_success_url())
+
+#         except User.DoesNotExist:
+#             # Sinon → création normale
+#             return super().form_valid(form)
+
+#     def get_success_url(self):
+#         return self.extra_context["succes_url"]
+
+
+class ParentCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, CreateView
+):
     form_class = ParentForm
-    permission_required = "users.add_parentprofile"
     template_name = "users/admin/user_form.html"
+    permission_required = "users.add_parentprofile"
 
     extra_context = {
-        "role": "parent",
-        "title": "Ajouter Parent",
+        "title": "Créer Parent",
         "cancel_url": reverse_lazy("users:parents_list"),
+        "success_url": reverse_lazy("users:students_list"),
     }
 
     def get_form_kwargs(self):
@@ -687,10 +741,8 @@ class ParentCreateView(UserCreateView):
                 kwargs["student_instance"] = student
             except StudentProfile.DoesNotExist:
                 pass
-
-        # Autoriser le numéro de téléphone existant (utile pour mise à jour parent)
+        # autoriser le numéro existant → utile si parent déjà créé
         kwargs["allow_existing_phone"] = True
-
         return kwargs
 
     def form_valid(self, form):
@@ -698,47 +750,31 @@ class ParentCreateView(UserCreateView):
         User = get_user_model()
 
         try:
+            # 🔎 Vérifier si un parent existe déjà avec ce numéro
             existing_user = User.objects.get(phone_number=phone, role="parent")
+            parent_profile, _ = ParentProfile.objects.get_or_create(user=existing_user)
 
-            # Un parent existe déjà avec ce numéro, on met à jour ses enfants et relation
-            parent_profile, created = ParentProfile.objects.get_or_create(
-                user=existing_user
-            )
+            # Ajouter les nouveaux enfants (sans supprimer les anciens)
+            new_children = form.cleaned_data["children"]
+            parent_profile.children.add(*new_children)
 
-            # On ajoute les enfants sans dupliquer (set() pourrait écraser, add() ajoute)
-            for child in form.cleaned_data["children"]:
-                parent_profile.children.add(child)
-
+            # Mettre à jour la relation
             parent_profile.relation = form.cleaned_data["relation"]
             parent_profile.save()
 
             send_custom_message(
                 self.request,
-                _("Parent existant mis à jour avec les nouveaux enfants."),
+                _("Parent existant mis à jour avec succès."),
                 "success",
             )
             return redirect(self.get_success_url())
 
         except User.DoesNotExist:
-            # Aucun parent existant, on crée un nouveau parent normalement
-            response = super().form_valid(form)
-            send_custom_message(
-                self.request,
-                _("Nouveau parent créé avec succès."),
-                "success",
-            )
-            return response
-
-    def form_invalid(self, form):
-        send_custom_message(
-            self.request,
-            _("Erreur dans le formulaire."),
-            "error",
-        )
-        return super().form_invalid(form)
+            # 🚀 Si le parent n’existe pas → continuer le flow normal de CreateView
+            return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy("users:students_list")
+        return self.extra_context["success_url"]
 
 
 class UserUpdateView(

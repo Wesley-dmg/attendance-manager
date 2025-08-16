@@ -18,7 +18,8 @@ if not SECRET_KEY:
     raise ValueError("La variable SECRET_KEY doit être définie !")
 
 # Enable/Disable DEBUG Mode
-DEBUG = str2bool(os.environ.get("DEBUG", "False"))
+# DEBUG = str2bool(os.environ.get("DEBUG", "False"))
+DEBUG = False
 
 
 ALLOWED_HOSTS = ["*"]

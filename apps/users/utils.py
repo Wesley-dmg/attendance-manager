@@ -39,26 +39,6 @@ def generate_unique_username(base_name: str) -> str:
     return username
 
 
-# class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
-#     def get(self, request):
-#         query = request.GET.get("q", "")
-#         role = request.GET.get("role", "")
-
-#         users = CustomUser.objects.filter(
-#             Q(first_name__icontains=query)
-#             | Q(last_name__icontains=query)
-#             | Q(phone_number__icontains=query)
-#         )
-
-#         if role:
-#             users = users.filter(role=role)
-
-#         html = render_to_string(
-#             "users/partials/_user_cards.html", {"users": users}, request=request
-#         )
-#         return JsonResponse({"html": html})
-
-
 class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
     """
     Retourne le partial HTML des cartes utilisateurs filtrées (search ajax).
