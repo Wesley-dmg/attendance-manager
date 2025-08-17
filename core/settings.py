@@ -20,8 +20,8 @@ if not SECRET_KEY:
 
 # Enable/Disable DEBUG Mode
 DEBUG = str2bool(os.environ.get("DEBUG", "False"))
-ALLOWED_HOSTS = ["*"]
-# ALLOWED_HOSTS = os.environ.list("ALLOWED_HOSTS", default=["*"])
+# ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
