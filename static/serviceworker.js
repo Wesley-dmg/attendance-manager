@@ -11,7 +11,7 @@ const urlsToCache = [
     "/static/assets/js/dark-mode.js",
     "/static/assets/js/datatable-all-option.js",
     "/static/assets/js/bootstrap-notify.js",
-    "/static/icons/logo-dark.png",
+    "/static/icons/logo-thumb.png",
     "/static/icons/logo-thumb.png"
     // tu peux ajouter d'autres fichiers si nécessaire
 ];
