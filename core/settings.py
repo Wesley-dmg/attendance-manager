@@ -13,16 +13,18 @@ load_dotenv()  # take environment variables from .env.
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+# SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = os.environ.get("SECRET_KEY", default="change-me")
 if not SECRET_KEY:
     raise ValueError("La variable SECRET_KEY doit être définie !")
 
 # Enable/Disable DEBUG Mode
-# DEBUG = str2bool(os.environ.get("DEBUG", "False"))
-DEBUG = False
-
-
+DEBUG = str2bool(os.environ.get("DEBUG", "False"))
 ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = os.environ.list("ALLOWED_HOSTS", default=["*"])
+
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Add here your deployment HOSTS
 CSRF_TRUSTED_ORIGINS = [
@@ -35,10 +37,10 @@ CSRF_TRUSTED_ORIGINS = [
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
 # RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-# RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-# if RENDER_EXTERNAL_HOSTNAME:
-#     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-#     CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
 # Application definition
 
@@ -51,6 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_select2",
+    "whitenoise.runserver_nostatic",
     "apps.common",  # Application pour gérer les  relations entre filière et matière
     "apps.courses",  # Application pour gérer les filières
     "apps.home",  # Application pour gérer les fonction de base de  l'application comme  les  notification systeme  d'alert et  autre
@@ -131,7 +134,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGES = [
     ("fr", _("French")),
-    # ("en", _("English")),
 ]
 
 LANGUAGE_CODE = "fr"  # Par défaut en français
