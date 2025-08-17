@@ -20,8 +20,9 @@ if not SECRET_KEY:
 
 # Enable/Disable DEBUG Mode
 DEBUG = str2bool(os.environ.get("DEBUG", "False"))
-# ALLOWED_HOSTS = ["*"]
+
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS += ["timelya.onrender.com"]
 
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -32,6 +33,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5085",
     "http://127.0.0.1:8000",
     "http://127.0.0.1:5085",
+    "https://timelya.onrender.com",  # <-- Ajout du sous-domaine
 ]
 
 X_FRAME_OPTIONS = "SAMEORIGIN"

@@ -1,0 +1,22 @@
+{
+    "name": "GestPresence",
+    "short_name": "Timelya",
+    "description": "Mon app de gestion en Django",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3f4d67",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/static/icons/logo-dark.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/static/icons/logo-thumb.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
