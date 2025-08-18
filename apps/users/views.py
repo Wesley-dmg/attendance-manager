@@ -73,6 +73,10 @@ def generate_password():
     return "".join(random.choice(characters) for _ in range(10))
 
 
+class RoleLoginView(TemplateView):
+    template_name = "accounts/choose_role.html"
+
+
 # Vue pour l'inscription
 # @user_passes_test(lambda u: u.is_authenticated and u.is_superuser)
 def CustomregisterView(request):

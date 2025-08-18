@@ -15,6 +15,7 @@ from .views import (
     AdminListView,
     ProfileUpdateView,
     ProfileView,
+    RoleLoginView,
     StudentDetailView,
     TeacherDetailView,
     TeacherListView,
@@ -38,7 +39,8 @@ from .views import (
 app_name = "users"  # Nom de l'application pour les URL inversées
 
 urlpatterns = [
-    path("", CustomLoginView, name="login"),
+    path("", RoleLoginView.as_view(), name="choose_role"),
+    path("login/", CustomLoginView, name="login"),
     path("register/", CustomregisterView, name="register"),  # Inscription
     path("logout/", custom_logout, name="logout"),
     path(
