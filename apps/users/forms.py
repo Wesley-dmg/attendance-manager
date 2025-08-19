@@ -13,7 +13,10 @@ from django_select2.forms import Select2MultipleWidget
 from django.core.cache import cache
 from django import forms
 from .models import *
+from django.contrib.auth import get_user_model
+from django.utils.text import slugify
 import random
+
 import string
 
 
