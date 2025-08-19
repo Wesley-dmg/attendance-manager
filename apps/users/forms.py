@@ -363,63 +363,6 @@ class StudentForm(BaseUserForm):
         return phone
 
 
-# Formulaire pour les parents
-# class ParentForm(BaseUserForm):
-#     children = forms.ModelMultipleChoiceField(
-#         queryset=StudentProfile.objects.all(),
-#         widget=forms.SelectMultiple(attrs={"class": "form-control select2"}),
-#         required=True,
-#         label="Enfants",
-#     )
-#     RELATION_CHOICES = [
-#         ("father", "Père"),
-#         ("mother", "Mère"),
-#         ("guardian", "Tuteur"),
-#     ]
-#     relation = forms.ChoiceField(
-#         choices=RELATION_CHOICES,
-#         widget=forms.Select(attrs={"class": "form-control"}),
-#         label="Lien avec l’enfant",
-#         required=True,
-#     )
-
-#     def __init__(self, *args, **kwargs):
-#         self.student_instance = kwargs.pop(
-#             "student_instance", None
-#         )  # récupère et retire l'argument
-#         self.allow_existing_phone = kwargs.pop("allow_existing_phone", False)
-#         super().__init__(*args, **kwargs)  # appelle init parent sans cet argument
-
-#         if self.student_instance:
-#             self.fields["children"].initial = [self.student_instance]
-#             self.fields["children"].queryset = StudentProfile.objects.filter(
-#                 pk=self.student_instance.pk
-#             )
-
-#     def save(self, commit=True):
-#         user = super().save(commit=False)
-#         user.role = "parent"
-#         if commit:
-#             user.save()
-#             parent_profile, created = ParentProfile.objects.get_or_create(user=user)
-#             parent_profile.children.set(self.cleaned_data["children"])
-#             parent_profile.relation = self.cleaned_data["relation"]
-#             parent_profile.save()
-#         return user
-
-#     def clean_phone_number(self):
-#         phone = self.cleaned_data["phone_number"]
-#         qs = CustomUser.objects.filter(phone_number=phone)
-
-#         if self.instance.pk:
-#             qs = qs.exclude(pk=self.instance.pk)
-
-#         # ✅ Accepter un numéro déjà existant si on autorise
-#         if qs.exists() and not self.allow_existing_phone:
-#             raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-#         return phone
-
-
 class ParentForm(BaseUserForm):
     children = forms.ModelMultipleChoiceField(
         queryset=StudentProfile.objects.all(),
@@ -453,9 +396,19 @@ class ParentForm(BaseUserForm):
             )
 
     def save(self, commit=True):
-        """Création d’un nouveau parent uniquement (la mise à jour est gérée dans la vue)."""
         user = super().save(commit=False)
         user.role = "parent"
+
+        # ✅ Générer username unique automatiquement
+        base_username = slugify(user.first_name) or "user"
+        username = base_username
+        suffix = random.randint(10, 99)
+        User = get_user_model()
+        while User.objects.filter(username=username).exists():
+            suffix = random.randint(10, 99)
+            username = f"{base_username}{suffix}"
+        user.username = username
+
         if commit:
             user.save()
             parent_profile, created = ParentProfile.objects.get_or_create(user=user)
@@ -463,6 +416,18 @@ class ParentForm(BaseUserForm):
             parent_profile.relation = self.cleaned_data["relation"]
             parent_profile.save()
         return user
+
+    # def save(self, commit=True):
+    #     """Création d’un nouveau parent uniquement (la mise à jour est gérée dans la vue)."""
+    #     user = super().save(commit=False)
+    #     user.role = "parent"
+    #     if commit:
+    #         user.save()
+    #         parent_profile, created = ParentProfile.objects.get_or_create(user=user)
+    #         parent_profile.children.set(self.cleaned_data["children"])
+    #         parent_profile.relation = self.cleaned_data["relation"]
+    #         parent_profile.save()
+    #     return user
 
     def clean_phone_number(self):
         phone = self.cleaned_data["phone_number"]
