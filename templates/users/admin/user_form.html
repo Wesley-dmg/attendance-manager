@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block   extrastyle %}
-  {{ form.media.css }}
   <style>
     .select2-container--default .select2-results__option {
       background-color: transparent; /* Ou la couleur par défaut de ton app */
@@ -40,6 +39,3 @@
   <!-- [ Main Content ] end -->
 
 {% endblock content %}
-{% block extra_js %}
-    {{ form.media.js }}
-{% endblock extra_js %}

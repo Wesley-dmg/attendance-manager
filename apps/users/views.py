@@ -1,5 +1,7 @@
 import hashlib
-from django.db import transaction
+from django.db import IntegrityError, transaction
+
+from django.utils.http import urlencode
 
 import random
 import string
@@ -691,7 +693,6 @@ class StudentCreateView(UserCreateView):
 #     extra_context = {
 #         "title": "Créer Parent",
 #         "cancel_url": reverse_lazy("users:parents_list"),
-#         "success_url": reverse_lazy("users:students_list"),
 #     }
 
 #     def get_form_kwargs(self):
@@ -703,53 +704,73 @@ class StudentCreateView(UserCreateView):
 #                 kwargs["student_instance"] = student
 #             except StudentProfile.DoesNotExist:
 #                 pass
-#         # autoriser le numéro existant → utile si parent déjà créé
-#         kwargs["allow_existing_phone"] = True
 #         return kwargs
 
 #     def form_valid(self, form):
 #         phone = form.cleaned_data.get("phone_number")
 #         User = get_user_model()
 
+#         # Vérifier si le téléphone existe déjà
+#         if User.objects.filter(phone_number=phone, role="parent").exists():
+#             form.add_error(
+#                 "phone_number",
+#                 "Un parent avec ce numéro existe déjà. "
+#                 "Veuillez utiliser la recherche pour l'associer.",
+#             )
+#             return self.form_invalid(form)
+
 #         try:
-#             # 🔎 Vérifier si un parent existe déjà avec ce numéro
-#             existing_user = User.objects.get(phone_number=phone, role="parent")
-#             parent_profile, _ = ParentProfile.objects.get_or_create(user=existing_user)
-
-#             # Ajouter les nouveaux enfants sans supprimer les anciens
-#             new_children = form.cleaned_data["children"]
-#             parent_profile.children.add(*new_children)
-
-#             # Mettre à jour la relation
-#             parent_profile.relation = form.cleaned_data["relation"]
-#             parent_profile.save()
-
+#             user = form.save()
 #             send_custom_message(
 #                 self.request,
-#                 _("Parent existant mis à jour avec succès."),
+#                 _("Parent créé avec succès."),
 #                 "success",
 #             )
 #             return redirect(self.get_success_url())
-
-#         except User.DoesNotExist:
-#             # 🚀 Si le parent n’existe pas → continuer le flow normal de CreateView
-#             try:
-#                 user = form.save()
-#                 send_custom_message(
-#                     self.request,
-#                     _("Parent créé avec succès."),
-#                     "success",
-#                 )
-#                 return redirect(self.get_success_url())
-#             except Exception as e:
-#                 form.add_error(
-#                     None,
-#                     _("Erreur inattendue lors de la création du parent : ") + str(e),
-#                 )
-#                 return self.form_invalid(form)
+#         except Exception as e:
+#             form.add_error(
+#                 None,
+#                 _("Erreur inattendue lors de la création du parent : ") + str(e),
+#             )
+#             return self.form_invalid(form)
 
 #     def get_success_url(self):
-#         return self.extra_context["success_url"]
+#         return reverse("users:students_list")
+
+
+# class ParentCreateView(CreateView):
+#     model = CustomUser
+#     form_class = ParentForm
+#     template_name = "users/admin/user_form.html"
+#     success_url = reverse_lazy("users:students_list")
+
+#     def get_form_kwargs(self):
+#         kwargs = super().get_form_kwargs()
+#         student_id = self.request.GET.get("student_id")
+#         if student_id:
+#             try:
+#                 kwargs["student_instance"] = StudentProfile.objects.get(pk=student_id)
+#             except StudentProfile.DoesNotExist:
+
+#                 send_custom_message(
+#                     self.request,
+#                     _("L'élève sélectionné n’existe pas."),
+#                     "error",
+#                 )
+#         return kwargs
+
+#     def form_invalid(self, form):
+#         # si le numéro existe déjà → message et retour page intermédiaire
+#         if "phone_number" in form.errors:
+#             send_custom_message(
+#                 self.request,
+#                 _(
+#                     "Ce numéro est déjà utilisé. Veuillez rechercher le parent existant."
+#                 ),
+#                 "error",
+#             )
+#             return redirect("users:parent_selector")
+#         return super().form_invalid(form)
 
 
 class ParentCreateView(
@@ -773,37 +794,71 @@ class ParentCreateView(
                 kwargs["student_instance"] = student
             except StudentProfile.DoesNotExist:
                 pass
+        # Création pure → on n’autorise pas un numéro déjà utilisé
+        kwargs["allow_existing_phone"] = False
         return kwargs
 
-    def form_valid(self, form):
-        phone = form.cleaned_data.get("phone_number")
-        User = get_user_model()
+    def form_invalid(self, form):
+        # Si duplication téléphone → renvoyer vers la page intermédiaire avec message
+        if "phone_number" in form.errors:
+            student_id = self.request.GET.get("student_id")
+            q = form.data.get("phone_number", "")
 
-        # Vérifier si le téléphone existe déjà
-        if User.objects.filter(phone_number=phone, role="parent").exists():
-            form.add_error(
-                "phone_number",
-                "Un parent avec ce numéro existe déjà. "
-                "Veuillez utiliser la recherche pour l'associer.",
-            )
-            return self.form_invalid(form)
-
-        try:
-            user = form.save()
             send_custom_message(
                 self.request,
-                _("Parent créé avec succès."),
-                "success",
+                _(
+                    "Un parent avec ce numéro existe déjà. Utilisez la recherche pour l'associer."
+                ),
+                "error",
             )
-            return redirect(self.get_success_url())
+
+            params = {}
+            if student_id:
+                params["student_id"] = student_id
+            if q:
+                params["q"] = q
+
+            url = reverse("users:parent_selector")
+            if params:
+                url = f"{url}?{urlencode(params)}"
+            return redirect(url)
+
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        try:
+            user = form.save()
+        except IntegrityError:
+            # Filet de sécurité si la contrainte unique du modèle déclenche malgré tout
+            student_id = self.request.GET.get("student_id")
+            q = form.cleaned_data.get("phone_number", "")
+            send_custom_message(
+                self.request,
+                _(
+                    "Ce numéro est déjà utilisé par un parent. Utilisez la recherche pour l'associer."
+                ),
+                "error",
+            )
+            params = {}
+            if student_id:
+                params["student_id"] = student_id
+            if q:
+                params["q"] = q
+            url = reverse("users:parent_selector")
+            if params:
+                url = f"{url}?{urlencode(params)}"
+            return redirect(url)
         except Exception as e:
             form.add_error(
-                None,
-                _("Erreur inattendue lors de la création du parent : ") + str(e),
+                None, _("Erreur inattendue lors de la création du parent : ") + str(e)
             )
             return self.form_invalid(form)
 
+        send_custom_message(self.request, _("Parent créé avec succès."), "success")
+        return redirect(self.get_success_url())
+
     def get_success_url(self):
+        # Tu peux garder ta redirection actuelle
         return reverse("users:students_list")
 
 
@@ -895,17 +950,6 @@ class StudentUpdateView(UserUpdateView):
         "title": "Modifier Élève",
         "cancel_url": reverse_lazy("users:students_list"),
     }
-
-
-# class ParentUpdateView(UserUpdateView):
-#     form_class = ParentUpdateForm
-#     permission_required = "users.change_parentprofile"
-#     template_name = "users/admin/user_form.html"
-
-#     extra_context = {
-#         "title": "Modifier Parent",
-#         "cancel_url": reverse_lazy("users:parents_list"),
-#     }
 
 
 class ParentUpdateView(UserUpdateView):

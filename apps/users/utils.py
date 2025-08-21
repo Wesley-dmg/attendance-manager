@@ -1,3 +1,4 @@
+import re
 import uuid
 import hashlib
 from django.views.decorators.http import require_GET
@@ -152,3 +153,16 @@ class FilterByFiliereView(LoginRequiredMixin, AdminTestMixin, View):
             "users/partials/_user_cards.html", {"users": qs, **urls}, request=request
         )
         return JsonResponse({"html": html})
+
+
+def normalize_bj_phone(phone: str) -> str:
+    """Normalise en +229XXXXXXXX (8 chiffres). Accepte 'XXXXXXXX', '+229XXXXXXXX', ou '229XXXXXXXX'."""
+    phone = (phone or "").replace(" ", "")
+    if phone.startswith("+229") and re.fullmatch(r"\+229\d{8}", phone):
+        return phone
+    if re.fullmatch(r"\d{8}", phone):
+        return f"+229{phone}"
+    if phone.startswith("229") and re.fullmatch(r"229\d{8}", phone):
+        return f"+{phone}"
+    # Laisse passer, le model.clean() lèvera une erreur si invalide
+    return phone
