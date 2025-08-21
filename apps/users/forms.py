@@ -420,18 +420,6 @@ class ParentForm(BaseUserForm):
             parent_profile.save()
         return user
 
-    # def save(self, commit=True):
-    #     """Création d’un nouveau parent uniquement (la mise à jour est gérée dans la vue)."""
-    #     user = super().save(commit=False)
-    #     user.role = "parent"
-    #     if commit:
-    #         user.save()
-    #         parent_profile, created = ParentProfile.objects.get_or_create(user=user)
-    #         parent_profile.children.set(self.cleaned_data["children"])
-    #         parent_profile.relation = self.cleaned_data["relation"]
-    #         parent_profile.save()
-    #     return user
-
     def clean_phone_number(self):
         phone = self.cleaned_data["phone_number"]
         qs = CustomUser.objects.filter(phone_number=phone)
