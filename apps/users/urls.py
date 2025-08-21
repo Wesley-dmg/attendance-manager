@@ -11,6 +11,7 @@ from .views import (
     CustomPasswordResetView,
     CustomPasswordResetConfirmView,
     ParentDetailView,
+    ParentSelectorView,
     PasswordResetCodeView,
     AdminListView,
     ProfileUpdateView,
@@ -99,4 +100,5 @@ urlpatterns = [
     path("redirect-after-login/", redirect_after_login, name="redirect-after-login"),
     path("search/", UserSearchView.as_view(), name="user_search"),
     path("filter-by-filiere/", FilterByFiliereView.as_view(), name="filter_by_filiere"),
+    path("select/parent/", ParentSelectorView.as_view(), name="parent_selector"),
 ]

@@ -402,7 +402,6 @@ class AdminListView(UserListView):
 
 
 class TeacherListView(UserListView):
-    # template_name = "users/admin/teachers_list.html"
     permission_required = "users.view_teacherprofile"
     extra_context = {
         "role": "teacher",
@@ -420,7 +419,6 @@ class TeacherListView(UserListView):
 
 
 class StudentListView(UserListView):
-    # template_name = "users/admin/students_list.html"
     permission_required = "users.view_studentprofile"
     extra_context = {
         "role": "student",
@@ -827,6 +825,17 @@ class StudentUpdateView(UserUpdateView):
     }
 
 
+# class ParentUpdateView(UserUpdateView):
+#     form_class = ParentUpdateForm
+#     permission_required = "users.change_parentprofile"
+#     template_name = "users/admin/user_form.html"
+
+#     extra_context = {
+#         "title": "Modifier Parent",
+#         "cancel_url": reverse_lazy("users:parents_list"),
+#     }
+
+
 class ParentUpdateView(UserUpdateView):
     form_class = ParentUpdateForm
     permission_required = "users.change_parentprofile"
@@ -836,6 +845,24 @@ class ParentUpdateView(UserUpdateView):
         "title": "Modifier Parent",
         "cancel_url": reverse_lazy("users:parents_list"),
     }
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        student_id = self.request.GET.get("student_id")
+        if student_id:
+            try:
+                kwargs["student_instance"] = StudentProfile.objects.get(pk=student_id)
+            except StudentProfile.DoesNotExist:
+                pass
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        student_id = self.request.GET.get("student_id")
+        if student_id:
+            student = StudentProfile.objects.get(pk=student_id)
+            self.object.parentprofile.children.add(student)
+        return response
 
 
 class UserDeleteView(
