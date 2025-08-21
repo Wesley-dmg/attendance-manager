@@ -1,0 +1,29 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block content %}
+<h2>Associer un parent</h2>
+
+<form method="get">
+    <input type="hidden" name="student_id" value="{{ student_id }}">
+    <input type="text" name="q" value="{{ query }}" placeholder="Nom, prénom ou téléphone">
+    <button type="submit">Rechercher</button>
+</form>
+
+{% if parents %}
+    <h3>Résultats</h3>
+    <ul>
+        {% for parent in parents %}
+            <li>
+                {{ parent.first_name }} {{ parent.last_name }} ({{ parent.phone_number }})
+                <a href="{% url 'users:edit_parent' parent.pk %}?student_id={{ student_id }}">Associer</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    {% if query %}
+        <p>Aucun parent trouvé.</p>
+    {% endif %}
+{% endif %}
+
+<a href="{% url 'users:create_parent' %}?student_id={{ student_id }}">Créer un parent</a>
+{% endblock %}
