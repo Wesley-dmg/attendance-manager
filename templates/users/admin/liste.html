@@ -30,7 +30,7 @@
 </div>
 {% endblock %}
  
-{% block extra_js %}
+{% comment %} {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.getElementById("search-input");
@@ -95,6 +95,59 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Erreur AJAX (filter filière):", error);
         });
     });
+});
+</script>
+{% endblock %} {% endcomment %}
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("search-input");
+    const filiereSelect = document.getElementById("filiere-filter");
+    const userContainer = document.getElementById("user-cards");
+    const role = "{{ role|default:'' }}";
+    const searchUrl = "{% url 'users:user_search' %}";
+
+    let timer = null;
+
+    function doSearch() {
+        const query = searchInput ? searchInput.value.trim() : "";
+        const filiereId = filiereSelect ? filiereSelect.value : "";
+
+        const params = new URLSearchParams({
+            q: query,
+            role: role,
+            filiere: filiereId
+        });
+
+        fetch(`${searchUrl}?${params.toString()}`, {
+            method: "GET",
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            return response.json();
+        })
+        .then(data => {
+            userContainer.innerHTML = data.html;
+        })
+        .catch(error => {
+            console.error("Erreur AJAX:", error);
+        });
+    }
+
+    // Recherche (avec debounce)
+    if (searchInput) {
+        searchInput.addEventListener("input", function () {
+            clearTimeout(timer);
+            timer = setTimeout(doSearch, 300);
+        });
+    }
+
+    // Filtre filière
+    if (filiereSelect) {
+        filiereSelect.addEventListener("change", doSearch);
+    }
 });
 </script>
 {% endblock %}

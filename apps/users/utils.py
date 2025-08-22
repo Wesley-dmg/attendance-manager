@@ -40,16 +40,81 @@ def generate_unique_username(base_name: str) -> str:
     return username
 
 
-class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
-    """
-    Retourne le partial HTML des cartes utilisateurs filtrées (search ajax).
-    """
+# class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
+#     def get(self, request, *args, **kwargs):
+#         query = request.GET.get("q", "").strip()
+#         role = request.GET.get("role", "").strip()
 
+#         users = CustomUser.objects.all().order_by("first_name", "last_name")
+
+#         if query:
+#             users = users.filter(
+#                 Q(first_name__icontains=query)
+#                 | Q(last_name__icontains=query)
+#                 | Q(phone_number__icontains=query)
+#                 | Q(email__icontains=query)
+#             )
+
+#         if role:
+#             users = users.filter(role=role)
+
+#         # enrichir absences si on est sur des étudiants
+#         if role == "student":
+#             users = users.select_related("studentprofile", "studentprofile__major")
+#             for student in users:
+#                 if hasattr(student, "studentprofile"):
+#                     student.absence_count = get_absence_count(student.studentprofile)
+
+#         role_map = {
+#             "admin": {
+#                 "detail_url": "users:admin_detail",
+#                 "edit_url": "users:edit_admin",
+#                 "delete_url": "users:delete_admin",
+#             },
+#             "teacher": {
+#                 "detail_url": "users:teacher_detail",
+#                 "edit_url": "users:edit_teacher",
+#                 "delete_url": "users:delete_teacher",
+#             },
+#             "student": {
+#                 "detail_url": "users:student_detail",
+#                 "edit_url": "users:edit_student",
+#                 "delete_url": "users:delete_student",
+#             },
+#             "parent": {
+#                 "detail_url": "users:parent_detail",
+#                 "edit_url": "users:edit_parent",
+#                 "delete_url": "users:delete_parent",
+#             },
+#         }
+
+#         urls = role_map.get(
+#             role,
+#             {  # fallback = student
+#                 "detail_url": "users:student_detail",
+#                 "edit_url": "users:edit_student",
+#                 "delete_url": "users:delete_student",
+#             },
+#         )
+
+#         context = {"users": users, "role": role, **urls}
+
+#         html = render_to_string(
+#             "users/partials/_user_cards.html", context, request=request
+#         )
+#         return JsonResponse({"html": html})
+
+
+class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q", "").strip()
         role = request.GET.get("role", "").strip()
+        filiere_id = request.GET.get("filiere", "").strip()
 
-        users = User.objects.all().order_by("first_name", "last_name")
+        users = CustomUser.objects.all().order_by("first_name", "last_name")
+
+        if role:
+            users = users.filter(role=role)
 
         if query:
             users = users.filter(
@@ -59,10 +124,16 @@ class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
                 | Q(email__icontains=query)
             )
 
-        if role:
-            users = users.filter(role=role)
+        if filiere_id:
+            users = users.filter(studentprofile__major_id=filiere_id)
 
-        # mapping role -> noms d'url utilisées dans le partial
+        # enrichir absences si on est sur des étudiants
+        if role == "student":
+            users = users.select_related("studentprofile", "studentprofile__major")
+            for student in users:
+                if hasattr(student, "studentprofile"):
+                    student.absence_count = get_absence_count(student.studentprofile)
+
         role_map = {
             "admin": {
                 "detail_url": "users:admin_detail",
@@ -86,17 +157,16 @@ class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
             },
         }
 
-        # si role absent ou inconnu, on prend un fallback (ajuste si tes noms d'urls diffèrent)
         urls = role_map.get(
             role,
-            {
+            {  # fallback = student
                 "detail_url": "users:student_detail",
                 "edit_url": "users:edit_student",
                 "delete_url": "users:delete_student",
             },
         )
 
-        context = {"users": users, **urls}
+        context = {"users": users, "role": role, **urls}
 
         html = render_to_string(
             "users/partials/_user_cards.html", context, request=request
@@ -137,20 +207,32 @@ class FilterByFiliereView(LoginRequiredMixin, AdminTestMixin, View):
         filiere_id = request.GET.get("filiere", "")
 
         # On prend uniquement les étudiants
-        qs = CustomUser.objects.filter(role="student")
+        qs = CustomUser.objects.filter(role="student").select_related(
+            "studentprofile", "studentprofile__major"
+        )
 
         if filiere_id:
             qs = qs.filter(studentprofile__major_id=filiere_id)
 
-        # On définit les noms de vues pour le partial
+        # enrichir chaque étudiant avec son absence_count
+        for student in qs:
+            if hasattr(student, "studentprofile"):
+                student.absence_count = get_absence_count(student.studentprofile)
+
         urls = {
             "detail_url": "users:student_detail",
             "edit_url": "users:edit_student",
             "delete_url": "users:delete_student",
         }
 
+        context = {
+            "users": qs,
+            "role": "student",  # 👈 indispensable pour afficher les badges et filière
+            **urls,
+        }
+
         html = render_to_string(
-            "users/partials/_user_cards.html", {"users": qs, **urls}, request=request
+            "users/partials/_user_cards.html", context, request=request
         )
         return JsonResponse({"html": html})
 
@@ -168,37 +250,6 @@ def normalize_bj_phone(phone: str) -> str:
     return phone
 
 
-# class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
-#     """
-#     Recherche asynchrone (AJAX) des parents uniquement.
-#     Retourne du HTML partial.
-#     """
-
-#     def get(self, request, *args, **kwargs):
-#         query = request.GET.get("q", "").strip()
-#         student_id = request.GET.get("student_id")
-
-#         parents = CustomUser.objects.filter(role="parent").order_by(
-#             "first_name", "last_name"
-#         )
-
-#         if query:
-#             parents = parents.filter(
-#                 Q(first_name__icontains=query)
-#                 | Q(last_name__icontains=query)
-#                 | Q(phone_number__icontains=query)
-#             )
-
-#         context = {
-#             "parents": parents,
-#             "student_id": student_id,
-#         }
-
-
-#         html = render_to_string(
-#             "users/partials/_parent_cards.html", context, request=request
-#         )
-#         return JsonResponse({"html": html})
 class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
     """
     Recherche AJAX des parents uniquement. Retourne le partial HTML.

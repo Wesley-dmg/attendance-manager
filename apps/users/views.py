@@ -15,6 +15,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.shortcuts import get_object_or_404
 
 from apps.attendance.models import Attendance
+from apps.attendance.utils import get_absence_count
 from apps.courses.models import DepartmentLevel
 from apps.home.mixins import AdminTestMixin
 from apps.users.utils import generate_reset_code, generate_unique_username

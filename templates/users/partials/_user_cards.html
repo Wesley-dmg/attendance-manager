@@ -1,40 +1,56 @@
-
 {% load static %}
 
-        {% for user in users %}
-        <div class="col-md-3 mb-4">
-            <div class="card shadow-sm text-center  h-100">
-                <div class="card-body">
-                    {% if user.profile_picture %}
-                        <img src="{{ user.profile_picture.url }}" alt="Photo de profil"
+{% for user in users %}
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm text-center h-100">
+            <div class="card-body">
+                {# Avatar #}
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="Photo de profil"
+                         class="img-fluid rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                {% else %}
+                    {% if user.gender == "female" %}
+                        <img src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="profile image"
                              class="img-fluid rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
                     {% else %}
-                        {% if user.gender == "female" %}
-                            <img src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="profile image"
-                                 class="img-fluid rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
-                        {% else %}
-                            <img src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="profile image"
-                                 class="img-fluid rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
-                        {% endif %}
+                        <img src="{% static 'assets/images/user/avatar-2.jpg' %}" alt="profile image"
+                             class="img-fluid rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
                     {% endif %}
-                    <h5 class="mb-1">{{ user.first_name }} {{ user.last_name }}</h5>
-                    <p class="mb-2 text-muted">{{ user.phone_number }}</p>
-                </div>
-                <div class="card-footer border-0 d-flex justify-content-center">
-                    <a href="{% url detail_url user.pk %}" class="btn btn-outline-info btn-sm mx-1" title="Voir">
-                        <i class="feather icon-eye"></i>
-                    </a>
-                    <a href="{% url edit_url user.pk %}" class="btn btn-outline-warning btn-sm mx-1" title="Modifier">
-                        <i class="feather icon-edit"></i>
-                    </a>
-                    <a href="{% url delete_url user.pk %}" class="btn btn-outline-danger btn-sm mx-1" title="Supprimer">
-                        <i class="feather icon-trash-2"></i>
-                    </a>
-                </div>
+                {% endif %}
+
+                <h5 class="mb-1">{{ user.first_name }} {{ user.last_name }}
+                     {% if role == "student" %} {% if user.absence_count < 5 %}
+                        <span style="width: .7rem; height: .7rem; display: inline-block; border-radius: 100%;" class="badge bg-success  text-white"> </span>
+                    {% elif user.absence_count < 10 %}
+                        <span style="width: .7rem; height: .7rem; display: inline-block; border-radius: 100%;" class="badge bg-warning  text-white"> </span>
+                    {% else %}
+                        <span style="width: .7rem; height: .7rem; display: inline-block; border-radius: 100%;" class="badge bg-danger text-white"> </span>
+                    {% endif %}{% endif %}</h5>
+                <p class="mb-2 text-muted">{{ user.phone_number }}</p>
+
+                {# Ajout spécifique étudiants #}
+                {% if role == "student" and user.studentprofile %}
+                    <p class="mb-1">
+                        {{ user.studentprofile.major.get_full_description }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="card-footer border-0 d-flex justify-content-center">
+                <a href="{% url detail_url user.pk %}" class="btn btn-outline-info btn-sm mx-1" title="Voir">
+                    <i class="feather icon-eye"></i>
+                </a>
+                <a href="{% url edit_url user.pk %}" class="btn btn-outline-warning btn-sm mx-1" title="Modifier">
+                    <i class="feather icon-edit"></i>
+                </a>
+                <a href="{% url delete_url user.pk %}" class="btn btn-outline-danger btn-sm mx-1" title="Supprimer">
+                    <i class="feather icon-trash-2"></i>
+                </a>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="alert alert-info text-center">Aucun utilisateur trouvé.</div>
-        </div>
-        {% endfor %}
+    </div>
+{% empty %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">Aucun utilisateur trouvé.</div>
+    </div>
+{% endfor %}
