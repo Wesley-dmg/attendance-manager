@@ -166,3 +166,66 @@ def normalize_bj_phone(phone: str) -> str:
         return f"+{phone}"
     # Laisse passer, le model.clean() lèvera une erreur si invalide
     return phone
+
+
+# class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
+#     """
+#     Recherche asynchrone (AJAX) des parents uniquement.
+#     Retourne du HTML partial.
+#     """
+
+#     def get(self, request, *args, **kwargs):
+#         query = request.GET.get("q", "").strip()
+#         student_id = request.GET.get("student_id")
+
+#         parents = CustomUser.objects.filter(role="parent").order_by(
+#             "first_name", "last_name"
+#         )
+
+#         if query:
+#             parents = parents.filter(
+#                 Q(first_name__icontains=query)
+#                 | Q(last_name__icontains=query)
+#                 | Q(phone_number__icontains=query)
+#             )
+
+#         context = {
+#             "parents": parents,
+#             "student_id": student_id,
+#         }
+
+
+#         html = render_to_string(
+#             "users/partials/_parent_cards.html", context, request=request
+#         )
+#         return JsonResponse({"html": html})
+class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
+    """
+    Recherche AJAX des parents uniquement. Retourne le partial HTML.
+    """
+
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("q", "").strip()
+        student_id = request.GET.get("student_id", "")
+
+        parents = CustomUser.objects.none()
+        if query:
+            parents = (
+                CustomUser.objects.filter(role="parent")
+                .filter(
+                    Q(first_name__icontains=query)
+                    | Q(last_name__icontains=query)
+                    | Q(phone_number__icontains=query)
+                )
+                .order_by("first_name", "last_name")
+            )
+
+        context = {
+            "parents": parents,
+            "student_id": student_id,
+            "query": query,
+        }
+        html = render_to_string(
+            "users/partials/_parent_cards.html", context, request=request
+        )
+        return JsonResponse({"html": html})

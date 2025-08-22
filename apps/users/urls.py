@@ -2,7 +2,12 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from apps.home.views import redirect_after_login
-from apps.users.utils import FilterByFiliereView, UserSearchView, check_parent_phone
+from apps.users.utils import (
+    FilterByFiliereView,
+    ParentSearchView,
+    UserSearchView,
+    check_parent_phone,
+)
 from .views import (
     AdminDetailView,
     CustomregisterView,
@@ -100,5 +105,6 @@ urlpatterns = [
     path("redirect-after-login/", redirect_after_login, name="redirect-after-login"),
     path("search/", UserSearchView.as_view(), name="user_search"),
     path("filter-by-filiere/", FilterByFiliereView.as_view(), name="filter_by_filiere"),
+    path("search/parent/", ParentSearchView.as_view(), name="parent_search"),
     path("select/parent/", ParentSelectorView.as_view(), name="parent_selector"),
 ]

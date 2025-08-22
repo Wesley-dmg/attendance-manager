@@ -752,15 +752,20 @@ class ParentSelectorView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        student_id = self.request.GET.get("student_id")
-        query = self.request.GET.get("q")
+        student_id = self.request.GET.get("student_id", "")
+        query = self.request.GET.get("q", "").strip()
 
-        parents = CustomUser.objects.filter(role="parent")
+        # Par défaut : ne rien afficher (QS vide)
+        parents = CustomUser.objects.none()
         if query:
-            parents = parents.filter(
-                Q(first_name__icontains=query)
-                | Q(last_name__icontains=query)
-                | Q(phone_number__icontains=query)
+            parents = (
+                CustomUser.objects.filter(role="parent")
+                .filter(
+                    Q(first_name__icontains=query)
+                    | Q(last_name__icontains=query)
+                    | Q(phone_number__icontains=query)
+                )
+                .order_by("first_name", "last_name")
             )
 
         context.update(
