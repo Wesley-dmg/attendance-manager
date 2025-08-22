@@ -16,13 +16,13 @@
       <div class="card-block">
         <div class="row">
           <div class="col-md-4 m-b-10">
-            <a href="{% url "home:stat" %}" class="btn btn-info btn-block">📊 Statistiques & Pourcentages</a>
+            <a href="{% url 'home:stat' %}" class="btn btn-info btn-block">📊 Statistiques & Pourcentages</a>
           </div>
           <div class="col-md-4 m-b-10">
-            <a href="{% url "home:archives" %}" class="btn btn-secondary btn-block">🗃️ Voir les Archives</a>
+            <a href="{% url 'home:archives' %}" class="btn btn-secondary btn-block">🗃️ Voir les Archives</a>
           </div>
           <div class="col-md-4 m-b-10">
-            <a href="{% url "home:import" %}" class="btn btn-success btn-block">📥 Importer des Données</a>
+            <a href="{% url 'home:import' %}" class="btn btn-success btn-block">📥 Importer des Données</a>
           </div>
         </div>
       </div>
@@ -90,14 +90,36 @@
             <tbody>
               {% for absent in absents_recents %}
               <tr class="unread">
-                <td><h6 class="mb-1">{{ absent.student.user.get_full_name }}</h6><p class="m-0">{{ absent.student.major}} - {{ absent.date|date:"d M" }}</p></td>
+                <td>
+                  <h6 class="mb-1">{{ absent.student.user.get_full_name }}</h6>
+                  <p class="m-0">{{ absent.student.major }} - {{ absent.date|date:"d M" }}</p>
+                </td>
                 <td><h6 class="text-muted"><i class="feather icon-clock"></i> {{ absent.date|date:"H:i" }} </h6></td>
-                <td><a href="{% url "users:student_detail" absent.student.user.pk %}" class="label theme-bg2 text-white f-12">Voir</a></td>
+                <td><a href="{% url 'users:student_detail' absent.student.user.pk %}" class="label theme-bg2 text-white f-12">Voir</a></td>
               </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center text-c-red">Aucun absent aujourd’hui</td></tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Absents -->
+        {% if absents_recents.has_other_pages %}
+        <nav aria-label="Pagination absents">
+          <ul class="pagination justify-content-center">
+            {% if absents_recents.has_previous %}
+            <li class="page-item"><a class="page-link" href="?absents_page={{ absents_recents.previous_page_number }}">Précédent</a></li>
+            {% endif %}
+
+            <li class="page-item disabled"><a class="page-link">Page {{ absents_recents.number }} / {{ absents_recents.paginator.num_pages }}</a></li>
+
+            {% if absents_recents.has_next %}
+            <li class="page-item"><a class="page-link" href="?absents_page={{ absents_recents.next_page_number }}">Suivant</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -112,20 +134,38 @@
         <div class="table-responsive">
           <table class="table">
             <tbody>
-              {% if archives_recent %}
-                {% for archive in archives_recent %}
-                  <tr class="unread">
-                    <td><h6 class="mb-1"> {{ archive.student.user.get_full_name }}</h6><p class="m-0"> {{ archive.student.major }} - {{ archive.archived_at|date:"d M" }}</p></td>
-                    <td><h6 class="text-muted"><i class="feather icon-archive"></i>  {{ archive.archived_at|date:"H:i" }}</h6></td>
-                    <td><a href="{% url "users:student_detail" archive.student.user.pk %}" class="label theme-bg text-white f-12">Détail</a></td>
-                  </tr>
-                {% endfor %}
-              {% else %}
-              <p class=" d-flex align-items-center justify-content-center py-3 text-c-red">Aucun étudiant archiver pour le moment </p>
-              {% endif %}
+              {% for archive in archives_recent %}
+              <tr class="unread">
+                <td>
+                  <h6 class="mb-1"> {{ archive.student.user.get_full_name }}</h6>
+                  <p class="m-0"> {{ archive.student.major }} - {{ archive.performed_at|date:"d M" }}</p>
+                </td>
+                <td><h6 class="text-muted"><i class="feather icon-archive"></i> {{ archive.performed_at|date:"H:i" }}</h6></td>
+                <td><a href="{% url 'users:student_detail' archive.student.user.pk %}" class="label theme-bg text-white f-12">Détail</a></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center text-c-red">Aucun étudiant archivé récemment</td></tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Archives -->
+        {% if archives_recent.has_other_pages %}
+        <nav aria-label="Pagination archives">
+          <ul class="pagination justify-content-center">
+            {% if archives_recent.has_previous %}
+            <li class="page-item"><a class="page-link" href="?archives_page={{ archives_recent.previous_page_number }}">Précédent</a></li>
+            {% endif %}
+
+            <li class="page-item disabled"><a class="page-link">Page {{ archives_recent.number }} / {{ archives_recent.paginator.num_pages }}</a></li>
+
+            {% if archives_recent.has_next %}
+            <li class="page-item"><a class="page-link" href="?archives_page={{ archives_recent.next_page_number }}">Suivant</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -139,7 +179,7 @@
       <div class="card-block px-0 py-3">
         <div class="table-responsive">
           <table class="table ">
-            <thead >
+            <thead>
               <tr>
                 <th>Filière</th>
                 <th>Absences</th>
@@ -147,7 +187,7 @@
                 <th>Archivés</th>
               </tr>
             </thead>
-            <tbody id="filiere-table-body">
+            <tbody>
               {% for filiere in absences_par_filiere %}
               <tr>
                 <td>{{ filiere.nom }}</td>
@@ -178,7 +218,7 @@
       <div class="card-block px-0 py-3">
         <div class="table-responsive">
           <table class="table">
-            <thead >
+            <thead>
               <tr>
                 <th>Matière</th>
                 <th>Absences</th>
@@ -209,3 +249,237 @@
 </div>
 <!-- [ Main Content ] end -->
 {% endblock content %}
+{% comment %} {% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block breadcrumbs %}{% endblock breadcrumbs %}
+
+{% block content %}
+<!-- [ Main Content ] start -->
+<div class="row">
+
+  <!-- Actions Rapides -->
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>⚡ Actions Rapides</h5>
+      </div>
+      <div class="card-block">
+        <div class="row">
+          <div class="col-md-4 m-b-10">
+            <a href="{% url 'home:stat' %}" class="btn btn-info btn-block">
+              📊 Statistiques & Pourcentages
+            </a>
+          </div>
+          <div class="col-md-4 m-b-10">
+            <a href="{% url 'home:archives' %}" class="btn btn-secondary btn-block">
+              🗃️ Voir les Archives
+            </a>
+          </div>
+          <div class="col-md-4 m-b-10">
+            <a href="{% url 'home:import' %}" class="btn btn-success btn-block">
+              📥 Importer des Données
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques Principales -->
+  <div class="col-md-6 col-xl-4">
+    <div class="card daily-sales">
+      <div class="card-block">
+        <h6 class="mb-4">Absents Aujourd’hui</h6>
+        <h3 class="f-w-300 d-flex align-items-center m-b-0">
+          <i class="feather icon-user-x text-c-red f-30 m-r-10"></i> {{ absents_aujourdhui }}
+        </h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-4">
+    <div class="card Monthly-sales">
+      <div class="card-block">
+        <h6 class="mb-4">Absents Ce Mois</h6>
+        <h3 class="f-w-300 d-flex align-items-center m-b-0">
+          <i class="feather icon-calendar text-c-blue f-30 m-r-10"></i> {{ absents_mois }}
+        </h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-4">
+    <div class="card Monthly-sales">
+      <div class="card-block">
+        <h6 class="mb-2">Alertes Critiques</h6>
+        <div class="row d-flex align-items-center">
+          <div class="col-9">
+            <h4 class="f-w-300 d-flex align-items-center m-b-0">
+              <i class="feather icon-alert-triangle text-c-orange f-30 m-r-10"></i>
+              {{ alertes_archives }} archivés / {{ alertes_cours }} en cours
+            </h4>
+          </div>
+          <div class="col-3 text-right">
+            <span class="badge badge-info">Suivi</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Absents Récents -->
+  <div class="col-xl-6 col-sm-12">
+    <div class="card Recent-Users">
+      <div class="card-header">
+        <h5>🕑 Absents Récents</h5>
+      </div>
+      <div class="card-block px-0 py-3">
+        <div class="table-responsive">
+          <table class="table">
+            <tbody>
+              {% for absent in absents_recents %}
+                <tr class="unread">
+                  <td>
+                    <h6 class="mb-1">{{ absent.student.user.get_full_name }}</h6>
+                    <p class="m-0">{{ absent.student.major }} - {{ absent.date|date:"d M" }}</p>
+                  </td>
+                  <td>
+                    <h6 class="text-muted">
+                      <i class="feather icon-clock"></i> {{ absent.date|date:"H:i" }}
+                    </h6>
+                  </td>
+                  <td>
+                    <a href="{% url 'users:student_detail' absent.student.user.pk %}" class="label theme-bg2 text-white f-12">Voir</a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-center text-muted">Aucun absent récent</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Archives Récentes -->
+  <div class="col-xl-6 col-sm-12">
+    <div class="card Recent-Users">
+      <div class="card-header">
+        <h5>📂 Archives Récentes</h5>
+      </div>
+      <div class="card-block px-0 py-3">
+        <div class="table-responsive">
+          <table class="table">
+            <tbody>
+              {% for archive in archives_recent %}
+                <tr class="unread">
+                  <td>
+                    <h6 class="mb-1">{{ archive.student.user.get_full_name }}</h6>
+                    <p class="m-0">{{ archive.student.major }} - {{ archive.archived_at|date:"d M" }}</p>
+                  </td>
+                  <td>
+                    <h6 class="text-muted">
+                      <i class="feather icon-archive"></i> {{ archive.archived_at|date:"H:i" }}
+                    </h6>
+                  </td>
+                  <td>
+                    <a href="{% url 'users:student_detail' archive.student.user.pk %}" class="label theme-bg text-white f-12">Détail</a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-center text-c-red">Aucune archive disponible</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau : Absences par Filière -->
+  <div class="col-xl-6 col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>📚 Absences par Filière</h5>
+      </div>
+      <div class="card-block px-0 py-3">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Filière</th>
+                <th>Absences</th>
+                <th>Pourcentage</th>
+                <th>Archivés</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for filiere in absences_par_filiere %}
+                <tr>
+                  <td>{{ filiere.nom }}</td>
+                  <td>{{ filiere.absences }}</td>
+                  <td>
+                    <span class="badge badge-pill 
+                      {% if filiere.pourcentage > 50 %}badge-danger
+                      {% elif filiere.pourcentage > 25 %}badge-warning
+                      {% else %}badge-success{% endif %}">
+                      {{ filiere.pourcentage }}%
+                    </span>
+                  </td>
+                  <td>{{ filiere.archives }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-center">Aucune donnée</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau : Absences par Matière -->
+  <div class="col-xl-6 col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>📖 Absences par Matière</h5>
+      </div>
+      <div class="card-block px-0 py-3">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Matière</th>
+                <th>Absences</th>
+                <th>Pourcentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for matiere in absences_par_matiere %}
+                <tr>
+                  <td>{{ matiere.nom }}</td>
+                  <td>{{ matiere.absences }}</td>
+                  <td>
+                    <span class="badge badge-pill 
+                      {% if matiere.pourcentage > 50 %}badge-danger
+                      {% elif matiere.pourcentage > 25 %}badge-warning
+                      {% else %}badge-success{% endif %}">
+                      {{ matiere.pourcentage }}%
+                    </span>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-center">Aucune donnée</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- [ Main Content ] end -->
+{% endblock content %} {% endcomment %}

@@ -17,6 +17,8 @@ from django.utils.timezone import now, timedelta
 
 from apps.users.models import StudentArchiveHistory, StudentProfile
 
+from django.core.paginator import Paginator
+
 
 def is_admin(user):
     return user.is_admin
@@ -26,82 +28,98 @@ def is_admin(user):
 def index(request):
     today = timezone.now().date()
     month_start = today.replace(day=1)
+    last_30_days = timezone.now() - timezone.timedelta(days=30)
 
-    # 1. Absents aujourd'hui
-    absents_aujourdhui = Attendance.objects.filter(date=today, status="absent").count()
-
-    # 2. Absents ce mois
-    absents_mois = Attendance.objects.filter(
-        date__gte=month_start, date__lte=today, status="absent"
+    # 1. Absences aujourd’hui
+    absents_aujourdhui = Attendance.objects.filter(
+        status="absent", date__date=today
     ).count()
 
-    # 3. Alertes critiques (exemple : nombre de profils archivés vs en cours)
-    total_archives = StudentProfile.objects.filter(archived=True).count()
+    # 2. Absences du mois en cours
+    absents_mois = Attendance.objects.filter(
+        status="absent", date__month=today.month, date__year=today.year
+    ).count()
 
-    en_cours = StudentProfile.objects.filter(archived=False).count()
+    # 3. Alertes critiques
+    alertes_cours = (
+        StudentProfile.objects.filter(archived=False)
+        .annotate(
+            total_abs=Count("attendances", filter=Q(attendances__status="absent"))
+        )
+        .filter(total_abs__gte=5)
+        .count()
+    )
 
-    # 4. Absents récents (ex: les 5 derniers)
-    absents_recents = Attendance.objects.filter(status="absent").order_by("-date")[:5]
+    alertes_archives = StudentProfile.objects.filter(archived=True).count()
 
-    # 5. Archives récentes (ex: derniers archivages)
-    archives_recentes = StudentArchiveHistory.objects.select_related(
-        "student__user"
-    ).order_by("-performed_at")[
-        :5
-    ]  # si tu as ce modèle
+    # 4. Absences récentes (aujourd’hui seulement)
+    absents_recents_qs = (
+        Attendance.objects.filter(status="absent", date__date=today)
+        .select_related("student__user", "student__major")
+        .order_by("-date")
+    )
 
-    # 6. Absences par filière
-    absences_par_filiere = DepartmentLevel.objects.annotate(
+    absents_paginator = Paginator(absents_recents_qs, 5)  # pagination 5 par page
+    absents_page = request.GET.get("absents_page")
+    absents_recents = absents_paginator.get_page(absents_page)
+
+    # 5. Archives récentes (30 derniers jours)
+    archives_recents_qs = (
+        StudentArchiveHistory.objects.filter(
+            action="archived", performed_at__gte=last_30_days
+        )
+        .select_related("student__user", "student__major")
+        .order_by("-performed_at")
+    )
+
+    archives_paginator = Paginator(archives_recents_qs, 5)
+    archives_page = request.GET.get("archives_page")
+    archives_recent = archives_paginator.get_page(archives_page)
+
+    # 6. Absences par filière (sans celles à 0)
+    absences_par_filiere_qs = DepartmentLevel.objects.annotate(
         absences=Count(
             "students__attendances", filter=Q(students__attendances__status="absent")
         ),
+        total=Count("students__attendances"),
         archives=Count("students", filter=Q(students__archived=True)),
-        total=Count("students"),
-    ).values("id", "level__name", "department__name", "absences", "archives", "total")
+    ).filter(absences__gt=0)
 
-    absences_par_filiere_data = []
-    for f in absences_par_filiere:
-        pourcentage = (
-            round((f["absences"] / f["total"]) * 100, 2) if f["total"] > 0 else 0
-        )
-        absences_par_filiere_data.append(
-            {
-                "nom": f"{f['department__name']} - {f['level__name']}",
-                "absences": f["absences"],
-                "pourcentage": pourcentage,
-                "archives": f["archives"],
-            }
-        )
+    absences_par_filiere = [
+        {
+            "nom": f"{f.department.name} - {f.level.name}",
+            "absences": f.absences,
+            "pourcentage": round((f.absences / f.total) * 100, 2) if f.total > 0 else 0,
+            "archives": f.archives,
+        }
+        for f in absences_par_filiere_qs
+    ]
 
-    # 7. Absences par matière
-    absences_par_matiere = Subject.objects.annotate(
+    # 7. Absences par matière (sans celles à 0)
+    absences_par_matiere_qs = Subject.objects.annotate(
         absences=Count("attendance", filter=Q(attendance__status="absent")),
         total=Count("attendance"),
-    ).values("name", "absences", "total")
+    ).filter(absences__gt=0)
 
-    absences_par_matiere_data = []
-    for m in absences_par_matiere:
-        pourcentage = (
-            round((m["absences"] / m["total"]) * 100, 2) if m["total"] > 0 else 0
-        )
-        absences_par_matiere_data.append(
-            {
-                "nom": m["name"],
-                "absences": m["absences"],
-                "pourcentage": pourcentage,
-            }
-        )
+    absences_par_matiere = [
+        {
+            "nom": m.name,
+            "absences": m.absences,
+            "pourcentage": round((m.absences / m.total) * 100, 2) if m.total > 0 else 0,
+        }
+        for m in absences_par_matiere_qs
+    ]
 
     context = {
         "segment": "index",
         "absents_aujourdhui": absents_aujourdhui,
         "absents_mois": absents_mois,
-        "alertes_archives": total_archives,
-        "alertes_cours": en_cours,
+        "alertes_archives": alertes_archives,
+        "alertes_cours": alertes_cours,
         "absents_recents": absents_recents,
-        "archives_recent": archives_recentes,
-        "absences_par_filiere": absences_par_filiere_data,
-        "absences_par_matiere": absences_par_matiere_data,
+        "archives_recent": archives_recent,
+        "absences_par_filiere": absences_par_filiere,
+        "absences_par_matiere": absences_par_matiere,
     }
 
     return render(request, "home/index.html", context)

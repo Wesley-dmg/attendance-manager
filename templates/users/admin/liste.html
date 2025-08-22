@@ -29,125 +29,56 @@
     </div>
 </div>
 {% endblock %}
- 
-{% comment %} {% block extra_js %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("search-input");
-    const userContainer = document.getElementById("user-cards");
-    const role = "{{ role|default:'' }}";
-    const searchUrl = "{% url 'users:user_search' %}";
-
-    let timer = null;
-    function doSearch(query) {
-        const params = new URLSearchParams({ q: query, role });
-        fetch(`${searchUrl}?${params.toString()}`, {
-            method: "GET",
-            credentials: "same-origin", // pour inclure cookie de session (LoginRequiredMixin)
-            headers: {
-                "X-Requested-With": "XMLHttpRequest"
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error("HTTP " + response.status);
-            return response.json();
-        })
-        .then(data => {
-            userContainer.innerHTML = data.html;
-        })
-        .catch(error => {
-            console.error("Erreur AJAX (search):", error);
-            // Optionnel : afficher une alerte utilisateur
-        });
-    }
-
-    searchInput.addEventListener("input", function (e) {
-        const query = e.target.value.trim();
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            doSearch(query);
-        }, 300); // debounce 300ms
-    });
-});
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-    const filiereSelect = document.getElementById("filiere-filter");
-    const userContainer = document.getElementById("user-cards");
-    const filterUrl = "{% url 'users:filter_by_filiere' %}";
-
-    filiereSelect.addEventListener("change", function () {
-        const filiereId = this.value;
-
-        fetch(`${filterUrl}?filiere=${encodeURIComponent(filiereId)}`, {
-            method: "GET",
-            credentials: "same-origin",
-            headers: { "X-Requested-With": "XMLHttpRequest" }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error("HTTP " + response.status);
-            return response.json();
-        })
-        .then(data => {
-            userContainer.innerHTML = data.html;
-        })
-        .catch(error => {
-            console.error("Erreur AJAX (filter filière):", error);
-        });
-    });
-});
-</script>
-{% endblock %} {% endcomment %}
 {% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("search-input");
-    const filiereSelect = document.getElementById("filiere-filter");
-    const userContainer = document.getElementById("user-cards");
-    const role = "{{ role|default:'' }}";
-    const searchUrl = "{% url 'users:user_search' %}";
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("search-input");
+        const filiereSelect = document.getElementById("filiere-filter");
+        const userContainer = document.getElementById("user-cards");
+        const role = "{{ role|default:'' }}";
+        const searchUrl = "{% url 'users:user_search' %}";
 
-    let timer = null;
+        let timer = null;
 
-    function doSearch() {
-        const query = searchInput ? searchInput.value.trim() : "";
-        const filiereId = filiereSelect ? filiereSelect.value : "";
+        function doSearch() {
+            const query = searchInput ? searchInput.value.trim() : "";
+            const filiereId = filiereSelect ? filiereSelect.value : "";
 
-        const params = new URLSearchParams({
-            q: query,
-            role: role,
-            filiere: filiereId
-        });
+            const params = new URLSearchParams({
+                q: query,
+                role: role,
+                filiere: filiereId
+            });
 
-        fetch(`${searchUrl}?${params.toString()}`, {
-            method: "GET",
-            credentials: "same-origin",
-            headers: { "X-Requested-With": "XMLHttpRequest" }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error("HTTP " + response.status);
-            return response.json();
-        })
-        .then(data => {
-            userContainer.innerHTML = data.html;
-        })
-        .catch(error => {
-            console.error("Erreur AJAX:", error);
-        });
-    }
+            fetch(`${searchUrl}?${params.toString()}`, {
+                method: "GET",
+                credentials: "same-origin",
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                return response.json();
+            })
+            .then(data => {
+                userContainer.innerHTML = data.html;
+            })
+            .catch(error => {
+                console.error("Erreur AJAX:", error);
+            });
+        }
 
-    // Recherche (avec debounce)
-    if (searchInput) {
-        searchInput.addEventListener("input", function () {
-            clearTimeout(timer);
-            timer = setTimeout(doSearch, 300);
-        });
-    }
+        // Recherche (avec debounce)
+        if (searchInput) {
+            searchInput.addEventListener("input", function () {
+                clearTimeout(timer);
+                timer = setTimeout(doSearch, 300);
+            });
+        }
 
-    // Filtre filière
-    if (filiereSelect) {
-        filiereSelect.addEventListener("change", doSearch);
-    }
-});
+        // Filtre filière
+        if (filiereSelect) {
+            filiereSelect.addEventListener("change", doSearch);
+        }
+    });
 </script>
 {% endblock %}
