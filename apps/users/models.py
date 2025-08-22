@@ -271,7 +271,7 @@ class StudentProfile(models.Model):
         blank=True,
     )
 
-    archived = models.BooleanField(default=False, verbose_name="Archivé")
+    archived = models.BooleanField(default=False, verbose_name=_("Archivé"))
 
     archived_at = models.DateTimeField(
         blank=True, null=True, verbose_name="Date d’archivage"

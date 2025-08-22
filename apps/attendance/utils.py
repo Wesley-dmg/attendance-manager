@@ -4,6 +4,8 @@ from django.utils import timezone
 from datetime import timedelta
 import random
 
+from apps.attendance.models import Attendance
+
 
 def send_whatsapp_message(user, message):
     client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
@@ -37,3 +39,10 @@ def set_otp_for_user(user, length=6, expiry_minutes=5):
     )
     send_whatsapp_message(user, msg)
     return otp
+
+
+def get_absence_count(student):
+    """
+    Retourne le nombre d'absences non justifiées pour un étudiant.
+    """
+    return Attendance.objects.filter(student=student, status="absent").count()

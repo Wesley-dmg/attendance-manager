@@ -432,7 +432,9 @@ class StudentListView(UserListView):
     }
 
     def get_queryset(self):
-        return CustomUser.objects.filter(role="student")
+        return CustomUser.objects.filter(role="student").select_related(
+            "studentprofile"
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
