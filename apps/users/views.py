@@ -433,11 +433,18 @@ class StudentListView(UserListView):
 
     def get_queryset(self):
         return CustomUser.objects.filter(role="student").select_related(
-            "studentprofile"
+            "studentprofile", "studentprofile__major"
         )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        students = context["users"]
+
+        # injecter absences pour chaque étudiant
+        for student in students:
+            if hasattr(student, "studentprofile"):
+                student.absence_count = get_absence_count(student.studentprofile)
+
         context["filieres"] = DepartmentLevel.objects.all()
         return context
 
