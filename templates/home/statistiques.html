@@ -37,7 +37,7 @@
       </div>
 
       <div class="card-block table-responsive p-3">
-        {% if tableau %}
+        {% comment %} {% if tableau %}
           <table class="table table-bordered">
             <thead class="thead-light">
               <tr>
@@ -60,9 +60,29 @@
           <div class="alert alert-info text-center m-3">
             Aucune donnée disponible pour les filtres sélectionnés.
           </div>
-        {% endif %}
+        {% endif %} {% endcomment %}
+        <div id="stats-table">
+          {% include "home/partials/_statistiques_table.html" %}
+        </div>
       </div>
     </div>
   </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.querySelector("form");
+  const tableDiv = document.getElementById("stats-table");
+
+  form.addEventListener("change", function (e) {
+    e.preventDefault();
+    const url = form.action + "?" + new URLSearchParams(new FormData(form)).toString();
+    fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then(res => res.text())
+      .then(html => {
+        tableDiv.innerHTML = html;
+      });
+  });
+});
+</script>
+
 {% endblock content %}

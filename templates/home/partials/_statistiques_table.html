@@ -1,0 +1,24 @@
+{% if tableau %}
+  <table class="table table-bordered">
+    <thead class="thead-light">
+      <tr>
+        {% for col in tableau.headers %}
+          <th>{{ col }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for ligne in tableau.rows %}
+        <tr>
+          {% for cellule in ligne %}
+            <td>{{ cellule }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="alert alert-info text-center m-3">
+    Aucune donnée disponible pour les filtres sélectionnés.
+  </div>
+{% endif %}

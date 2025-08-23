@@ -129,8 +129,9 @@ def index(request):
 def statistiques_view(request):
     vue = request.GET.get("vue", "filiere")
     periode = request.GET.get("periode", "mois")
+    filiere_filter = request.GET.get("filiere")  # nouveau filtre optionnel
 
-    # Filtrage par période
+    # --- Période ---
     today = now().date()
     if periode == "semaine":
         start_date = today - timedelta(days=7)
@@ -145,6 +146,12 @@ def statistiques_view(request):
     if start_date:
         attendances = attendances.filter(date__date__gte=start_date)
 
+    # --- Filtrage par filière spécifique ---
+    if filiere_filter:
+        attendances = attendances.filter(
+            student__major__department__name=filiere_filter
+        )
+
     headers, rows = [], []
 
     # Vue par filière
@@ -154,7 +161,8 @@ def statistiques_view(request):
             filiere=F("student__major__department__name"),
             niveau=F("student__major__level__name"),
         ).annotate(
-            total_abs=Count("id"), total_etudiants=Count("student", distinct=True)
+            total_abs=Count("id"),
+            total_etudiants=Count("student", distinct=True),
         )
 
         for item in data:
@@ -169,7 +177,11 @@ def statistiques_view(request):
                 archived=True,
             ).count()
 
-            pourcentage = f"{round((item['total_abs'] / total_students) * 100, 1) if total_students else 0}%"
+            pourcentage = (
+                f"{round((item['total_abs'] / total_students) * 100, 1)}%"
+                if total_students
+                else "0%"
+            )
             rows.append([filiere_label, item["total_abs"], pourcentage, archives])
 
     # Vue par matière
@@ -180,24 +192,33 @@ def statistiques_view(request):
         )
         total_absences = attendances.count()
         for item in data:
-            pourcentage = f"{round((item['total_abs'] / total_absences) * 100, 1) if total_absences else 0}%"
+            pourcentage = (
+                f"{round((item['total_abs'] / total_absences) * 100, 1)}%"
+                if total_absences
+                else "0%"
+            )
             rows.append([item["nom_matiere"], item["total_abs"], pourcentage])
 
-    # Vue matière + filière
+    # Vue par matière + filière
     elif vue == "matiere_filiere":
         headers = ["Filière", "Matière", "Absences"]
         data = attendances.values(
-            filiere=F("student__major__department__name"), matiere=F("subject__name")
+            filiere=F("student__major__department__name"),
+            matiere=F("subject__name"),
         ).annotate(total_abs=Count("id"))
         for item in data:
             rows.append([item["filiere"], item["matiere"], item["total_abs"]])
 
     context = {
-        "tableau": {
-            "headers": headers,
-            "rows": rows,
-        }
+        "tableau": {"headers": headers, "rows": rows},
+        "vue": vue,
+        "periode": periode,
     }
+
+    # --- AJAX support (renvoyer juste le tableau en HTML partiel) ---
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(request, "home/partials/_statistiques_table.html", context)
+
     return render(request, "home/statistiques.html", context)
 
 
