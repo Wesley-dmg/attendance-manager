@@ -3,7 +3,7 @@ from django.db.models import F, Count, Q, Max
 
 from django.utils import timezone
 
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 
 from django.contrib.auth.decorators import login_required
 
@@ -18,6 +18,9 @@ from django.utils.timezone import now, timedelta
 from apps.users.models import StudentArchiveHistory, StudentProfile
 
 from django.core.paginator import Paginator
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 
 def is_admin(user):
@@ -331,49 +334,6 @@ def liste_presence_view(request):
     return render(request, "home/presence.html", context)
 
 
-# @login_required
-# def archives_view(request):
-#     # Récupération des paramètres GET
-#     filiere_id = request.GET.get("filiere", "toutes")
-#     date_archivage = request.GET.get("date", "")
-
-#     # Base queryset
-#     archived_students = StudentProfile.objects.filter(archived=True)
-
-#     # Filtre par filière
-#     if filiere_id != "toutes":
-#         archived_students = archived_students.filter(major_id=filiere_id)
-
-#     # Filtre par date d’archivage (optionnel)
-#     if date_archivage:
-#         try:
-#             date_obj = datetime.strptime(date_archivage, "%Y-%m-%d").date()
-#             archived_students = archived_students.filter(archived_at__date=date_obj)
-#         except ValueError:
-#             pass  # Ignore si format invalide
-
-#     # Annoter avec le nombre d’absences (présences != "present")
-#     archived_students = archived_students.annotate(
-#         nb_absences=Count("attendances", filter=~Q(attendances__status="present"))
-#     ).select_related("major__department", "major__level")
-
-#     # Récupérer toutes les filières existantes pour le filtre, triées par nom
-#     filieres = DepartmentLevel.objects.order_by("department__name").select_related(
-#         "department", "level"
-#     )
-
-#     return render(
-#         request,
-#         "home/archives.html",
-#         {
-#             "liste_archives": archived_students,
-#             "filieres": filieres,
-#             "filiere_active": filiere_id,
-#             "date_active": date_archivage,
-#         },
-#     )
-
-
 @login_required
 def archives_view(request):
     # Récupération du paramètre GET
@@ -404,6 +364,31 @@ def archives_view(request):
             "filieres": filieres,
             "filiere_active": filiere_id,
         },
+    )
+
+
+@require_POST
+def unarchive_student(request, student_id):
+    student = get_object_or_404(StudentProfile, id=student_id)
+
+    if not student.archived:
+        return JsonResponse(
+            {"success": False, "message": "Cet étudiant n'est pas archivé."}
+        )
+
+    # Désarchiver
+    student.archived = False
+    student.archived_at = None
+    student.save()
+
+    # Historique
+    StudentArchiveHistory.objects.create(student=student, action="unarchived")
+
+    return JsonResponse(
+        {
+            "success": True,
+            "message": f"{student.user.get_full_name()} a été désarchivé avec succès.",
+        }
     )
 
 

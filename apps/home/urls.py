@@ -10,5 +10,10 @@ urlpatterns = [
     path("stats/", views.statistiques_view, name="stat"),
     path("e-presence/", views.liste_presence_view, name="abs"),
     path("archives/", views.archives_view, name="archives"),
+    path(
+        "students/<int:student_id>/unarchive/",
+        views.unarchive_student,
+        name="unarchive_student",
+    ),
     path("import/", views.import_data_view, name="import"),
 ]

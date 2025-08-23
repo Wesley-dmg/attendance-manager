@@ -1,6 +1,7 @@
 from django.contrib import messages
 
-def send_custom_message(request, message, message_type='info'):
+
+def send_custom_message(request, message, message_type="info"):
     """
     Envoie un message personnalisé à l'utilisateur.
 
@@ -9,10 +10,10 @@ def send_custom_message(request, message, message_type='info'):
     :param message_type: Type de message ('success', 'info', 'warning', 'error').
     """
     message_types = {
-        'success': messages.SUCCESS,
-        'info': messages.INFO,
-        'warning': messages.WARNING,
-        'error': messages.ERROR,
+        "success": messages.SUCCESS,
+        "info": messages.INFO,
+        "warning": messages.WARNING,
+        "error": messages.ERROR,
     }
 
     # Vérifie si le type de message est valide
@@ -20,4 +21,3 @@ def send_custom_message(request, message, message_type='info'):
         messages.add_message(request, message_types[message_type], message)
     else:
         messages.add_message(request, messages.INFO, message)
-

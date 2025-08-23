@@ -26,7 +26,7 @@ def send_whatsapp_message(user, message):
 
 def set_otp_for_user(user, length=6, expiry_minutes=5):
     if not hasattr(user, "teacherprofile"):
-        return None  # ou raise une erreur
+        return None
 
     otp = f"{random.randint(0, 999999):06d}"
     teacher_profile = user.teacherprofile
