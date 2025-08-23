@@ -13,6 +13,89 @@
           <div class="btn-group mb-2 mr-2">
             <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">
               {% if filiere_active != "toutes" %}
+                {{ filieres|get_filiere_name }}
+              {% else %}
+                Toutes les filières
+              {% endif %}
+            </button>
+            <div class="dropdown-menu">
+              <button type="submit" name="filiere" value="toutes" class="dropdown-item">Toutes</button>
+              {% for f in filieres %}
+                <button type="submit" name="filiere" value="{{ f.id }}" class="dropdown-item">
+                  {{ f.level.name }} - {{ f.department.name }}
+                </button>
+              {% endfor %}
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-block table-responsive p-3">
+        {% if liste_archives %}
+          <table class="table table-bordered">
+            <thead class="thead-light">
+              <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Filière</th>
+                <th>Nombre d'absences</th>
+                <th>Date d'archivage</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for etu in liste_archives %}
+              <tr>
+                <td>{{ etu.user.last_name }}</td>
+                <td>{{ etu.user.first_name }}</td>
+                <td>
+                  {% if etu.major %}
+                    {{ etu.major.level.name }} - {{ etu.major.department.name }}
+                  {% else %}
+                    Non assignée
+                  {% endif %}
+                </td>
+                <td>{{ etu.nb_absences }}</td>
+                <td>{{ etu.archived_at|date:"d/m/Y" }}</td>
+                <td>
+                  <a href="{% url 'users:student_detail' etu.user.id %}" class="btn btn-sm btn-outline-info" title="Détail"><i class="feather icon-eye"></i></a>
+                  <form method="post" action="{% url 'unarchive_student' etu.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Déarchiver">
+                      <i class="feather icon-upload"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info text-center">
+            Aucun étudiant archivé pour la filière sélectionnée.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% comment %} {% extends 'layouts/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="row">
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Étudiants Archivés</h5>
+        <form method="get" class="form-inline">
+          <!-- Filtre Filière -->
+          <div class="btn-group mb-2 mr-2">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">
+              {% if filiere_active != "toutes" %}
                 {{ filieres|get_filiere_name}}
               {% else %}
                 Toutes les filières
@@ -76,4 +159,4 @@
     </div>
   </div>
 </div>
-{% endblock content %}
+{% endblock content %} {% endcomment %}
