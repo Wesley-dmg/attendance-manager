@@ -222,13 +222,121 @@ def statistiques_view(request):
     return render(request, "home/statistiques.html", context)
 
 
+# @login_required
+# def liste_presence_view(request):
+#     filiere = request.GET.get("filiere", "toutes")
+#     statut = request.GET.get("statut", "tous").lower()
+#     date_str = request.GET.get("date")  # format attendu 'YYYY-MM-DD'
+
+#     # Parse la date ou utilise aujourd'hui
+#     try:
+#         filter_date = (
+#             datetime.strptime(date_str, "%Y-%m-%d").date()
+#             if date_str
+#             else timezone.localdate()
+#         )
+#     except ValueError:
+#         filter_date = timezone.localdate()
+
+#     # Liste des filières (DepartmentLevel) ordonnée alphabétiquement sur le label
+#     filieres_disponibles = (
+#         DepartmentLevel.objects.select_related("department", "level")
+#         .order_by("level__name", "department__name")
+#         .values_list("id", "level__name", "department__name")
+#         .distinct()
+#     )
+#     filieres_disponibles = [
+#         {"id": f[0], "label": f"{f[1]} - {f[2]}"} for f in filieres_disponibles
+#     ]
+
+#     # Statuts
+#     statuts_disponibles = ["present", "absent", "justified", "archive"]
+
+#     # Filtrage des présences uniquement sur la date donnée
+#     attendances_qs = Attendance.objects.select_related(
+#         "student__user",
+#         "student__major__department",
+#         "student__major__level",
+#     ).filter(
+#         date__date=filter_date  # filtrage sur la date seulement
+#     )
+
+#     # Filtrage filière (DepartmentLevel.id)
+#     if filiere != "toutes":
+#         try:
+#             filiere_id = int(filiere)
+#             attendances_qs = attendances_qs.filter(student__major_id=filiere_id)
+#         except ValueError:
+#             pass
+
+#     # Filtrage statut
+#     if statut != "tous":
+#         if statut == "archive":
+#             attendances_qs = attendances_qs.filter(student__archived=True)
+#         else:
+#             attendances_qs = attendances_qs.filter(status=statut)
+
+#     # Pour éviter doublons (plusieurs matières), on prend la présence la plus récente par étudiant
+#     # Ici on récupère les ids max (le plus récent) par étudiant pour la date donnée
+#     latest_ids = (
+#         attendances_qs.values("student_id")
+#         .annotate(latest_id=Max("id"))
+#         .values_list("latest_id", flat=True)
+#     )
+
+#     attendances = (
+#         Attendance.objects.filter(id__in=latest_ids)
+#         .select_related(
+#             "student__user",
+#             "student__major__department",
+#             "student__major__level",
+#         )
+#         .order_by("student__user__last_name", "student__user__first_name")
+#     )
+
+#     # Préparation pour le template
+#     liste_etudiants = []
+#     for att in attendances:
+#         liste_etudiants.append(
+#             {
+#                 "id": att.student.user.pk,
+#                 "nom": att.student.user.get_full_name(),
+#                 "filiere": (
+#                     f"{att.student.major.level.name} - {att.student.major.department.name}"
+#                     if att.student.major
+#                     else "Non assigné"
+#                 ),
+#                 "statut": (
+#                     "Archivé"
+#                     if att.student.archived
+#                     else dict(Attendance.STATUS_CHOICES).get(att.status, "Inconnu")
+#                 ),
+#             }
+#         )
+#     context = {
+#         "liste_etudiants": liste_etudiants,
+#         "filieres_disponibles": filieres_disponibles,
+#         "statuts_disponibles": statuts_disponibles,
+#         "filiere_active": filiere,
+#         "statut_actif": statut,
+#         "date_active": filter_date.strftime("%Y-%m-%d"),
+#     }
+#     return render(
+#         request,
+#         "home/presence.html",
+#         context,
+#     )
+
+
 @login_required
 def liste_presence_view(request):
+    # --- Récupération des filtres ---
     filiere = request.GET.get("filiere", "toutes")
     statut = request.GET.get("statut", "tous").lower()
     date_str = request.GET.get("date")  # format attendu 'YYYY-MM-DD'
+    search = request.GET.get("search", "").strip()
 
-    # Parse la date ou utilise aujourd'hui
+    # --- Parse date ou valeur par défaut ---
     try:
         filter_date = (
             datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -238,7 +346,7 @@ def liste_presence_view(request):
     except ValueError:
         filter_date = timezone.localdate()
 
-    # Liste des filières (DepartmentLevel) ordonnée alphabétiquement sur le label
+    # --- Récupération des filières disponibles ---
     filieres_disponibles = (
         DepartmentLevel.objects.select_related("department", "level")
         .order_by("level__name", "department__name")
@@ -249,19 +357,16 @@ def liste_presence_view(request):
         {"id": f[0], "label": f"{f[1]} - {f[2]}"} for f in filieres_disponibles
     ]
 
-    # Statuts
     statuts_disponibles = ["present", "absent", "justified", "archive"]
 
-    # Filtrage des présences uniquement sur la date donnée
+    # --- Queryset de base : filtrage par date ---
     attendances_qs = Attendance.objects.select_related(
         "student__user",
         "student__major__department",
         "student__major__level",
-    ).filter(
-        date__date=filter_date  # filtrage sur la date seulement
-    )
+    ).filter(date__date=filter_date)
 
-    # Filtrage filière (DepartmentLevel.id)
+    # --- Filtrage par filière ---
     if filiere != "toutes":
         try:
             filiere_id = int(filiere)
@@ -269,15 +374,21 @@ def liste_presence_view(request):
         except ValueError:
             pass
 
-    # Filtrage statut
+    # --- Filtrage par statut ---
     if statut != "tous":
         if statut == "archive":
             attendances_qs = attendances_qs.filter(student__archived=True)
         else:
             attendances_qs = attendances_qs.filter(status=statut)
 
-    # Pour éviter doublons (plusieurs matières), on prend la présence la plus récente par étudiant
-    # Ici on récupère les ids max (le plus récent) par étudiant pour la date donnée
+    # --- Filtrage par recherche (nom ou prénom) ---
+    if search:
+        attendances_qs = attendances_qs.filter(
+            Q(student__user__first_name__icontains=search)
+            | Q(student__user__last_name__icontains=search)
+        )
+
+    # --- Dernière présence par étudiant (évite doublons) ---
     latest_ids = (
         attendances_qs.values("student_id")
         .annotate(latest_id=Max("id"))
@@ -294,7 +405,7 @@ def liste_presence_view(request):
         .order_by("student__user__last_name", "student__user__first_name")
     )
 
-    # Préparation pour le template
+    # --- Construction du contexte ---
     liste_etudiants = []
     for att in attendances:
         liste_etudiants.append(
@@ -313,6 +424,7 @@ def liste_presence_view(request):
                 ),
             }
         )
+
     context = {
         "liste_etudiants": liste_etudiants,
         "filieres_disponibles": filieres_disponibles,
@@ -320,12 +432,9 @@ def liste_presence_view(request):
         "filiere_active": filiere,
         "statut_actif": statut,
         "date_active": filter_date.strftime("%Y-%m-%d"),
+        "search_active": search,
     }
-    return render(
-        request,
-        "home/presence.html",
-        context,
-    )
+    return render(request, "home/presence.html", context)
 
 
 @login_required
