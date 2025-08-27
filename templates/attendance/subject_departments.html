@@ -2,34 +2,62 @@
 {% load static %}
 
 {% block content %}
+<style>
+  /* Cacher les vrais checkboxes */
+  .custom-checkbox input[type="checkbox"] {
+    display: none;
+  }
+
+  /* Style par défaut du bouton */
+  .custom-checkbox label {
+    display: block;
+    padding: 10px;
+    border: 1px solid #04a9f5;
+    border-radius: 0.25rem;
+    color: #04a9f5;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Quand c'est coché */
+  .custom-checkbox input[type="checkbox"]:checked + label {
+    background-color: #04a9f5 ;
+    color: white;
+  }
+</style>
 
 <div class="row">
   <div class="col-sm-12">
     <div class="card">
       <div class="card-header">
-        <h5>Gérer la présence pour la matière : <span class="text-info">{{ subject.name }}</span></h5>
+        <h5>
+          Gérer la présence pour la matière :
+          <span class="text-info">{{ subject.name }}</span>
+        </h5>
       </div>
       <div class="card-body">
         <form method="post" class="mb-4">
           {% csrf_token %}
           {{ form.non_field_errors }}
+
           <div class="row">
             {% for checkbox in form.department_levels %}
-              <div class="col-md-4 mb-2">
-                <div class="form-check">
-                  {{ checkbox.tag }} {{ checkbox.choice_label }}
-                </div>
+              <div class="col-md-4 mb-2 custom-checkbox">
+                {{ checkbox.tag }}   {# <-- Django gère name & value automatiquement #}
+                <label for="{{ checkbox.id_for_label }}">
+                  {{ checkbox.choice_label }}
+                </label>
               </div>
             {% endfor %}
           </div>
-          <button type="submit" class="btn btn-primary mt-3">Voir les étudiants</button>
+
+          <button type="submit" class="btn btn-primary mt-3">
+            Voir les étudiants
+          </button>
         </form>
-        
-
-
       </div>
     </div>
   </div>
 </div>
-
 {% endblock content %}
