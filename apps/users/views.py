@@ -72,10 +72,15 @@ from django.contrib.auth import get_user_model, logout
 
 from django.db.models import Q
 
+import secrets
+
 
 def generate_password():
-    characters = string.ascii_letters + string.digits + "!@#$%^&*()-_=+"
-    return "".join(random.choice(characters) for _ in range(10))
+    # 6 chiffres (000000-999999). Tu peux remplacer par alphanum si tu veux.
+    code = f"{secrets.randbelow(10**6):06d}"
+    return code
+
+    Si
 
 
 class RoleLoginView(TemplateView):
@@ -83,7 +88,6 @@ class RoleLoginView(TemplateView):
 
 
 # Vue pour l'inscription
-# @user_passes_test(lambda u: u.is_authenticated and u.is_superuser)
 def CustomregisterView(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
@@ -188,46 +192,6 @@ class CustomPasswordChangeView(PasswordChangeView):
         return super().form_valid(form)
 
 
-# Vue pour la demande de réinitialisation du mot de passe
-class CustomPasswordResetView(PasswordResetView):
-    form_class = CustomPasswordResetForm
-    template_name = "accounts/auth-reset-password.html"
-    success_url = reverse_lazy("users:password_reset_code")
-
-    def form_valid(self, form):
-        email = form.cleaned_data["email"]
-        user = CustomUser.objects.filter(email=email).first()
-
-        if not user:
-            send_custom_message(
-                self.request, _("Aucun utilisateur trouvé avec cet email."), "error"
-            )
-            return self.form_invalid(form)
-
-        # ✅ Génération sécurisée du code
-        code, hashed_code = generate_reset_code()
-        user.reset_code = hashed_code
-        user.reset_code_expiry = timezone.now() + timezone.timedelta(minutes=5)
-        user.save(update_fields=["reset_code", "reset_code_expiry"])
-
-        # ✅ Envoie du code par email
-        send_mail(
-            "Code de réinitialisation de votre mot de passe",
-            f"Votre code de réinitialisation est : {code}",
-            "from@example.com",
-            [email],
-            fail_silently=False,
-        )
-
-        send_custom_message(
-            self.request,
-            _("Un code de réinitialisation a été envoyé par email."),
-            "success",
-        )
-
-        return redirect(self.success_url)
-
-
 # Vue pour réinitialiser le mot de passe
 class CustomPasswordResetConfirmView(FormView):
     template_name = "accounts/auth-password-reset-confirm.html"
@@ -275,6 +239,49 @@ class CustomPasswordResetConfirmView(FormView):
         return super().form_valid(form)
 
 
+# --- Vue pour demander la réinitialisation du mot de passe ---
+class CustomPasswordResetView(PasswordResetView):
+    form_class = CustomPasswordResetForm
+    template_name = "accounts/auth-reset-password.html"
+    success_url = reverse_lazy("users:password_reset_code")
+
+    def form_valid(self, form):
+        email = form.cleaned_data["email"]
+        user = CustomUser.objects.filter(email=email).first()
+
+        if not user:
+            send_custom_message(
+                self.request, _("Aucun utilisateur trouvé avec cet email."), "error"
+            )
+            return self.form_invalid(form)
+
+        # ✅ Génération du code (6 chiffres)
+        code = generate_password()
+
+        # ✅ Sauvegarde du code et de son expiration
+        user.reset_code = code
+        user.reset_code_expiry = timezone.now() + timezone.timedelta(minutes=5)
+        user.save(update_fields=["reset_code", "reset_code_expiry"])
+
+        # ✅ Envoi du mail avec le code
+        send_mail(
+            "Code de réinitialisation de votre mot de passe",
+            f"Votre code de réinitialisation est : {code}",
+            "from@example.com",
+            [email],
+            fail_silently=False,
+        )
+
+        send_custom_message(
+            self.request,
+            _("Un code de réinitialisation a été envoyé par email."),
+            "success",
+        )
+
+        return redirect(self.success_url)
+
+
+# --- Vue pour entrer et valider le code ---
 class PasswordResetCodeView(View):
     template_name = "accounts/password_reset_code.html"
     form_class = PasswordResetCodeForm
@@ -286,12 +293,11 @@ class PasswordResetCodeView(View):
     def post(self, request):
         form = self.form_class(request.POST)
         if form.is_valid():
-            code = form.cleaned_data["code"].upper()
+            code = form.cleaned_data["code"]
             now = timezone.now()
 
-            # ✅ Vérifie le hash du code
-            hashed_code = hashlib.sha256(code.encode()).hexdigest()
-            user = CustomUser.objects.filter(reset_code=hashed_code).first()
+            # ✅ Vérifie directement le code en clair (pas de hash)
+            user = CustomUser.objects.filter(reset_code=code).first()
 
             if user:
                 if user.reset_code_expiry and user.reset_code_expiry < now:
@@ -302,8 +308,10 @@ class PasswordResetCodeView(View):
                     )
                     return render(request, self.template_name, {"form": form})
 
-                # ✅ Code valide
+                # ✅ Code valide → on garde l’utilisateur en session
                 request.session["reset_user_id"] = user.id
+
+                # Nettoyage après validation
                 user.reset_code = None
                 user.reset_code_expiry = None
                 user.save(update_fields=["reset_code", "reset_code_expiry"])
@@ -316,6 +324,7 @@ class PasswordResetCodeView(View):
                     "success",
                 )
                 return redirect("users:password_reset_confirm")
+
             else:
                 send_custom_message(
                     request, _("Code de réinitialisation invalide."), "error"

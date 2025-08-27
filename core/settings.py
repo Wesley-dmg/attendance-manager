@@ -175,8 +175,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = "users:login"  # fallback utilisé si @login_required est appelé sans redirection personnalisée
 
-# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
 AUTH_USER_MODEL = "users.CustomUser"
 
 if not DEBUG:
@@ -215,6 +213,30 @@ INTERNAL_IPS = [
 # Pour autoriser toutes les origines (à restreindre en prod)
 CORS_ALLOW_ALL_ORIGINS = True
 
+
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_WHATSAPP_SANDBOX_NUMBER = os.getenv("TWILIO_WHATSAPP_SANDBOX_NUMBER")
+
+# ========= EMAIL CONFIG DEV =========
+# L’adresse "from" par défaut
+DEFAULT_FROM_EMAIL = "noreply@timelya.com"
+
+# Optionnel : pour tester le file backend au lieu de la console
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = BASE_DIR / "sent_emails"  # Dossier où seront stockés les mails
+
+# # ========= EMAIL CONFIG PROD (Gmail) =========
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = "smtp.gmail.com"
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+
+# # ⚠️ Utilise ton adresse Gmail
+# EMAIL_HOST_USER = "tonadresse@gmail.com"
+
+# # ⚠️ Utilise un "App Password" et PAS ton mot de passe Gmail normal
+# EMAIL_HOST_PASSWORD = "xxxxxxxxxxxxxx"
+
+# # Expéditeur par défaut
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

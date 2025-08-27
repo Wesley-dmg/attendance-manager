@@ -67,7 +67,7 @@ class CustomUser(AbstractUser):
         default=False, verbose_name=_("Mot de passe modifié")
     )
     reset_code = models.CharField(
-        max_length=6, blank=True, null=True, verbose_name=_("Code de réinitialisation")
+        max_length=64, blank=True, null=True, verbose_name=_("Code de réinitialisation")
     )
     reset_code_expiry = models.DateTimeField(
         blank=True, null=True, verbose_name=_("Expiration du code")

@@ -84,25 +84,25 @@
     });
     });
 </script>
-<Script>
+{% comment %} <Script>
 
     function updateOnlineStatus() {
     if (!navigator.onLine) {
         alert("⚠️ Vous êtes hors ligne. Les données saisies seront sauvegardées localement et envoyées dès que la connexion revient.");
     }
-}
+    }
 
-window.addEventListener('online', () => {
+ window.addEventListener('online', () => {
     console.log("Connexion rétablie !");
     sendOfflineData();
-});
+    });
 
-window.addEventListener('offline', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
 
-// On peut appeler une première fois
-updateOnlineStatus();
+    // On peut appeler une première fois
+    updateOnlineStatus();
 
-</Script>
+</Script> {% endcomment %}
 
 <script>
 if ('serviceWorker' in navigator) {
