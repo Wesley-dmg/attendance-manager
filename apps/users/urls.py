@@ -50,7 +50,7 @@ urlpatterns = [
     path("logout/", custom_logout, name="logout"),
     path(
         "password_change/", CustomPasswordChangeView.as_view(), name="password_change"
-    ),  # Changement de mot de passe
+    ),
     path(
         "password_reset/", CustomPasswordResetView.as_view(), name="password_reset"
     ),  # Demande de réinitialisation de mot de passe

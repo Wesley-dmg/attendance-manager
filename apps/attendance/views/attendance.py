@@ -5,7 +5,6 @@ from django.views.generic import TemplateView
 from apps.attendance.models import Attendance
 from apps.subjects.models import Subject
 from apps.users.models import StudentProfile
-
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
@@ -40,14 +39,14 @@ class MarkAttendanceView(LoginRequiredMixin, TemplateView):
 
         for student in students:
             status = "absent" if str(student.id) in absent_ids else "present"
-            Attendance.objects.update_or_create(
+
+            # ⚡️ on crée toujours une nouvelle ligne
+            Attendance.objects.create(
                 student=student,
                 subject=subject,
-                date=timezone.now().date(),
-                defaults={
-                    "status": status,
-                    "teacher": request.user.teacherprofile,
-                },
+                teacher=request.user.teacherprofile,
+                status=status,
+                date=timezone.now(),
             )
 
         return redirect("attendance:dashboard")

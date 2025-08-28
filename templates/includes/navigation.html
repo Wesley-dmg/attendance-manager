@@ -63,13 +63,14 @@
               </li>
               {% if request.user.is_authenticated %}
               <li>
-                {% if request.user.is_superuser %}
+                {% if user.is_admin %}
                 <a href="{% url 'users:password_reset' %}" class="dropdown-item">
-                {% else %}
+                  <i class="feather icon-edit"></i>Reset Password
+                </a>
                 <a href="{% url 'users:password_change' %}" class="dropdown-item">
-                {% endif %}
                   <i class="feather icon-edit"></i>Change Password
                 </a>
+                {% endif %}
               </li>
               {% endif %}
             </ul>

@@ -23,8 +23,8 @@ class Attendance(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
 
     class Meta:
-        unique_together = ("student", "subject", "date")
+        # ⚡️ on supprime unique_together
         ordering = ["-date"]
 
     def __str__(self):
-        return f"{self.student} - {self.subject} - {self.status}"
+        return f"{self.student} - {self.subject} - {self.status} ({self.date})"

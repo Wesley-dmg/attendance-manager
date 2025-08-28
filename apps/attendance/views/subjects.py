@@ -27,46 +27,43 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         user = self.request.user
 
         try:
-            # Récupère le profil enseignant
             teacher_profile = user.teacherprofile
 
-            # Matières enseignées
+            # Matières enseignées par ce prof
             subjects = teacher_profile.subjects.all()
 
-            # DepartmentLevels concernés par les matières du prof
-            department_levels = DepartmentLevel.objects.filter(
-                department_levels_subjects__subject__in=subjects
-            ).distinct()
-
-            # Étudiants inscrits dans ces niveaux de département
-            students = StudentProfile.objects.filter(
-                major__in=department_levels
-            ).distinct()
-
-            # Absences enregistrées par cet enseignant, dans ses matières, pour ses étudiants
+            # Absences enregistrées par ce prof
             absences = Attendance.objects.filter(
                 teacher=teacher_profile,
-                subject__in=subjects,
-                student__in=students,
                 status="absent",
             )
 
-            # Filières concernées = départements associés aux DepartmentLevel
+            # Étudiants concernés par ces absences
+            students_concerned = StudentProfile.objects.filter(
+                id__in=absences.values_list("student_id", flat=True)
+            ).distinct()
+
+            # Filières (DepartmentLevel) concernées
+            department_levels = DepartmentLevel.objects.filter(
+                id__in=students_concerned.values_list("major_id", flat=True)
+            ).distinct()
+
+            # Départements concernés
             departments = Department.objects.filter(
                 department_levels__in=department_levels
             ).distinct()
 
-            # Ajout au context
-            context["total_students"] = students.count()
-            context["total_absences"] = absences.count()
-            context["total_streams"] = departments.count()
+            # Ajout au contexte
             context["subjects"] = subjects
+            context["total_absences"] = absences.count()
+            context["total_streams"] = department_levels.count()
+            context["total_students"] = students_concerned.count()
 
         except TeacherProfile.DoesNotExist:
-            context["total_students"] = 0
+            context["subjects"] = []
             context["total_absences"] = 0
             context["total_streams"] = 0
-            context["subjects"] = []
+            context["total_students"] = 0
 
         return context
 

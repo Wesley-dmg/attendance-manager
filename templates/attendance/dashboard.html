@@ -3,35 +3,37 @@
 
 {% block content %}
 
+
 <div class="row mb-4">
   <div class="col-6">
     <div class="card text-center border-success">
       <div class="card-body">
-        <h6 class="card-title text-muted">Abs enregistrées</h6>
-        <h3 class="card-text">{{ total_absences|default:"00" }}</h3>
+        <h6 class="card-title text-muted">Absences enregistrées</h6>
+        <h3 class="card-text">{{ total_absences|default:"0" }}</h3>
       </div>
     </div>
   </div>
+
   <div class="col-6">
     <div class="card text-center border-primary">
       <div class="card-body">
         <h6 class="card-title text-muted">Filières concernées</h6>
-        <h3 class="card-text">{{ total_streams|default:"00" }}</h3>
+        <h3 class="card-text">{{ total_streams|default:"0" }}</h3>
       </div>
     </div>
   </div>
   
-  <div class="col-12">
+  <div class="col-12 mt-3">
     <div class="card text-center border-info">
       <div class="card-body">
         <h6 class="card-title text-muted">Étudiants concernés</h6>
-        <h3 class="card-text"> {{ total_students |default:"00" }}</h3>
+        <h3 class="card-text">{{ total_students|default:"0" }}</h3>
       </div>
     </div>
   </div>
 </div>
 
-<div class="row">
+ <div class="row">
   <div class="col-sm-12">
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">

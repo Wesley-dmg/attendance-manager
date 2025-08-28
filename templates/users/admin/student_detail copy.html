@@ -118,13 +118,13 @@
                             <td>{{ att.date|date:"d/m/Y H:i" }}</td>
                             <td>{{ att.subject }}</td>
                             <td>{{ att.teacher.user.get_full_name }}</td>
-                            <td>
+                            <td style="color: white !important;">
                                 {% if att.status == 'present' %}
-                                    <span class="badge bg-success">{{ att.get_status_display }}</span>
+                                    <span class="badge bg-success" style="color: white !important;">{{ att.get_status_display }}</span>
                                 {% elif att.status == 'absent' %}
-                                    <span class="badge bg-danger">{{ att.get_status_display }}</span>
+                                    <span class="badge bg-danger"  style="color: white !important;">{{ att.get_status_display }}</span>
                                 {% else %}
-                                    <span class="badge bg-info">{{ att.get_status_display }}</span>
+                                    <span class="badge bg-info"    style="color: white !important;">{{ att.get_status_display }}</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -146,12 +146,12 @@
             {% if archive_history %}
                 <ul class="list-group">
                     {% for hist in archive_history %}
-                        <li class="list-group-item">
+                        <li class="list-group-item"  style="color: white !important;">
                             {{ hist.performed_at|date:"d/m/Y H:i" }} — 
                             {% if hist.action == 'archived' %}
-                                <span class="badge bg-danger">Archivé</span>
+                                <span class="badge bg-danger"  style="color: white !important;">Archivé</span>
                             {% else %}
-                                <span class="badge bg-success">Désarchivé</span>
+                                <span class="badge bg-success"  style="color: white !important;">Désarchivé</span>
                             {% endif %}
                         </li>
                     {% endfor %}

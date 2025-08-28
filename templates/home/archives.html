@@ -59,7 +59,7 @@
                 <td>{{ etu.archived_at|date:"d/m/Y" }}</td>
                 <td>
                   <a href="{% url 'users:student_detail' etu.user.id %}" class="btn btn-sm btn-outline-info" title="Détail"><i class="feather icon-eye"></i></a>
-                  <form method="post" action="{% url 'unarchive_student' etu.id %}" style="display:inline;">
+                  <form method="post" action="{% url 'home:unarchive_student' etu.id %}" style="display:inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-sm btn-outline-warning" title="Déarchiver">
                       <i class="feather icon-upload"></i>
