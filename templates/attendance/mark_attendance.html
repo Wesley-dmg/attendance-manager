@@ -2,57 +2,65 @@
 {% load static %}
 
 {% block content %}
-<h5 class="mb-3">Marquer la présence</h5>
 
-<h2>Présence pour la matière : {{ subject.name }}</h2>
+<div class="row">
+  <div class="col-sm-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>
+          cochez  les  absents
+        </h5>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="subject" value="{{ subject.id }}">
+          {% for dep_id in department_ids %}
+            <input type="hidden" name="department_ids" value="{{ dep_id }}">
+          {% endfor %}
 
-<form method="post">
-  {% csrf_token %}
-  <input type="hidden" name="subject" value="{{ subject.id }}">
-  {% for dep_id in department_ids %}
-    <input type="hidden" name="department_ids" value="{{ dep_id }}">
-  {% endfor %}
+          <div class="row">
+            {% for student in students %}
+              <div class="col-md-4 mb-2 custom-checkbox">
+                <!-- Checkbox cachée -->
+                <input  type="checkbox"  id="student-{{ student.id }}"  name="absent_students"  value="{{ student.id }}">
+                <!-- Label bouton -->
+                <label for="student-{{ student.id }}">
+                  {{ student.user.get_full_name }}
+                </label>
+              </div>
+            {% endfor %}
+          </div>
 
-  <ul>
-    {% for student in students %}
-      <li>
-        <label>
-          <input type="checkbox" name="absent_students" value="{{ student.id }}">
-          {{ student.user.get_full_name }}
-        </label>
-      </li>
-    {% endfor %}
-  </ul>
-
-  <button type="submit" class="btn btn-primary">Enregistrer</button>
-</form>
-
-
-
+          <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 <style>
-  .btn input[type="checkbox"] {
+  /* Cacher le vrai checkbox */
+  .custom-checkbox input[type="checkbox"] {
     display: none;
   }
 
-  .btn.btn-danger {
-    color: #fff;
+  /* Style par défaut → bouton vert (présent) */
+  .custom-checkbox label {
+    display: block;
+    padding: 10px;
+    border: 1px solid #28a745;
+    border-radius: 0.25rem;
+   
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Quand absent (coché) → bouton rouge */
+  .custom-checkbox input[type="checkbox"]:checked + label {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
   }
 </style>
-
-
-
-<script>
-  document.querySelectorAll('.checkbox-absent').forEach(cb => {
-    cb.addEventListener('change', function() {
-      const label = document.getElementById("label-" + this.dataset.student);
-      if (this.checked) {
-        label.classList.remove('btn-outline-success');
-        label.classList.add('btn-danger');
-      } else {
-        label.classList.add('btn-outline-success');
-        label.classList.remove('btn-danger');
-      }
-    });
-  });
-</script>
 {% endblock %}
