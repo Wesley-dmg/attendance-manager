@@ -1,6 +1,9 @@
+import os
 import re
 import uuid
 import hashlib
+from django.conf import settings
+from django.contrib.staticfiles import finders
 from django.views.decorators.http import require_GET
 from django.utils.text import slugify
 import random
@@ -181,3 +184,22 @@ class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
             "users/partials/_parent_cards.html", context, request=request
         )
         return JsonResponse({"html": html})
+
+
+def link_callback(uri, rel):
+    """
+    Convertit les URI HTML (ex: /static/...) en chemins absolus pour xhtml2pdf
+    """
+    # Cherche le fichier dans les staticfiles
+    result = finders.find(uri.replace(settings.STATIC_URL, ""))
+    if result:
+        if not isinstance(result, (list, tuple)):
+            result = [result]
+        return os.path.realpath(result[0])
+
+    # Si c'est une URL absolue (http:// ou https://), retourne tel quel
+    if uri.startswith("http://") or uri.startswith("https://"):
+        return uri
+
+    # Sinon essaie dans STATIC_ROOT
+    return os.path.join(settings.STATIC_ROOT, uri.replace(settings.STATIC_URL, ""))

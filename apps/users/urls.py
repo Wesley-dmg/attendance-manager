@@ -39,6 +39,7 @@ from .views import (
     StudentDeleteView,
     ParentDeleteView,
     custom_logout,
+    student_profile_pdf,
 )
 
 app_name = "users"  # Nom de l'application pour les URL inversées
@@ -99,6 +100,7 @@ urlpatterns = [
     path("admins/<int:pk>/", AdminDetailView.as_view(), name="admin_detail"),
     path("teachers/<int:pk>/", TeacherDetailView.as_view(), name="teacher_detail"),
     path("students/<int:pk>/", StudentDetailView.as_view(), name="student_detail"),
+    path("student/<int:student_id>/pdf/", student_profile_pdf, name="student_pdf"),
     path("parents/<int:pk>/", ParentDetailView.as_view(), name="parent_detail"),
     path("check-parent-phone/", check_parent_phone, name="check_parent_phone"),
     path("redirect-after-login/", redirect_after_login, name="redirect-after-login"),

@@ -28,3 +28,5 @@ twilio==8.11.0
 Pillow==11.0.0
 
 djangorestframework-simplejwt
+
+xhtml2pdf

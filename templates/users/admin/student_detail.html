@@ -2,163 +2,187 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid py-4">
 
-    <!-- Statistiques rapides -->
+    <!-- En-tête -->
     <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center border-0">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1">Profil de l'étudiant</h2>
+                <p class="text-muted mb-0 small">{{ user_obj.get_full_name }}</p>
+            </div>
+            <div class="no-print">
+                <a href="{% url 'users:student_pdf' user_obj.id %}" class="btn btn-outline-secondary me-2">
+                    Exporter PDF
+                </a>
+                <button class="btn btn-outline-dark" onclick="window.print()">
+                    Imprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 text-center">
                 <div class="card-body">
-                    <h6 class="text-muted">Absences totales</h6>
-                    <h3 class="text-danger">{{ attendances|length }}</h3>
+                    <h6 class="mb-1">Absences totales</h6>
+                    <h4 class="mb-0">{{ attendances|length }}</h4>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center border-0">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 text-center">
                 <div class="card-body">
-                    <h6 class="text-muted">Archivé</h6>
-                    {% if student_profile.archived %}
-                        <h3 class="text-danger">Oui</h3>
+                    <h6 class="mb-1">Archivé</h6>
+                    <h4 class="mb-0">{% if student_profile.archived %}Oui{% else %}Non{% endif %}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonne gauche -->
+        <div class="col-md-6 mb-4">
+            <!-- Infos perso -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Informations personnelles</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if user_obj.profile_picture %}
+                            <img class="rounded-circle" src="{{ user_obj.profile_picture.url }}" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% else %}
+                            <img class="rounded-circle" src="{% static 'assets/images/user/avatar-2.jpg' %}" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% endif %}
+                    </div>
+                    <h5 class="fw-bold mb-1">{{ user_obj.first_name }} {{ user_obj.last_name }}</h5>
+                    <p class="text-muted small mb-3">{{ user_obj.get_role_display }}</p>
+
+                    <div class="row text-start small">
+                        <div class="col-md-6">
+                            <p><strong>Email :</strong> {{ user_obj.email }}</p>
+                            <p><strong>Téléphone :</strong> {{ user_obj.phone_number }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if user_obj.gender %}
+                                <p><strong>Genre :</strong> {{ user_obj.get_gender_display }}</p>
+                            {% endif %}
+                            {% if user_obj.date_of_birth %}
+                                <p><strong>Date de naissance :</strong> {{ user_obj.date_of_birth|date:"d/m/Y" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if user_obj.address %}
+                        <p class="mt-2 small"><strong>Adresse :</strong> {{ user_obj.address }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Infos académiques -->
+            {% if student_profile %}
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Informations académiques</h6>
+                </div>
+                <div class="card-body small">
+                    {% if student_profile.student_id %}
+                        <p><strong>ID Étudiant :</strong> {{ student_profile.student_id }}</p>
+                    {% endif %}
+                    <p><strong>Statut :</strong> {{ student_profile.get_enrollment_status_display }}</p>
+                    <p><strong>Filière :</strong> {{ student_profile.major }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="col-md-6 mb-4">
+            <!-- Parents -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Parents associés</h6>
+                </div>
+                <div class="card-body small">
+                    {% if parents %}
+                        {% for parent in parents %}
+                            <p class="mb-2">
+                                <strong>{{ parent.user.get_full_name }}</strong> ({{ parent.get_relation_display }})<br>
+                                <span class="text-muted">📧 {{ parent.user.email }} | 📞 {{ parent.user.phone_number }}</span>
+                            </p>
+                        {% endfor %}
                     {% else %}
-                        <h3 class="text-success">Non</h3>
+                        <p class="text-muted">Aucun parent associé.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Absences -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Historique des absences</h6>
+                </div>
+                <div class="card-body p-0 small">
+                    {% if attendances %}
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Matière</th>
+                                    <th>Enseignant</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for att in attendances %}
+                                <tr>
+                                    <td>{{ att.date|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ att.subject }}</td>
+                                    <td>{{ att.teacher.user.get_full_name }}</td>
+                                    <td>{{ att.get_status_display }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-muted text-center py-2">Aucune absence enregistrée.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Archivage -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0">Historique d'archivage</h6>
+                </div>
+                <div class="card-body small">
+                    {% if archive_history %}
+                        <ul class="list-unstyled mb-0">
+                            {% for hist in archive_history %}
+                                <li class="mb-1">
+                                    {{ hist.performed_at|date:"d/m/Y H:i" }} — 
+                                    {{ hist.get_action_display }} 
+                                    par {{ hist.performed_by.get_full_name }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Aucun historique d'archivage.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center border-0">
-                <div class="card-body">
-                    <h6 class="text-muted">Parents associés</h6>
-                    <h3>{{ parents|length }}</h3>
-                </div>
-            </div>
-        </div>
     </div>
-
-    <!-- Informations personnelles -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h6 class="mb-0">Informations personnelles</h6>
-        </div>
-        <div class="card-body">
-            <div class="text-center mb-3">
-                {% if user_obj.profile_picture %}
-                    <img src="{{ user_obj.profile_picture.url }}" class="rounded-circle shadow" style="width: 120px; height: 120px;">
-                {% else %}
-                    <img src="{% static 'assets/images/user/avatar-2.jpg' %}" class="rounded-circle shadow" style="width: 120px; height: 120px;">
-                {% endif %}
-                <h4 class="mt-2">{{ user_obj.first_name }} {{ user_obj.last_name }}</h4>
-            </div>
-            <p><strong>Email :</strong> {{ user_obj.email }}</p>
-            <p><strong>Téléphone :</strong> {{ user_obj.phone_number }}</p>
-            {% if user_obj.gender %}<p><strong>Genre :</strong> {{ user_obj.get_gender_display }}</p>{% endif %}
-            {% if user_obj.date_of_birth %}<p><strong>Date de naissance :</strong> {{ user_obj.date_of_birth|date:"d M Y" }}</p>{% endif %}
-            {% if user_obj.address %}<p><strong>Adresse :</strong> {{ user_obj.address }}</p>{% endif %}
-            <p><strong>Rôle :</strong> {{ user_obj.get_role_display }}</p>
-        </div>
-    </div>
-
-    <!-- Informations académiques -->
-    {% if student_profile %}
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-info text-white">
-            <h6 class="mb-0">Informations académiques</h6>
-        </div>
-        <div class="card-body">
-            {% if student_profile.student_id %}<p><strong>ID Étudiant :</strong> {{ student_profile.student_id }}</p>{% endif %}
-            <p><strong>Statut d'inscription :</strong> {{ student_profile.get_enrollment_status_display }}</p>
-            <p><strong>Filière :</strong> {{ student_profile.major }}</p>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Parents associés -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-secondary text-white">
-            <h6 class="mb-0">Parents associés</h6>
-        </div>
-        <div class="card-body">
-            {% if parents %}
-                <ul class="list-group">
-                    {% for parent in parents %}
-                        <li class="list-group-item">
-                            <strong>{{ parent.user.get_full_name }}</strong> — {{ parent.get_relation_display }}<br>
-                            <small>Email : {{ parent.user.email }} | Téléphone : {{ parent.user.phone_number }}</small>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Aucun parent associé.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Historique des absences -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-warning text-dark">
-            <h6 class="mb-0">Historique des absences</h6>
-        </div>
-        <div class="card-body p-0">
-            {% if attendances %}
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Matière</th>
-                            <th>Enseignant</th>
-                            <th>Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for att in attendances %}
-                        <tr>
-                            <td>{{ att.date|date:"d/m/Y H:i" }}</td>
-                            <td>{{ att.subject }}</td>
-                            <td>{{ att.teacher.user.get_full_name }}</td>
-                            <td>
-                                {% if att.status == 'present' %}
-                                    <span class="badge bg-success">{{ att.get_status_display }}</span>
-                                {% elif att.status == 'absent' %}
-                                    <span class="badge bg-danger">{{ att.get_status_display }}</span>
-                                {% else %}
-                                    <span class="badge bg-info">{{ att.get_status_display }}</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="p-3 text-muted">Aucune absence enregistrée.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Historique d'archivage -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-dark text-white">
-            <h6 class="mb-0">Historique d'archivage</h6>
-        </div>
-        <div class="card-body">
-            {% if archive_history %}
-                <ul class="list-group">
-                    {% for hist in archive_history %}
-                        <li class="list-group-item">
-                            {{ hist.performed_at|date:"d/m/Y H:i" }} — 
-                            {% if hist.action == 'archived' %}
-                                <span class="badge bg-danger">Archivé</span>
-                            {% else %}
-                                <span class="badge bg-success">Désarchivé</span>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Aucun historique d'archivage.</p>
-            {% endif %}
-        </div>
-    </div>
-
 </div>
+
+<style>
+    @media print {
+        .no-print, .btn {
+            display: none !important;
+        }
+    }
+</style>
 {% endblock %}

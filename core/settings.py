@@ -39,11 +39,6 @@ CSRF_TRUSTED_ORIGINS = [
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
-# RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
 # Application definition
 
@@ -153,13 +148,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "/static/"
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 
 MEDIA_URL = "/media/"  # URL accessible depuis le navigateur
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # Répertoire de stockage des fichiers
 
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
 # Pour mieux gérer les fichiers statiques sur Render
 STATICFILES_STORAGE = (

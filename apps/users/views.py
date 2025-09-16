@@ -1,27 +1,23 @@
-import hashlib
-from django.db import IntegrityError, transaction
-
-from django.utils.http import urlencode
-
+from xhtml2pdf import pisa
 import random
-import string
+import secrets
 
-from django.shortcuts import render
+import hashlib
 
-from django.utils.text import slugify
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 
+from django.contrib.auth import (
+    login,
+    authenticate,
+    update_session_auth_hash,
+    get_user_model,
+    logout,
+)
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-
-from django.shortcuts import get_object_or_404
-
-from apps.attendance.models import Attendance
-from apps.attendance.utils import get_absence_count
-from apps.courses.models import DepartmentLevel
-from apps.home.mixins import AdminTestMixin
-from apps.users.utils import generate_reset_code, generate_unique_username
-
-from .forms import UserUpdateForm
-from django.contrib.auth import login, authenticate, update_session_auth_hash
+from django.db import IntegrityError, transaction
+from django.core.mail import send_mail
+from django.db.models import Q
 from django.views.generic import (
     TemplateView,
     ListView,
@@ -31,16 +27,25 @@ from django.views.generic import (
     DeleteView,
     FormView,
 )
-from django.utils.translation import gettext as _
-from django.shortcuts import render, redirect
+from django.views import View
 from django.contrib.auth.views import *
-from django.core.mail import send_mail
-from django.urls import reverse, reverse_lazy
-
-# from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
+from django.utils.http import urlencode
+from django.utils.text import slugify
 from django.utils import timezone
+from django.urls import reverse, reverse_lazy
+from django.template.loader import get_template
 
-from apps.home.utils import send_custom_message
+from apps.attendance.models import Attendance
+from apps.courses.models import DepartmentLevel
+from apps.users.models import (
+    AdminProfile,
+    CustomUser,
+    ParentProfile,
+    StudentArchiveHistory,
+    StudentProfile,
+    TeacherProfile,
+)
 from apps.users.forms import (
     AdminForm,
     AdminUpdateForm,
@@ -56,23 +61,12 @@ from apps.users.forms import (
     StudentUpdateForm,
     TeacherForm,
     TeacherUpdateForm,
+    UserUpdateForm,
 )
-from apps.users.models import (
-    AdminProfile,
-    CustomUser,
-    ParentProfile,
-    StudentArchiveHistory,
-    StudentProfile,
-    TeacherProfile,
-)
-
-from django.views import View
-
-from django.contrib.auth import get_user_model, logout
-
-from django.db.models import Q
-
-import secrets
+from apps.home.mixins import AdminTestMixin
+from apps.attendance.utils import get_absence_count
+from apps.home.utils import send_custom_message
+from apps.users.utils import link_callback
 
 
 def generate_password():
@@ -526,9 +520,9 @@ class StudentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
 
         # Absences de l'étudiant
         if student_profile:
-            absences = Attendance.objects.filter(student=student_profile).order_by(
-                "-date"
-            )
+            absences = Attendance.objects.filter(
+                student=student_profile, status="absent"
+            ).order_by("-date")
             context["attendances"] = absences
 
             # Historique d'archivage
@@ -538,6 +532,55 @@ class StudentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
             context["archive_history"] = archive_history
 
         return context
+
+
+def render_pdf(template_src, context_dict={}):
+    template = get_template(template_src)
+    html = template.render(context_dict)
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="student_profile.pdf"'
+    pisa_status = pisa.CreatePDF(html, dest=response, link_callback=link_callback)
+    if pisa_status.err:
+        return HttpResponse("We had some errors <pre>" + html + "</pre>")
+    return response
+
+
+def student_profile_pdf(request, student_id):
+    # Récupérer l'utilisateur
+    user_obj = get_object_or_404(CustomUser, id=student_id)
+
+    # Récupérer le profil étudiant
+    student_profile = getattr(user_obj, "studentprofile", None)
+
+    # Récupérer les parents associés
+    parents = (
+        ParentProfile.objects.filter(children=student_profile)
+        if student_profile
+        else []
+    )
+
+    # Récupérer les absences
+    if student_profile:
+        attendances = Attendance.objects.filter(
+            student=student_profile, status="absent"
+        ).order_by("-date")
+        archive_history = StudentArchiveHistory.objects.filter(
+            student=student_profile
+        ).order_by("-performed_at")
+    else:
+        attendances = []
+        archive_history = []
+
+    # Préparer le contexte
+    context = {
+        "user_obj": user_obj,
+        "student_profile": student_profile,
+        "parents": parents,
+        "attendances": attendances,
+        "archive_history": archive_history,
+    }
+
+    return render_pdf("users/admin/student_pdf.html", context)
 
 
 class ParentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):

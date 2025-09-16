@@ -2,166 +2,344 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-
-    <div class="row">
-        <!-- Statistiques rapides -->
-    <div class="row mb-4 col-12">
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center border-0">
-                <div class="card-body">
-                    <h6 class="text-muted">Absences totales</h6>
-                    <h3 class="text-danger">{{ attendances|length }}</h3>
+<div class="container-fluid py-4">
+    <!-- En-tête avec boutons d'action -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">Profil de l'étudiant</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Tableau de bord</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'users:students_list' %}">Étudiants</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ user_obj.get_full_name }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'student_pdf' user_obj.id %}" class="btn btn-danger me-2">
+                        <i class="fas fa-file-pdf me-1"></i> Exporter PDF
+                    </a>
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Imprimer
+                    </button>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center border-0">
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
-                    <h6 class="text-muted">Archivé</h6>
-                    {% if student_profile.archived %}
-                        <h3 class="text-danger">Oui</h3>
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Absences totales
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attendances|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-{% if student_profile.archived %}danger{% else %}success{% endif %} shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{% if student_profile.archived %}danger{% else %}success{% endif %} text-uppercase mb-1">
+                                Statut archivé
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if student_profile.archived %}Oui{% else %}Non{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-archive fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Parents associés
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ parents|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Historique d'archivage
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ archive_history|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-history fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonne de gauche -->
+        <div class="col-lg-5 mb-4">
+            <!-- Carte profil -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Informations personnelles</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if user_obj.profile_picture %}
+                            <img class="img-profile rounded-circle shadow" src="{{ user_obj.profile_picture.url }}" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                            <img class="img-profile rounded-circle shadow" src="{% static 'assets/images/user/avatar-2.jpg' %}" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% endif %}
+                    </div>
+                    <h4 class="font-weight-bold">{{ user_obj.first_name }} {{ user_obj.last_name }}</h4>
+                    <p class="text-muted mb-4">{{ user_obj.get_role_display }}</p>
+
+                    <div class="row text-left">
+                        <div class="col-md-6">
+                            <p class="mb-2"><i class="fas fa-envelope mr-2 text-primary"></i> <strong>Email:</strong><br>{{ user_obj.email }}</p>
+                            <p class="mb-2"><i class="fas fa-phone mr-2 text-primary"></i> <strong>Téléphone:</strong><br>{{ user_obj.phone_number }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if user_obj.gender %}
+                                <p class="mb-2"><i class="fas fa-venus-mars mr-2 text-primary"></i> <strong>Genre:</strong><br>{{ user_obj.get_gender_display }}</p>
+                            {% endif %}
+                            {% if user_obj.date_of_birth %}
+                                <p class="mb-2"><i class="fas fa-birthday-cake mr-2 text-primary"></i> <strong>Date de naissance:</strong><br>{{ user_obj.date_of_birth|date:"d M Y" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if user_obj.address %}
+                        <p class="mb-0 mt-3"><i class="fas fa-map-marker-alt mr-2 text-primary"></i> <strong>Adresse:</strong><br>{{ user_obj.address }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Carte informations académiques -->
+            {% if student_profile %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-info">Informations académiques</h6>
+                </div>
+                <div class="card-body">
+                    {% if student_profile.student_id %}
+                        <p><i class="fas fa-id-card mr-2 text-info"></i> <strong>ID Étudiant:</strong> {{ student_profile.student_id }}</p>
+                    {% endif %}
+                    <p><i class="fas fa-graduation-cap mr-2 text-info"></i> <strong>Statut d'inscription:</strong> {{ student_profile.get_enrollment_status_display }}</p>
+                    <p><i class="fas fa-book mr-2 text-info"></i> <strong>Filière:</strong> {{ student_profile.major }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Colonne de droite -->
+        <div class="col-lg-7 mb-4">
+            <!-- Carte parents -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-success">Parents associés</h6>
+                </div>
+                <div class="card-body">
+                    {% if parents %}
+                        <div class="row">
+                            {% for parent in parents %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-left-success h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="mr-3">
+                                                    <div class="icon-circle bg-success">
+                                                        <i class="fas fa-user text-white"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="h6 font-weight-bold text-success mb-0">{{ parent.user.get_full_name }}</div>
+                                                    <div class="text-xs text-muted">{{ parent.get_relation_display }}</div>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <div class="small">
+                                                <i class="fas fa-envelope mr-1 text-gray-400"></i> {{ parent.user.email }}<br>
+                                                <i class="fas fa-phone mr-1 text-gray-400"></i> {{ parent.user.phone_number }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
-                        <h3 class="text-success">Non</h3>
+                        <p class="text-muted text-center py-3">Aucun parent associé.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Carte absences -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-warning">Historique des absences</h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if attendances %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Matière</th>
+                                        <th>Enseignant</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for att in attendances %}
+                                    <tr>
+                                        <td>{{ att.date|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ att.subject }}</td>
+                                        <td>{{ att.teacher.user.get_full_name }}</td>
+                                        <td>
+                                            {% if att.status == 'present' %}
+                                                <span class="badge bg-success text-white">{{ att.get_status_display }}</span>
+                                            {% elif att.status == 'absent' %}
+                                                <span class="badge bg-danger text-white">{{ att.get_status_display }}</span>
+                                            {% else %}
+                                                <span class="badge bg-info text-white">{{ att.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-4">Aucune absence enregistrée.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Carte historique archivage -->
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-secondary">Historique d'archivage</h6>
+                </div>
+                <div class="card-body">
+                    {% if archive_history %}
+                        <div class="timeline">
+                            {% for hist in archive_history %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker {% if hist.action == 'archived' %}bg-danger{% else %}bg-success{% endif %}"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">{{ hist.performed_at|date:"d/m/Y H:i" }}</h6>
+                                        <p class="text-sm text-muted mb-0">
+                                            {% if hist.action == 'archived' %}
+                                                <span class="badge bg-danger text-white">Archivé</span>
+                                            {% else %}
+                                                <span class="badge bg-success text-white">Désarchivé</span>
+                                            {% endif %}
+                                            par {{ hist.performed_by.get_full_name }}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-2">Aucun historique d'archivage.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center border-0">
-                <div class="card-body">
-                    <h6 class="text-muted">Parents associés</h6>
-                    <h3>{{ parents|length }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Informations personnelles -->
-    <div class="card mb-4 shadow-sm col-6">
-        <div class="card-header bg-primary text-white">
-            <h6 class="mb-0">Informations personnelles</h6>
-        </div>
-        <div class="card-body">
-            <div class="text-center mb-3">
-                {% if user_obj.profile_picture %}
-                    <img src="{{ user_obj.profile_picture.url }}" class="rounded-circle shadow" style="width: 120px; height: 120px;">
-                {% else %}
-                    <img src="{% static 'assets/images/user/avatar-2.jpg' %}" class="rounded-circle shadow" style="width: 120px; height: 120px;">
-                {% endif %}
-                <h4 class="mt-2">{{ user_obj.first_name }} {{ user_obj.last_name }}</h4>
-            </div>
-            <p><strong>Email :</strong> {{ user_obj.email }}</p>
-            <p><strong>Téléphone :</strong> {{ user_obj.phone_number }}</p>
-            {% if user_obj.gender %}<p><strong>Genre :</strong> {{ user_obj.get_gender_display }}</p>{% endif %}
-            {% if user_obj.date_of_birth %}<p><strong>Date de naissance :</strong> {{ user_obj.date_of_birth|date:"d M Y" }}</p>{% endif %}
-            {% if user_obj.address %}<p><strong>Adresse :</strong> {{ user_obj.address }}</p>{% endif %}
-            <p><strong>Rôle :</strong> {{ user_obj.get_role_display }}</p>
-        </div>
-    </div>
-
-    
-    <!-- Parents associés -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-secondary text-white">
-            <h6 class="mb-0">Parents associés</h6>
-        </div>
-        <div class="card-body">
-            {% if parents %}
-                <ul class="list-group">
-                    {% for parent in parents %}
-                        <li class="list-group-item">
-                            <strong>{{ parent.user.get_full_name }}</strong> — {{ parent.get_relation_display }}<br>
-                            <small>Email : {{ parent.user.email }} | Téléphone : {{ parent.user.phone_number }}</small>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Aucun parent associé.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Informations académiques -->
-    {% if student_profile %}
-    <div class="card mb-4 shadow-sm col-12">
-        <div class="card-header bg-info text-white">
-            <h6 class="mb-0">Informations académiques</h6>
-        </div>
-        <div class="card-body">
-            {% if student_profile.student_id %}<p><strong>ID Étudiant :</strong> {{ student_profile.student_id }}</p>{% endif %}
-            <p><strong>Statut d'inscription :</strong> {{ student_profile.get_enrollment_status_display }}</p>
-            <p><strong>Filière :</strong> {{ student_profile.major }}</p>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Historique des absences -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-warning text-dark">
-            <h6 class="mb-0">Historique des absences</h6>
-        </div>
-        <div class="card-body p-0">
-            {% if attendances %}
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Matière</th>
-                            <th>Enseignant</th>
-                            <th>Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for att in attendances %}
-                        <tr>
-                            <td>{{ att.date|date:"d/m/Y H:i" }}</td>
-                            <td>{{ att.subject }}</td>
-                            <td>{{ att.teacher.user.get_full_name }}</td>
-                            <td style="color: white !important;">
-                                {% if att.status == 'present' %}
-                                    <span class="badge bg-success" style="color: white !important;">{{ att.get_status_display }}</span>
-                                {% elif att.status == 'absent' %}
-                                    <span class="badge bg-danger"  style="color: white !important;">{{ att.get_status_display }}</span>
-                                {% else %}
-                                    <span class="badge bg-info"    style="color: white !important;">{{ att.get_status_display }}</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="p-3 text-muted">Aucune absence enregistrée.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Historique d'archivage -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-dark text-white">
-            <h6 class="mb-0">Historique d'archivage</h6>
-        </div>
-        <div class="card-body">
-            {% if archive_history %}
-                <ul class="list-group">
-                    {% for hist in archive_history %}
-                        <li class="list-group-item"  style="color: white !important;">
-                            {{ hist.performed_at|date:"d/m/Y H:i" }} — 
-                            {% if hist.action == 'archived' %}
-                                <span class="badge bg-danger"  style="color: white !important;">Archivé</span>
-                            {% else %}
-                                <span class="badge bg-success"  style="color: white !important;">Désarchivé</span>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Aucun historique d'archivage.</p>
-            {% endif %}
-        </div>
-    </div>
-
     </div>
 </div>
+
+<style>
+    .icon-circle {
+        height: 2.5rem;
+        width: 2.5rem;
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .img-profile {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+    }
+    
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 4rem;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -4rem;
+        height: 1rem;
+        width: 1rem;
+        border-radius: 100%;
+        z-index: 10;
+    }
+    
+    .timeline-content {
+        padding-top: 0.25rem;
+    }
+    
+    @media print {
+        .btn, .breadcrumb, .no-print {
+            display: none !important;
+        }
+    }
+</style>
 {% endblock %}

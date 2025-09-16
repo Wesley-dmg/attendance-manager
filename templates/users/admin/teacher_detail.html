@@ -38,7 +38,7 @@
                 {% if teacher_profile.subjects.all %}
                     <span class="list-unstyled mb-0">
                         {% for subject in teacher_profile.subjects.all %}
-                            <i>{{ subject.name }}</i>
+                            <i class="text-primary">{{ subject.name }}<span class="mx-2 text-warning"> || </span></i>
                         {% endfor %}
                     </span>
                 {% else %}

@@ -1,0 +1,258 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Profil Étudiant - {{ user_obj.first_name }} {{ user_obj.last_name }}</title>
+    <style>
+        @page {
+            margin: 1.5cm;
+            size: A4 portrait;
+
+            @frame footer {
+                -pdf-frame-content: footerContent;
+                bottom: 0;
+                margin-left: 1.5cm;
+                margin-right: 1.5cm;
+                height: 1cm;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            font-size: 12px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            color: #1e3a8a;
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .profile-card {
+            display: grid;
+            grid-template-columns: 120px auto;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+
+        .profile-img {
+            width: 110px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+
+        .profile-info h2 {
+            margin: 0 0 8px;
+            font-size: 16px;
+            color: #111827;
+        }
+
+        .info-item {
+            margin-bottom: 5px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #374151;
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: #1e3a8a;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+
+        th {
+            background: #f9fafb;
+        }
+
+        tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .badge {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .badge-present {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-absent {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-archived {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .footer {
+            text-align: center;
+            color: #888;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Profil Étudiant</h1>
+        <p> Généré le {% now "d/m/Y H:i" %}</p>
+    </div>
+
+    <!-- Carte Profil -->
+    <div class="profile-card">
+        <div>
+            {% if user_obj.profile_picture %}
+                <img src="{{ user_obj.profile_picture.url }}" class="profile-img">
+            {% else %}
+                <img src="{% static 'assets/images/user/avatar-2.jpg' %}" class="profile-img">
+            {% endif %}
+        </div>
+
+        <div class="profile-info">
+            <h1>{{ user_obj.first_name }} {{ user_obj.last_name }}</h1>
+            <div class="info-item"><span class="info-label">Email:</span> {{ user_obj.email }}</div>
+            <div class="info-item"><span class="info-label">Téléphone:</span> {{ user_obj.phone_number }}</div>
+                {% if user_obj.gender %}
+                    <div class="info-item"><span class="info-label">Genre:</span> {{ user_obj.get_gender_display }}</div>
+                {% endif %} 
+                {% if user_obj.date_of_birth %}
+                    <div class="info-item"><span class="info-label">Date de naissance:</span> {{ user_obj.date_of_birth|date:"d/m/Y" }}</div>
+                {% endif %}
+
+            {% if user_obj.address %}
+                <div class="info-item"><span class="info-label">Adresse:</span> {{ user_obj.address }}</div>
+            {% endif %}
+
+            <div class="info-item"><span class="info-label">Filière:</span> {{ student_profile.major }}</div>
+        </div>
+    </div>
+
+    <!-- Section Parents -->
+    <div class="section">
+        <div class="section-title">Parents associés</div>
+        {% if parents %}
+            {% for parent in parents %}
+                <div class="info-item"><strong>{{ parent.user.get_full_name }}</strong> ({{ parent.get_relation_display }})<br>
+                {% if parent.user.email %} Email: {{ parent.user.email }} {% endif %} <br> Tél: {{ parent.user.phone_number }}</div>
+            {% endfor %}
+        {% else %}
+            <p>Aucun parent associé.</p>
+        {% endif %}
+    </div>
+
+    <!-- Absences -->
+    {% if attendances %}
+        <div class="section">
+            <div class="section-title">Historique des absences</div>
+            {% if attendances %}
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Matière</th><th>Enseignant</th><th>Statut</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for att in attendances %}
+                        <tr>
+                            <td>{{ att.date|date:"d/m/Y H:i" }}</td>
+                            <td>{{ att.subject }}</td>
+                            <td>{{ att.teacher.user.get_full_name }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if att.status == 'present' %}badge-present
+                                    {% elif att.status == 'absent' %}badge-absent
+                                    {% else %}badge-archived{% endif %}">
+                                    {{ att.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Aucune absence enregistrée.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+    {% if archive_history %}
+        <!-- Archivage -->
+        <div class="section">
+            <div class="section-title">Historique d'archivage</div>
+            {% if archive_history %}
+                <table>
+                    <thead><tr><th>Date</th><th>Action</th><th>Réalisé par</th></tr></thead>
+                    <tbody>
+                        {% for hist in archive_history %}
+                            <tr>
+                                <td>{{ hist.performed_at|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <span class="badge {% if hist.action == 'archived' %}badge-absent{% else %}badge-present{% endif %}">
+                                        {% if hist.action == 'archived' %}Archivé{% else %}Désarchivé{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ hist.performed_by.get_full_name }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Aucun historique d'archivage.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+    <!-- Footer -->
+    <div id="footerContent" class="footer">
+        Page <pdf:pagenumber> sur <pdf:pagecount> — {{ user_obj.first_name }} {{ user_obj.last_name }} — {% now "Y" %}
+    </div>
+</body>
+</html>
+
