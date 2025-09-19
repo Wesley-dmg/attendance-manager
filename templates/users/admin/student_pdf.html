@@ -183,8 +183,13 @@
         <div class="section-title">Parents associés</div>
         {% if parents %}
             {% for parent in parents %}
-                <div class="info-item"><strong>{{ parent.user.get_full_name }}</strong> ({{ parent.get_relation_display }})<br>
-                {% if parent.user.email %} Email: {{ parent.user.email }} {% endif %} <br> Tél: {{ parent.user.phone_number }}</div>
+                <div class="info-item">
+                    <strong>Nom : </strong> <span>{{ parent.user.get_full_name }}</span> ({{ parent.get_relation_display }})<br>
+                    {% if parent.user.email %} 
+                        <strong>Email : </strong> {{ parent.user.email }} 
+                    {% endif %} <br> 
+                    <strong>Tél : </strong> {{ parent.user.phone_number }}
+                </div>
             {% endfor %}
         {% else %}
             <p>Aucun parent associé.</p>

@@ -157,60 +157,67 @@ def statistiques_view(request):
 
     headers, rows = [], []
 
-    # Vue par filière
     if vue == "filiere":
         headers = ["Filière", "Absences", "Pourcentage", "Archivés"]
+
+        data = DepartmentLevel.objects.annotate(
+            absences=Count(
+                "students__attendances",
+                filter=Q(students__attendances__status="absent"),
+            ),
+            total=Count("students__attendances"),
+            archives=Count("students", filter=Q(students__archived=True)),
+        ).filter(absences__gt=0)
+
+        for f in data:
+            filiere_label = f"{f.department.name} - {f.level.name}"
+            pourcentage = (
+                f"{round((f.absences / f.total) * 100, 2)}%" if f.total > 0 else "0%"
+            )
+            rows.append([filiere_label, f.absences, pourcentage, f.archives])
+
+    # Vue par matière (même logique que dans index)
+    elif vue == "matiere":
+        headers = ["Matière", "Absences", "Pourcentage"]
+
+        data = Subject.objects.annotate(
+            absences=Count("attendance", filter=Q(attendance__status="absent")),
+            total=Count("attendance"),
+        ).filter(absences__gt=0)
+
+        for m in data:
+            pourcentage = (
+                f"{round((m.absences / m.total) * 100, 2)}%" if m.total > 0 else "0%"
+            )
+            rows.append([m.name, m.absences, pourcentage])
+
+    # Vue par matière + filière
+    elif vue == "Matiere/filiere":
+        headers = ["Filière", "Matière", "Absences", "Pourcentage"]
+
         data = attendances.values(
             filiere=F("student__major__department__name"),
             niveau=F("student__major__level__name"),
-        ).annotate(
-            total_abs=Count("id"),
-            total_etudiants=Count("student", distinct=True),
-        )
+            matiere=F("subject__name"),
+        ).annotate(total_abs=Count("id"))
 
         for item in data:
             filiere_label = f"{item['filiere']} - {item['niveau']}"
-            total_students = StudentProfile.objects.filter(
-                major__department__name=item["filiere"],
-                major__level__name=item["niveau"],
-            ).count()
-            archives = StudentProfile.objects.filter(
-                major__department__name=item["filiere"],
-                major__level__name=item["niveau"],
-                archived=True,
+            # Pourcentage par rapport au total des assiduités dans cette matière pour ce niveau/filière
+            total_attendance = Attendance.objects.filter(
+                student__major__department__name=item["filiere"],
+                student__major__level__name=item["niveau"],
+                subject__name=item["matiere"],
             ).count()
 
             pourcentage = (
-                f"{round((item['total_abs'] / total_students) * 100, 1)}%"
-                if total_students
+                f"{round((item['total_abs'] / total_attendance) * 100, 2)}%"
+                if total_attendance
                 else "0%"
             )
-            rows.append([filiere_label, item["total_abs"], pourcentage, archives])
-
-    # Vue par matière
-    elif vue == "matiere":
-        headers = ["Matière", "Absences", "Pourcentage"]
-        data = attendances.values(nom_matiere=F("subject__name")).annotate(
-            total_abs=Count("id")
-        )
-        total_absences = attendances.count()
-        for item in data:
-            pourcentage = (
-                f"{round((item['total_abs'] / total_absences) * 100, 1)}%"
-                if total_absences
-                else "0%"
+            rows.append(
+                [filiere_label, item["matiere"], item["total_abs"], pourcentage]
             )
-            rows.append([item["nom_matiere"], item["total_abs"], pourcentage])
-
-    # Vue par matière + filière
-    elif vue == "matiere_filiere":
-        headers = ["Filière", "Matière", "Absences"]
-        data = attendances.values(
-            filiere=F("student__major__department__name"),
-            matiere=F("subject__name"),
-        ).annotate(total_abs=Count("id"))
-        for item in data:
-            rows.append([item["filiere"], item["matiere"], item["total_abs"]])
 
     context = {
         "tableau": {"headers": headers, "rows": rows},

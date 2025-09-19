@@ -8,14 +8,13 @@
     <div class="row mb-4">
         <div class="col-12 d-flex justify-content-between align-items-center">
             <div>
-                <h2 class="mb-1">Profil de l'étudiant</h2>
-                <p class="text-muted mb-0 small">{{ user_obj.get_full_name }}</p>
+                <p class="mb-1" style="font-size: x-large;">Profil de l'étudiant</p>
             </div>
             <div class="no-print">
-                <a href="{% url 'users:student_pdf' user_obj.id %}" class="btn btn-outline-secondary me-2">
+                <a href="{% url 'users:student_pdf' user_obj.id %}" class="btn btn-outline-success me-2">
                     Exporter PDF
                 </a>
-                <button class="btn btn-outline-dark" onclick="window.print()">
+                <button class="btn btn-outline-primary" onclick="window.print()">
                     Imprimer
                 </button>
             </div>
@@ -84,18 +83,18 @@
 
             <!-- Infos académiques -->
             {% if student_profile %}
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white border-0">
-                    <h6 class="mb-0">Informations académiques</h6>
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0">Informations académiques</h6>
+                    </div>
+                    <div class="card-body small">
+                        {% if student_profile.student_id %}
+                            <p><strong>ID Étudiant :</strong> {{ student_profile.student_id }}</p>
+                        {% endif %}
+                        <p><strong>Statut :</strong> {{ student_profile.get_enrollment_status_display }}</p>
+                        <p><strong>Filière :</strong> {{ student_profile.major }}</p>
+                    </div>
                 </div>
-                <div class="card-body small">
-                    {% if student_profile.student_id %}
-                        <p><strong>ID Étudiant :</strong> {{ student_profile.student_id }}</p>
-                    {% endif %}
-                    <p><strong>Statut :</strong> {{ student_profile.get_enrollment_status_display }}</p>
-                    <p><strong>Filière :</strong> {{ student_profile.major }}</p>
-                </div>
-            </div>
             {% endif %}
         </div>
 
@@ -109,10 +108,22 @@
                 <div class="card-body small">
                     {% if parents %}
                         {% for parent in parents %}
-                            <p class="mb-2">
-                                <strong>{{ parent.user.get_full_name }}</strong> ({{ parent.get_relation_display }})<br>
-                                <span class="text-muted">📧 {{ parent.user.email }} | 📞 {{ parent.user.phone_number }}</span>
-                            </p>
+                            <div class="mb-2">
+                                <p> 
+                                    <strong class="" style="font-weight: 900;"> Nom :</strong> {{ parent.user.get_full_name }}  
+                                    <span class="text-primary mx-1">({{ parent.get_relation_display }}) </span> 
+                                </p>
+                                {% if parent.user.email  %}
+                                    <p class="text-muted"> 
+                                        <strong class="" style="font-weight: 900;">Mail :</strong> {{ parent.user.email }}
+                                    </p> 
+                                {% endif %}
+                                {% if parent.user.phone_number %}
+                                <p>  
+                                    <strong class="" style="font-weight: 900;"> Tel :</strong>{{ parent.user.phone_number }}
+                                </p>
+                                {% endif %}
+                            </div>
                         {% endfor %}
                     {% else %}
                         <p class="text-muted">Aucun parent associé.</p>
@@ -121,59 +132,58 @@
             </div>
 
             <!-- Absences -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white border-0">
-                    <h6 class="mb-0">Historique des absences</h6>
+            {% if attendances %}
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0">Historique des absences</h6>
+                    </div>
+                    <div class="card-body p-0 small">
+                            <table class="table table-sm p-1">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Matière</th>
+                                        <th>Enseignant</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for att in attendances %}
+                                    <tr>
+                                        <td>{{ att.date|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ att.subject }}</td>
+                                        <td>{{ att.teacher.user.get_full_name }}</td>
+                                        <td>{{ att.get_status_display }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                    </div>
                 </div>
-                <div class="card-body p-0 small">
-                    {% if attendances %}
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Matière</th>
-                                    <th>Enseignant</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for att in attendances %}
-                                <tr>
-                                    <td>{{ att.date|date:"d/m/Y H:i" }}</td>
-                                    <td>{{ att.subject }}</td>
-                                    <td>{{ att.teacher.user.get_full_name }}</td>
-                                    <td>{{ att.get_status_display }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p class="text-muted text-center py-2">Aucune absence enregistrée.</p>
-                    {% endif %}
-                </div>
-            </div>
+            {% endif %}
 
             <!-- Archivage -->
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white border-0">
-                    <h6 class="mb-0">Historique d'archivage</h6>
+            {% if archive_history %}
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0">Historique d'archivage</h6>
+                    </div>
+                    <div class="card-body small">
+                            <ul class="list-unstyled mb-0">
+                                {% for hist in archive_history %}
+                                    <li class="mb-1">
+                                        {{ hist.performed_at|date:"d/m/Y H:i" }} — 
+                                        {{ hist.get_action_display }} 
+                                        par {{ hist.performed_by.get_full_name }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        
+                        
+                    </div>
                 </div>
-                <div class="card-body small">
-                    {% if archive_history %}
-                        <ul class="list-unstyled mb-0">
-                            {% for hist in archive_history %}
-                                <li class="mb-1">
-                                    {{ hist.performed_at|date:"d/m/Y H:i" }} — 
-                                    {{ hist.get_action_display }} 
-                                    par {{ hist.performed_by.get_full_name }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="text-muted">Aucun historique d'archivage.</p>
-                    {% endif %}
-                </div>
-            </div>
+            {% endif %}
+
         </div>
     </div>
 </div>
