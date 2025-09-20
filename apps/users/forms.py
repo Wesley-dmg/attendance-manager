@@ -294,24 +294,49 @@ class BaseUserForm(forms.ModelForm):
 
 # Formulaire pour les administrateurs
 class AdminForm(BaseUserForm):
+    role = forms.ModelMultipleChoiceField(
+        queryset=Role.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Rôles",
+    )
+
+    class Meta(BaseUserForm.Meta):
+        fields = BaseUserForm.Meta.fields + ["role"]
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.role = "admin"
         if commit:
             user.save()
+            # Sauvegarder les rôles
+            user.role.set(self.cleaned_data["role"])
 
-            # Vérifier si un AdminProfile existe déjà pour cet utilisateur
-            if not hasattr(user, "adminprofile"):
-                AdminProfile.objects.create(
-                    user=user
-                    # , admin_type=self.cleaned_data['admin_type']
-                )
-            else:
-                # Gérer le cas où le profil existe déjà, par exemple, mettre à jour les informations
-                # user.adminprofile.admin_type = self.cleaned_data['admin_type']
-                user.adminprofile.save()
+            # Création ou mise à jour du profil admin
+            AdminProfile.objects.get_or_create(user=user)
+
+            # Si admin a aussi "teacher" → créer ou maj TeacherProfile
+            if user.has_role("teacher"):
+                TeacherProfile.objects.get_or_create(user=user)
+
         return user
+
+    # def save(self, commit=True):
+    #     user = super().save(commit=False)
+    #     user.role = "admin"
+    #     if commit:
+    #         user.save()
+
+    #         # Vérifier si un AdminProfile existe déjà pour cet utilisateur
+    #         if not hasattr(user, "adminprofile"):
+    #             AdminProfile.objects.create(
+    #                 user=user
+    #                 # , admin_type=self.cleaned_data['admin_type']
+    #             )
+    #         else:
+    #             # Gérer le cas où le profil existe déjà, par exemple, mettre à jour les informations
+    #             # user.adminprofile.admin_type = self.cleaned_data['admin_type']
+    #             user.adminprofile.save()
+    #     return user
 
 
 # Formulaire pour les enseignants

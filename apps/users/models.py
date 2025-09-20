@@ -15,19 +15,27 @@ phone_number_validator = RegexValidator(
 )
 
 
-class CustomUser(AbstractUser):
+class Role(models.Model):
     ROLE_CHOICES = (
         ("student", _("Étudiant")),
         ("teacher", _("Enseignant")),
         ("parent", _("Parent")),
         ("admin", _("Administrateur")),
     )
+    name = models.CharField(max_length=20, choices=ROLE_CHOICES, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class CustomUser(AbstractUser):
     GENDER_CHOICES = [
         ("male", _("Masculin")),
         ("female", _("Féminin")),
         ("other", _("Autre")),
     ]
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, verbose_name=_("Rôle"))
+    role = models.ManyToManyField(Role, verbose_name=_("Rôle"))
+
     phone_number = models.CharField(
         max_length=15,
         blank=True,
@@ -88,7 +96,8 @@ class CustomUser(AbstractUser):
         ordering = ["-date_joined"]
 
     def __str__(self):
-        return f"{self.username} ({self.get_role_display()})"
+        roles = ", ".join(self.role.values_list("name", flat=True))
+        return f"{self.username} ({roles or 'Aucun rôle'})"
 
     def clean(self):
         super().clean()
@@ -116,29 +125,26 @@ class CustomUser(AbstractUser):
         self.clean()
         is_new = self._state.adding
 
-        # Forcer le rôle "admin" si superutilisateur
-        if self.is_superuser:
-            self.role = "admin"
-        elif not self.role:
-            self.role = "student"
+        super().save(
+            *args, **kwargs
+        )  # d'abord sauvegarde de base (obligatoire avant M2M)
 
-        # Gestion de la date de changement de mot de passe et première connexion
-        if self.password_changed:
-            self.password_updated_at = timezone.now()
-            self.password_changed = False
-            self.first_login = False
+        if is_new:
+            # Forcer le rôle admin si superuser
+            if self.is_superuser:
+                admin_role, _ = Role.objects.get_or_create(name="admin")
+                self.role.add(admin_role)
+            elif self.role.count() == 0:  # Si aucun rôle n'est assigné
+                student_role, _ = Role.objects.get_or_create(name="student")
+                self.role.add(student_role)
 
-        with transaction.atomic():
-            # Sauvegarde unique
-            super().save(*args, **kwargs)
-
-            # Ajout automatique au groupe selon le rôle
-            if is_new:
-                group, _ = Group.objects.get_or_create(name=self.role.capitalize())
+            # Ajouter automatiquement au groupe
+            for r in self.role.all():
+                group, _ = Group.objects.get_or_create(name=r.name.capitalize())
                 self.groups.add(group)
 
-    def has_role(self, role):
-        return self.is_authenticated and self.role == role
+    def has_role(self, role_name):
+        return self.role.filter(name=role_name).exists()
 
     @property
     def is_student(self):
@@ -181,7 +187,7 @@ class CustomUser(AbstractUser):
 
 class AdminProfile(models.Model):
     user = models.OneToOneField(
-        CustomUser, on_delete=models.CASCADE, verbose_name=_("Utilisateur"), unique=True
+        CustomUser, on_delete=models.CASCADE, verbose_name=_("Utilisateur")
     )
 
     def __str__(self):

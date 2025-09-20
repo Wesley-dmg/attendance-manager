@@ -30,37 +30,13 @@
             <div class="dropdown-menu">
               <button type="submit" name="vue" value="filiere" class="dropdown-item">Par Filière</button>
               <button type="submit" name="vue" value="matiere" class="dropdown-item">Par Matière</button>
-              <button type="submit" name="vue" value="matiere_filiere" class="dropdown-item">Par Matière / Filière</button>
+              <button type="submit" name="vue" value="Matiere/filiere" class="dropdown-item">Par Matière / Filière</button>
             </div>
           </div>
         </form>
       </div>
 
-      <div class="card-block table-responsive p-3">
-        {% comment %} {% if tableau %}
-          <table class="table table-bordered">
-            <thead class="thead-light">
-              <tr>
-                {% for col in tableau.headers %}
-                  <th>{{ col }}</th>
-                {% endfor %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for ligne in tableau.rows %}
-                <tr>
-                  {% for cellule in ligne %}
-                    <td>{{ cellule }}</td>
-                  {% endfor %}
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <div class="alert alert-info text-center m-3">
-            Aucune donnée disponible pour les filtres sélectionnés.
-          </div>
-        {% endif %} {% endcomment %}
+      <div class="card-block table-responsive p-3"> 
         <div id="stats-table">
           {% include "home/partials/_statistiques_table.html" %}
         </div>
