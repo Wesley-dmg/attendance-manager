@@ -476,12 +476,11 @@ class ParentForm(BaseUserForm):
 
     def __init__(self, *args, **kwargs):
         self.student_instance = kwargs.pop("student_instance", None)
-        # ⚠️ En création pure, on ne permet PAS un numéro déjà existant
         self.allow_existing_phone = kwargs.pop("allow_existing_phone", False)
         super().__init__(*args, **kwargs)
 
         if self.student_instance:
-            # En création venant d’un élève: on cache le champ et on force l’élève
+            # Création à partir d’un élève → champ enfants caché et forcé
             self.fields["children"] = forms.ModelMultipleChoiceField(
                 queryset=StudentProfile.objects.filter(pk=self.student_instance.pk),
                 widget=forms.MultipleHiddenInput(),
@@ -491,7 +490,6 @@ class ParentForm(BaseUserForm):
             )
 
     def clean_phone_number(self):
-        # Normaliser AVANT la vérif d’unicité pour éviter les collisions masquées
         phone_raw = self.cleaned_data["phone_number"]
         phone = normalize_bj_phone(phone_raw)
         self.cleaned_data["phone_number"] = phone
@@ -507,7 +505,7 @@ class ParentForm(BaseUserForm):
     def save(self, commit=True):
         user = super().save(commit=False)
 
-        # Générer username unique automatiquement (basé sur le prénom)
+        # Génération automatique d’un username unique
         base_username = slugify(user.first_name) or "user"
         username = base_username
         User = get_user_model()
@@ -518,23 +516,28 @@ class ParentForm(BaseUserForm):
         if commit:
             user.save()
 
-            # ✅ Gestion correcte du rôle via la table Role
+            # Ajout du rôle parent
             parent_role, _ = Role.objects.get_or_create(name="parent")
-            # 👉 choisis selon ton besoin :
-            # user.role.set([parent_role])   # si un parent ne peut avoir que ce rôle
-            user.role.add(parent_role)  # si un parent peut aussi être prof/admin etc.
+            user.role.add(parent_role)
 
             parent_profile, _ = ParentProfile.objects.get_or_create(user=user)
 
-            # Associer l’enfant
+            # Associer l’enfant automatiquement
             if self.student_instance:
+                print(">> Association automatique de l'élève au parent")
+                print("   Élève ID:", self.student_instance.pk)
                 parent_profile.children.add(self.student_instance)
             else:
+                print(">> Association via champ children (sélection manuelle)")
                 parent_profile.children.set(self.cleaned_data["children"])
 
             parent_profile.relation = self.cleaned_data["relation"]
             parent_profile.save()
-
+            print(">> ParentProfile enregistré :", parent_profile.pk)
+            print(
+                ">> Enfants associés :",
+                list(parent_profile.children.values_list("pk", flat=True)),
+            )
         return user
 
 

@@ -14,6 +14,10 @@ phone_number_validator = RegexValidator(
     message="Numéro invalide. Format attendu : +22997011234 ou 97011234",
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Role(models.Model):
     ROLE_CHOICES = (
@@ -135,8 +139,12 @@ class CustomUser(AbstractUser):
                 admin_role, _ = Role.objects.get_or_create(name="admin")
                 self.role.add(admin_role)
             elif self.role.count() == 0:  # Si aucun rôle n'est assigné
-                student_role, _ = Role.objects.get_or_create(name="student")
-                self.role.add(student_role)
+                # ⚠️ On ne force plus student automatiquement
+                logger.warning(
+                    f"[CustomUser.save] Utilisateur {self} créé sans rôle explicite !"
+                )
+                # student_role, _ = Role.objects.get_or_create(name="student")
+                # self.role.add(student_role)
 
             # Ajouter automatiquement au groupe
             for r in self.role.all():

@@ -7,10 +7,12 @@ from .models import (
     TeacherProfile,
     ParentProfile,
     AdminProfile,
+    Role,
 )
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -19,20 +21,65 @@ def create_user_profile(sender, instance, created, **kwargs):
 
     # Ne pas créer de profil étudiant pour les superusers
     if instance.is_superuser:
-        # Mais créer un profil admin
-        AdminProfile.objects.get_or_create(user=instance)
+        admin_profile, _ = AdminProfile.objects.get_or_create(user=instance)
         logger.info(f"[Signal] Profil ADMIN SUPERUSER créé pour {instance}")
         return
 
-    if instance.role == "student":
+    # Récupère tous les rôles de l'utilisateur
+    roles = list(instance.role.values_list("name", flat=True))
+
+    if "student" in roles:
         StudentProfile.objects.get_or_create(user=instance)
         logger.info(f"[Signal] Profil ÉTUDIANT créé pour {instance}")
-    elif instance.role == "teacher":
+
+    if "teacher" in roles:
         TeacherProfile.objects.get_or_create(user=instance)
         logger.info(f"[Signal] Profil ENSEIGNANT créé pour {instance}")
-    elif instance.role == "parent":
+
+    if "parent" in roles:
         ParentProfile.objects.get_or_create(user=instance)
         logger.info(f"[Signal] Profil PARENT créé pour {instance}")
-    elif instance.role == "admin":
+
+    if "admin" in roles:
         AdminProfile.objects.get_or_create(user=instance)
         logger.info(f"[Signal] Profil ADMIN créé pour {instance}")
+
+
+# # apps/users/signals.py
+# from django.db.models.signals import post_save
+# from django.dispatch import receiver
+# from .models import (
+#     CustomUser,
+#     StudentProfile,
+#     TeacherProfile,
+#     ParentProfile,
+#     AdminProfile,
+# )
+# import logging
+
+# logger = logging.getLogger(__name__)
+
+# @receiver(post_save, sender=CustomUser)
+# def create_user_profile(sender, instance, created, **kwargs):
+#     if not created:
+#         return
+
+#     # Ne pas créer de profil étudiant pour les superusers
+#     if instance.is_superuser:
+#         # Mais créer un profil admin
+#         AdminProfile.objects.get_or_create(user=instance)
+#         logger.info(f"[Signal] Profil ADMIN SUPERUSER créé pour {instance}")
+#         return
+
+#     if instance.role == "student":
+#         StudentProfile.objects.get_or_create(user=instance)
+#         logger.info(f"[Signal] Profil ÉTUDIANT créé pour {instance}")
+#     elif instance.role == "teacher":
+#         TeacherProfile.objects.get_or_create(user=instance)
+#         logger.info(f"[Signal] Profil ENSEIGNANT créé pour {instance}")
+#     elif instance.role == "parent":
+#         ParentProfile.objects.get_or_create(user=instance)
+#         logger.info(f"[Signal] Profil PARENT créé pour {instance}")
+#     elif instance.role == "admin":
+#         AdminProfile.objects.get_or_create(user=instance)
+#         logger.info(f"[Signal] Profil ADMIN créé pour {instance}")

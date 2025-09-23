@@ -731,6 +731,140 @@ class StudentCreateView(UserCreateView):
         return redirect(f"{self.success_url}?student_id={student_profile.pk}")
 
 
+# class ParentCreateView(
+#     LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, CreateView
+# ):
+#     form_class = ParentForm
+#     template_name = "users/admin/user_form.html"
+#     permission_required = "users.add_parentprofile"
+
+#     extra_context = {
+#         "title": "Créer Parent",
+#         "cancel_url": reverse_lazy("users:parents_list"),
+#     }
+
+#     def get_form_kwargs(self):
+#         kwargs = super().get_form_kwargs()
+#         student_id = self.request.GET.get("student_id")
+#         if student_id:
+#             try:
+#                 student = StudentProfile.objects.get(pk=student_id)
+#                 kwargs["student_instance"] = student
+#             except StudentProfile.DoesNotExist:
+#                 pass
+#         # Création pure → on n’autorise pas un numéro déjà utilisé
+#         kwargs["allow_existing_phone"] = False
+#         return kwargs
+
+#     def form_invalid(self, form):
+#         # Si duplication téléphone → renvoyer vers la page intermédiaire avec message
+#         if "phone_number" in form.errors:
+#             student_id = self.request.GET.get("student_id")
+#             q = form.data.get("phone_number", "")
+
+#             send_custom_message(
+#                 self.request,
+#                 _(
+#                     "Un parent avec ce numéro existe déjà. Utilisez la recherche pour l'associer."
+#                 ),
+#                 "error",
+#             )
+
+#             params = {}
+#             if student_id:
+#                 params["student_id"] = student_id
+#             if q:
+#                 params["q"] = q
+
+#             url = reverse("users:parent_selector")
+#             if params:
+#                 url = f"{url}?{urlencode(params)}"
+#             return redirect(url)
+
+#         return super().form_invalid(form)
+
+#     def form_valid(self, form):
+#         try:
+#             user = form.save()
+#             print(">> Parent créé :", user.pk, user.first_name, user.phone_number)
+
+#         except IntegrityError:
+#             student_id = self.request.GET.get("student_id")
+#             q = form.cleaned_data.get("phone_number", "")
+#             send_custom_message(
+#                 self.request,
+#                 _(
+#                     "Ce numéro est déjà utilisé par un parent. Utilisez la recherche pour l'associer."
+#                 ),
+#                 "error",
+#             )
+#             params = {}
+#             if student_id:
+#                 params["student_id"] = student_id
+#             if q:
+#                 params["q"] = q
+#             url = reverse("users:parent_selector")
+#             if params:
+#                 url = f"{url}?{urlencode(params)}"
+#             return redirect(url)
+
+#         except Exception as e:
+#             print("!! Erreur inattendue lors de la création du parent :", str(e))
+#             form.add_error(
+#                 None, _("Erreur inattendue lors de la création du parent : ") + str(e)
+#             )
+#             return self.form_invalid(form)
+
+#         send_custom_message(self.request, _("Parent créé avec succès."), "success")
+
+#         # ✅ Conserver le student_id pour debug + redirection propre
+#         student_id = self.request.GET.get("student_id")
+#         if student_id:
+#             print(">> Redirection avec student_id :", student_id)
+#             return redirect(
+#                 f"{reverse('users:parent_selector')}?student_id={student_id}"
+#             )
+
+#         print(">> Redirection par défaut (pas de student_id)")
+#         return redirect(self.get_success_url())
+
+#     # def form_valid(self, form):
+#     #     try:
+#     #         user = form.save()
+#     #     except IntegrityError:
+#     #         # Filet de sécurité si la contrainte unique du modèle déclenche malgré tout
+#     #         student_id = self.request.GET.get("student_id")
+#     #         q = form.cleaned_data.get("phone_number", "")
+#     #         send_custom_message(
+#     #             self.request,
+#     #             _(
+#     #                 "Ce numéro est déjà utilisé par un parent. Utilisez la recherche pour l'associer."
+#     #             ),
+#     #             "error",
+#     #         )
+#     #         params = {}
+#     #         if student_id:
+#     #             params["student_id"] = student_id
+#     #         if q:
+#     #             params["q"] = q
+#     #         url = reverse("users:parent_selector")
+#     #         if params:
+#     #             url = f"{url}?{urlencode(params)}"
+#     #         return redirect(url)
+#     #     except Exception as e:
+#     #         form.add_error(
+#     #             None, _("Erreur inattendue lors de la création du parent : ") + str(e)
+#     #         )
+#     #         return self.form_invalid(form)
+
+#     #     send_custom_message(self.request, _("Parent créé avec succès."), "success")
+#     #     return redirect(self.get_success_url())
+
+#     def get_success_url(self):
+#         # Tu peux garder ta redirection actuelle
+#         return reverse("users:students_list")
+
+
 class ParentCreateView(
     LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, CreateView
 ):
@@ -752,12 +886,10 @@ class ParentCreateView(
                 kwargs["student_instance"] = student
             except StudentProfile.DoesNotExist:
                 pass
-        # Création pure → on n’autorise pas un numéro déjà utilisé
         kwargs["allow_existing_phone"] = False
         return kwargs
 
     def form_invalid(self, form):
-        # Si duplication téléphone → renvoyer vers la page intermédiaire avec message
         if "phone_number" in form.errors:
             student_id = self.request.GET.get("student_id")
             q = form.data.get("phone_number", "")
@@ -786,8 +918,8 @@ class ParentCreateView(
     def form_valid(self, form):
         try:
             user = form.save()
+            print(">> Parent créé :", user.pk, user.first_name, user.phone_number)
         except IntegrityError:
-            # Filet de sécurité si la contrainte unique du modèle déclenche malgré tout
             student_id = self.request.GET.get("student_id")
             q = form.cleaned_data.get("phone_number", "")
             send_custom_message(
@@ -807,17 +939,23 @@ class ParentCreateView(
                 url = f"{url}?{urlencode(params)}"
             return redirect(url)
         except Exception as e:
+            print("!! Erreur inattendue lors de la création du parent :", str(e))
             form.add_error(
                 None, _("Erreur inattendue lors de la création du parent : ") + str(e)
             )
             return self.form_invalid(form)
 
         send_custom_message(self.request, _("Parent créé avec succès."), "success")
+
+        # ✅ Si création liée à un élève → retour direct sur liste des étudiants
+        student_id = self.request.GET.get("student_id")
+        if student_id:
+            return redirect("users:students_list")
+
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        # Tu peux garder ta redirection actuelle
-        return reverse("users:students_list")
+        return reverse("users:parents_list")
 
 
 class ParentSelectorView(
