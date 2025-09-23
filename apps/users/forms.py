@@ -232,7 +232,9 @@ class PasswordResetCodeForm(forms.Form):
     )
 
 
-# Formulaire de base avec les champs partagés
+# ======================
+# Formulaire de base
+# ======================
 class BaseUserForm(forms.ModelForm):
     first_name = forms.CharField(
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Prénom"})
@@ -292,11 +294,13 @@ class BaseUserForm(forms.ModelForm):
         return phone
 
 
-# Formulaire pour les administrateurs
+# ======================
+# Admin
+# ======================
 class AdminForm(BaseUserForm):
     role = forms.ModelMultipleChoiceField(
         queryset=Role.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
+        widget=Select2MultipleWidget(attrs={"class": "form-control select2"}),
         required=True,
         label="Rôles",
     )
@@ -317,29 +321,27 @@ class AdminForm(BaseUserForm):
             # Si admin a aussi "teacher" → créer ou maj TeacherProfile
             if user.has_role("teacher"):
                 TeacherProfile.objects.get_or_create(user=user)
-
         return user
 
-    # def save(self, commit=True):
-    #     user = super().save(commit=False)
-    #     user.role = "admin"
-    #     if commit:
-    #         user.save()
 
-    #         # Vérifier si un AdminProfile existe déjà pour cet utilisateur
-    #         if not hasattr(user, "adminprofile"):
-    #             AdminProfile.objects.create(
-    #                 user=user
-    #                 # , admin_type=self.cleaned_data['admin_type']
-    #             )
-    #         else:
-    #             # Gérer le cas où le profil existe déjà, par exemple, mettre à jour les informations
-    #             # user.adminprofile.admin_type = self.cleaned_data['admin_type']
-    #             user.adminprofile.save()
-    #     return user
+class AdminUpdateForm(BaseUserForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if commit:
+            user.save()
+            admin_role, _ = Role.objects.get_or_create(name="admin")
+            user.role.add(admin_role)
+            AdminProfile.objects.get_or_create(user=user)
+        return user
 
 
-# Formulaire pour les enseignants
+# ======================
+# Teacher
+# ======================
 class TeacherForm(BaseUserForm):
     subjects = forms.ModelMultipleChoiceField(
         queryset=Subject.objects.all(),
@@ -347,26 +349,45 @@ class TeacherForm(BaseUserForm):
         required=True,
     )
 
-    # department_levels = forms.ModelMultipleChoiceField(queryset=DepartmentLevel.objects.all(), widget=Select2MultipleWidget, required=False)
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if commit:
+            user.save()
+            teacher_role, _ = Role.objects.get_or_create(name="teacher")
+            user.role.add(teacher_role)
+            teacher_profile, _ = TeacherProfile.objects.get_or_create(user=user)
+            teacher_profile.subjects.set(self.cleaned_data["subjects"])
+            teacher_profile.save()
+        return user
+
+
+class TeacherUpdateForm(BaseUserForm):
+    subjects = forms.ModelMultipleChoiceField(
+        queryset=Subject.objects.all(), widget=Select2MultipleWidget, required=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and hasattr(self.instance, "teacherprofile"):
+            self.fields["subjects"].initial = (
+                self.instance.teacherprofile.subjects.all()
+            )
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.role = "teacher"
         if commit:
             user.save()
-            teacher_profile, created = TeacherProfile.objects.get_or_create(user=user)
+            teacher_role, _ = Role.objects.get_or_create(name="teacher")
+            user.role.add(teacher_role)
+            teacher_profile, _ = TeacherProfile.objects.get_or_create(user=user)
             teacher_profile.subjects.set(self.cleaned_data["subjects"])
-
+            teacher_profile.save()
         return user
 
-    def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        if CustomUser.objects.filter(phone_number=phone).exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
 
-
-# Formulaire pour les étudiants
+# ======================
+# Student
+# ======================
 class StudentForm(BaseUserForm):
     major = forms.ModelChoiceField(
         queryset=DepartmentLevel.objects.all(),
@@ -377,24 +398,44 @@ class StudentForm(BaseUserForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.role = "student"
+        student_role, _ = Role.objects.get_or_create(name="student")
         if commit:
             user.save()
-            student_profile, created = StudentProfile.objects.get_or_create(user=user)
+            user.role.set([student_role])  # Remplace tous les autres rôles
+            student_profile, _ = StudentProfile.objects.get_or_create(user=user)
             student_profile.major = self.cleaned_data["major"]
             student_profile.save()
         return user
 
-    def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
+
+class StudentUpdateForm(BaseUserForm):
+    major = forms.ModelChoiceField(
+        queryset=DepartmentLevel.objects.all(),
+        widget=forms.Select(attrs={"class": "form-control select2"}),
+        required=True,
+        label="Filière",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and hasattr(self.instance, "studentprofile"):
+            self.fields["major"].initial = self.instance.studentprofile.major
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        student_role, _ = Role.objects.get_or_create(name="student")
+        if commit:
+            user.save()
+            user.role.set([student_role])
+            student_profile, _ = StudentProfile.objects.get_or_create(user=user)
+            student_profile.major = self.cleaned_data["major"]
+            student_profile.save()
+        return user
 
 
+# ======================
+# Parent
+# ======================
 class ParentForm(BaseUserForm):
     children = forms.ModelMultipleChoiceField(
         queryset=StudentProfile.objects.all(),
@@ -447,7 +488,6 @@ class ParentForm(BaseUserForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.role = "parent"
 
         # Générer username unique automatiquement (basé sur le prénom)
         base_username = slugify(user.first_name) or "user"
@@ -459,98 +499,25 @@ class ParentForm(BaseUserForm):
 
         if commit:
             user.save()
+
+            # ✅ Gestion correcte du rôle via la table Role
+            parent_role, _ = Role.objects.get_or_create(name="parent")
+            # 👉 choisis selon ton besoin :
+            # user.role.set([parent_role])   # si un parent ne peut avoir que ce rôle
+            user.role.add(parent_role)  # si un parent peut aussi être prof/admin etc.
+
             parent_profile, _ = ParentProfile.objects.get_or_create(user=user)
-            # Sécurité : si student_instance, on force l’association même si le champ est caché
+
+            # Associer l’enfant
             if self.student_instance:
                 parent_profile.children.add(self.student_instance)
             else:
                 parent_profile.children.set(self.cleaned_data["children"])
+
             parent_profile.relation = self.cleaned_data["relation"]
             parent_profile.save()
+
         return user
-
-
-class AdminUpdateForm(BaseUserForm):
-    # admin_type = forms.ModelChoiceField(queryset=AdminType.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}), required=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.role = "admin"
-        if commit:
-            user.save()
-            admin_profile, created = AdminProfile.objects.get_or_create(user=user)
-            # admin_profile.admin_type = self.cleaned_data['admin_type']
-            admin_profile.save()
-        return user
-
-
-class TeacherUpdateForm(BaseUserForm):
-    subjects = forms.ModelMultipleChoiceField(
-        queryset=Subject.objects.all(), widget=Select2MultipleWidget, required=True
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and hasattr(self.instance, "teacherprofile"):
-            self.fields["subjects"].initial = (
-                self.instance.teacherprofile.subjects.all()
-            )
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.role = "teacher"
-        if commit:
-            user.save()
-            teacher_profile, created = TeacherProfile.objects.get_or_create(user=user)
-            teacher_profile.subjects.set(self.cleaned_data["subjects"])
-
-            teacher_profile.save()
-        return user
-
-    def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
-
-
-class StudentUpdateForm(BaseUserForm):
-    major = forms.ModelChoiceField(
-        queryset=DepartmentLevel.objects.all(),
-        widget=forms.Select(attrs={"class": "form-control select2"}),
-        required=True,
-        label="Filière",
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and hasattr(self.instance, "studentprofile"):
-            self.fields["major"].initial = self.instance.studentprofile.major
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.role = "student"
-        if commit:
-            user.save()
-            student_profile, created = StudentProfile.objects.get_or_create(user=user)
-            student_profile.major = self.cleaned_data["major"]
-            student_profile.save()
-        return user
-
-    def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
 
 
 class ParentUpdateForm(BaseUserForm):
@@ -560,11 +527,7 @@ class ParentUpdateForm(BaseUserForm):
         required=True,
         label="Enfants",
     )
-    RELATION_CHOICES = [
-        ("father", "Père"),
-        ("mother", "Mère"),
-        ("guardian", "Tuteur"),
-    ]
+    RELATION_CHOICES = [("father", "Père"), ("mother", "Mère"), ("guardian", "Tuteur")]
     relation = forms.ChoiceField(
         choices=RELATION_CHOICES,
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -573,16 +536,13 @@ class ParentUpdateForm(BaseUserForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.student_instance = kwargs.pop("student_instance", None)  # ✅ ajouter ceci
+        self.student_instance = kwargs.pop("student_instance", None)
         super().__init__(*args, **kwargs)
-
         if self.instance and hasattr(self.instance, "parentprofile"):
             profile = self.instance.parentprofile
             self.fields["children"].initial = profile.children.all()
             self.fields["relation"].initial = profile.relation
-
         if self.student_instance:
-            # Pré-sélectionner l’enfant transmis
             self.fields["children"].initial = list(self.fields["children"].initial) + [
                 self.student_instance
             ]
@@ -593,23 +553,222 @@ class ParentUpdateForm(BaseUserForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.role = "parent"
+        parent_role, _ = Role.objects.get_or_create(name="parent")
         if commit:
             user.save()
-            parent_profile, created = ParentProfile.objects.get_or_create(user=user)
+            user.role.set([parent_role])
+            parent_profile, _ = ParentProfile.objects.get_or_create(user=user)
             parent_profile.children.set(self.cleaned_data["children"])
             parent_profile.relation = self.cleaned_data["relation"]
             parent_profile.save()
         return user
 
-    def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
+
+# class ParentForm(BaseUserForm):
+#     children = forms.ModelMultipleChoiceField(
+#         queryset=StudentProfile.objects.all(),
+#         widget=forms.SelectMultiple(attrs={"class": "form-control select2"}),
+#         required=True,
+#         label="Enfants",
+#     )
+
+#     RELATION_CHOICES = [
+#         ("father", "Père"),
+#         ("mother", "Mère"),
+#         ("guardian", "Tuteur"),
+#     ]
+#     relation = forms.ChoiceField(
+#         choices=RELATION_CHOICES,
+#         widget=forms.Select(attrs={"class": "form-control"}),
+#         label="Lien avec l’enfant",
+#         required=True,
+#     )
+
+#     def __init__(self, *args, **kwargs):
+#         self.student_instance = kwargs.pop("student_instance", None)
+#         # ⚠️ En création pure, on ne permet PAS un numéro déjà existant
+#         self.allow_existing_phone = kwargs.pop("allow_existing_phone", False)
+#         super().__init__(*args, **kwargs)
+
+#         if self.student_instance:
+#             # En création venant d’un élève: on cache le champ et on force l’élève
+#             self.fields["children"] = forms.ModelMultipleChoiceField(
+#                 queryset=StudentProfile.objects.filter(pk=self.student_instance.pk),
+#                 widget=forms.MultipleHiddenInput(),
+#                 initial=[self.student_instance],
+#                 required=True,
+#                 label="Enfants",
+#             )
+
+#     def clean_phone_number(self):
+#         # Normaliser AVANT la vérif d’unicité pour éviter les collisions masquées
+#         phone_raw = self.cleaned_data["phone_number"]
+#         phone = normalize_bj_phone(phone_raw)
+#         self.cleaned_data["phone_number"] = phone
+
+#         qs = CustomUser.objects.filter(phone_number=phone)
+#         if self.instance.pk:
+#             qs = qs.exclude(pk=self.instance.pk)
+
+#         if qs.exists() and not self.allow_existing_phone:
+#             raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
+#         return phone
+
+#     def save(self, commit=True):
+#         user = super().save(commit=False)
+#         user.role = "parent"
+
+#         # Générer username unique automatiquement (basé sur le prénom)
+#         base_username = slugify(user.first_name) or "user"
+#         username = base_username
+#         User = get_user_model()
+#         while User.objects.filter(username=username).exists():
+#             username = f"{base_username}{random.randint(10, 99)}"
+#         user.username = username
+
+#         if commit:
+#             user.save()
+#             parent_profile, _ = ParentProfile.objects.get_or_create(user=user)
+#             # Sécurité : si student_instance, on force l’association même si le champ est caché
+#             if self.student_instance:
+#                 parent_profile.children.add(self.student_instance)
+#             else:
+#                 parent_profile.children.set(self.cleaned_data["children"])
+#             parent_profile.relation = self.cleaned_data["relation"]
+#             parent_profile.save()
+#         return user
+
+# class TeacherUpdateForm(BaseUserForm):
+#     subjects = forms.ModelMultipleChoiceField(
+#         queryset=Subject.objects.all(), widget=Select2MultipleWidget, required=True
+#     )
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         if self.instance and hasattr(self.instance, "teacherprofile"):
+#             self.fields["subjects"].initial = (
+#                 self.instance.teacherprofile.subjects.all()
+#             )
+
+#     def save(self, commit=True):
+#         user = super().save(commit=False)
+
+#         if commit:
+#             user.save()
+
+#             # Assurez-vous que l'utilisateur a le rôle "teacher"
+#             teacher_role, _ = Role.objects.get_or_create(name="teacher")
+#             user.role.add(
+#                 teacher_role
+#             )  # Ajoute le rôle 'teacher' sans supprimer les autres
+
+#             # Créer ou mettre à jour le profil enseignant
+#             teacher_profile, _ = TeacherProfile.objects.get_or_create(user=user)
+#             teacher_profile.subjects.set(self.cleaned_data["subjects"])
+#             teacher_profile.save()
+
+#         return user
+
+#     def clean_phone_number(self):
+#         phone = self.cleaned_data["phone_number"]
+#         qs = CustomUser.objects.filter(phone_number=phone)
+#         if self.instance.pk:
+#             qs = qs.exclude(pk=self.instance.pk)
+#         if qs.exists():
+#             raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
+#         return phone
+
+
+# class StudentUpdateForm(BaseUserForm):
+#     major = forms.ModelChoiceField(
+#         queryset=DepartmentLevel.objects.all(),
+#         widget=forms.Select(attrs={"class": "form-control select2"}),
+#         required=True,
+#         label="Filière",
+#     )
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         if self.instance and hasattr(self.instance, "studentprofile"):
+#             self.fields["major"].initial = self.instance.studentprofile.major
+
+#     def save(self, commit=True):
+#         user = super().save(commit=False)
+#         user.role = "student"
+#         if commit:
+#             user.save()
+#             student_profile, created = StudentProfile.objects.get_or_create(user=user)
+#             student_profile.major = self.cleaned_data["major"]
+#             student_profile.save()
+#         return user
+
+#     def clean_phone_number(self):
+#         phone = self.cleaned_data["phone_number"]
+#         qs = CustomUser.objects.filter(phone_number=phone)
+#         if self.instance.pk:
+#             qs = qs.exclude(pk=self.instance.pk)
+#         if qs.exists():
+#             raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
+#         return phone
+
+
+# class ParentUpdateForm(BaseUserForm):
+#     children = forms.ModelMultipleChoiceField(
+#         queryset=StudentProfile.objects.all(),
+#         widget=forms.SelectMultiple(attrs={"class": "form-control select2"}),
+#         required=True,
+#         label="Enfants",
+#     )
+#     RELATION_CHOICES = [
+#         ("father", "Père"),
+#         ("mother", "Mère"),
+#         ("guardian", "Tuteur"),
+#     ]
+#     relation = forms.ChoiceField(
+#         choices=RELATION_CHOICES,
+#         widget=forms.Select(attrs={"class": "form-control"}),
+#         label="Lien avec l’enfant",
+#         required=True,
+#     )
+
+#     def __init__(self, *args, **kwargs):
+#         self.student_instance = kwargs.pop("student_instance", None)  # ✅ ajouter ceci
+#         super().__init__(*args, **kwargs)
+
+#         if self.instance and hasattr(self.instance, "parentprofile"):
+#             profile = self.instance.parentprofile
+#             self.fields["children"].initial = profile.children.all()
+#             self.fields["relation"].initial = profile.relation
+
+#         if self.student_instance:
+#             # Pré-sélectionner l’enfant transmis
+#             self.fields["children"].initial = list(self.fields["children"].initial) + [
+#                 self.student_instance
+#             ]
+#             self.fields["children"].queryset = StudentProfile.objects.filter(
+#                 Q(pk__in=[c.pk for c in self.fields["children"].initial])
+#                 | Q(pk=self.student_instance.pk)
+#             )
+
+#     def save(self, commit=True):
+#         user = super().save(commit=False)
+#         user.role = "parent"
+#         if commit:
+#             user.save()
+#             parent_profile, created = ParentProfile.objects.get_or_create(user=user)
+#             parent_profile.children.set(self.cleaned_data["children"])
+#             parent_profile.relation = self.cleaned_data["relation"]
+#             parent_profile.save()
+#         return user
+
+#     def clean_phone_number(self):
+#         phone = self.cleaned_data["phone_number"]
+#         qs = CustomUser.objects.filter(phone_number=phone)
+#         if self.instance.pk:
+#             qs = qs.exclude(pk=self.instance.pk)
+#         if qs.exists():
+#             raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
+#         return phone
 
 
 class UserUpdateForm(forms.ModelForm):

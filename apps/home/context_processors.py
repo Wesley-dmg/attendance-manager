@@ -1,8 +1,8 @@
-from apps.home.models import Notification
+# from apps.home.models import Notification
 
 
-def unread_notifications_count(request):
-    if request.user.is_authenticated:
-        count = Notification.objects.filter(user=request.user, is_read=False).count()
-        return {'notification_count': count}
-    return {}
+# def unread_notifications_count(request):
+#     if request.user.is_authenticated:
+#         count = Notification.objects.filter(user=request.user, is_read=False).count()
+#         return {'notification_count': count}
+#     return {}

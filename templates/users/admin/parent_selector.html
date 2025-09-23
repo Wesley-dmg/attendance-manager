@@ -1,6 +1,6 @@
-{# templates/users/admin/parent_selector.html #}
 {% extends 'layouts/base.html' %}
 {% load static %}
+
 {% block content %}
 <div class="container py-4">
   <div class="row justify-content-center">
@@ -17,7 +17,6 @@
   </div>
 
   <div class="mt-4" id="parent-results">
-    {# Au chargement parents est vide donc partial affichera le bouton Créer seulement #}
     {% include "users/partials/_parent_cards.html" with parents=parents student_id=student_id query=query %}
   </div>
 </div>
@@ -29,7 +28,6 @@
   const studentId = input.dataset.studentId || "";
   const searchUrl = "{% url 'users:parent_search' %}";
 
-  // debounce simple
   let timer = null;
   input.addEventListener("input", function(e){
     clearTimeout(timer);
@@ -39,9 +37,10 @@
 
       fetch(url, { headers: { "x-requested-with": "XMLHttpRequest" } })
         .then(resp => resp.json())
-        .then(data => { results.innerHTML = data.html; })
+        .then(data => {
+          results.innerHTML = data.html;
+        })
         .catch(err => {
-          // en dev on pourrait logger; pour l'UX on reste silencieux
           console.error("parent search error", err);
         });
     }, 250);

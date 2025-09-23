@@ -53,7 +53,7 @@ class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
         users = CustomUser.objects.all().order_by("first_name", "last_name")
 
         if role:
-            users = users.filter(role=role)
+            users = users.filter(role__name=role)
 
         if query:
             users = users.filter(
@@ -120,7 +120,7 @@ def check_parent_phone(request):
         return JsonResponse({"exists": False})
 
     try:
-        user = User.objects.get(phone_number=phone, role="parent")
+        user = User.objects.get(phone_number=phone, role__name="parent")
         parent_profile = user.parentprofile
         return JsonResponse(
             {
@@ -163,16 +163,16 @@ class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
         query = request.GET.get("q", "").strip()
         student_id = request.GET.get("student_id", "")
 
-        parents = CustomUser.objects.none()
+        # ⚠️ Toujours partir du queryset des parents
+        parents = CustomUser.objects.filter(role__name="parent").order_by(
+            "first_name", "last_name"
+        )
+
         if query:
-            parents = (
-                CustomUser.objects.filter(role="parent")
-                .filter(
-                    Q(first_name__icontains=query)
-                    | Q(last_name__icontains=query)
-                    | Q(phone_number__icontains=query)
-                )
-                .order_by("first_name", "last_name")
+            parents = parents.filter(
+                Q(first_name__icontains=query)
+                | Q(last_name__icontains=query)
+                | Q(phone_number__icontains=query)
             )
 
         context = {
@@ -180,10 +180,43 @@ class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
             "student_id": student_id,
             "query": query,
         }
+
         html = render_to_string(
             "users/partials/_parent_cards.html", context, request=request
         )
         return JsonResponse({"html": html})
+
+
+# class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
+#     """
+#     Recherche AJAX des parents uniquement. Retourne le partial HTML.
+#     """
+
+#     def get(self, request, *args, **kwargs):
+#         query = request.GET.get("q", "").strip()
+#         student_id = request.GET.get("student_id", "")
+
+#         parents = CustomUser.objects.none()
+#         if query:
+#             parents = (
+#                 CustomUser.objects.filter(role__name="parent")
+#                 .filter(
+#                     Q(first_name__icontains=query)
+#                     | Q(last_name__icontains=query)
+#                     | Q(phone_number__icontains=query)
+#                 )
+#                 .order_by("first_name", "last_name")
+#             )
+
+#         context = {
+#             "parents": parents,
+#             "student_id": student_id,
+#             "query": query,
+#         }
+#         html = render_to_string(
+#             "users/partials/_parent_cards.html", context, request=request
+#         )
+#         return JsonResponse({"html": html})
 
 
 def link_callback(uri, rel):

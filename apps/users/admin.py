@@ -5,6 +5,7 @@ from apps.users.models import (
     CustomUser,
     AdminProfile,
     ParentProfile,
+    Role,
     StudentProfile,
     TeacherProfile,
 )
@@ -33,6 +34,10 @@ class TeacherProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "grade", "get_subjects")
 
 
+class RoleAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+
+
 class StudentProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "student_id", "enrollment_status", "major")
 
@@ -50,6 +55,7 @@ class AdminProfileAdmin(admin.ModelAdmin):
 
 # Enregistrer les modèles dans l'admin
 admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(Role, RoleAdmin)
 admin.site.register(AdminProfile, AdminProfileAdmin)
 admin.site.register(TeacherProfile, TeacherProfileAdmin)
 admin.site.register(StudentProfile, StudentProfileAdmin)

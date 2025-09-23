@@ -106,20 +106,11 @@ def CustomregisterView(request):
     return render(request, "accounts/auth-signup.html", {"form": form})
 
 
-# Ajoute les redirections pour chaque rôle dans un dictionnaire pour plus de lisibilité
-ROLE_REDIRECTS = {
-    "admin": "home:dashboard",
-}
-
-
-# Vue pour la connexion
 def CustomLoginView(request):
-    # Récupérer le paramètre 'next' depuis GET (lorsque la page est chargée)
     next_url = request.GET.get("next", "")
 
     if request.method == "POST":
         form = CustomLoginForm(data=request.POST)
-        # Prioriser le 'next' transmis via POST
         next_url = request.POST.get("next", next_url)
 
         if form.is_valid():
@@ -128,7 +119,8 @@ def CustomLoginView(request):
 
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                if user.role != "admin":
+                # Vérifier que l'utilisateur a au moins le rôle admin
+                if not user.role.filter(name="admin").exists():
                     send_custom_message(
                         request,
                         _("Accès refusé. Vous n'êtes pas un administrateur."),
@@ -136,26 +128,25 @@ def CustomLoginView(request):
                     )
                     return redirect("users:login")
 
+                # Première connexion
                 if user.first_login:
                     user.first_login = False
                     user.first_login_date = timezone.now()
                     user.save()
 
+                # Connexion
                 login(request, user)
                 send_custom_message(
                     request, _("Vous êtes maintenant connecté."), "success"
                 )
 
-                # Si un 'next' existe et est valide, redirigez vers celui-ci, sinon redirigez selon le rôle
-                if next_url:
-                    return redirect(next_url)
-                else:
-                    return redirect(ROLE_REDIRECTS.get(user.role, "home:index"))
+                # Redirection forcée vers home:index
+                return redirect("home:dashboard")
+
             else:
                 send_custom_message(
                     request, _("Nom d'utilisateur ou mot de passe incorrect."), "error"
                 )
-
         else:
             send_custom_message(
                 request,
@@ -404,7 +395,7 @@ class AdminListView(UserListView):
     }
 
     def get_queryset(self):
-        return CustomUser.objects.filter(role="admin")
+        return CustomUser.objects.filter(role__name="admin")
 
 
 class TeacherListView(UserListView):
@@ -419,7 +410,7 @@ class TeacherListView(UserListView):
     }
 
     def get_queryset(self):
-        return CustomUser.objects.filter(role="teacher").select_related(
+        return CustomUser.objects.filter(role__name="teacher").select_related(
             "teacherprofile"
         )
 
@@ -436,7 +427,7 @@ class StudentListView(UserListView):
     }
 
     def get_queryset(self):
-        return CustomUser.objects.filter(role="student").select_related(
+        return CustomUser.objects.filter(role__name="student").select_related(
             "studentprofile", "studentprofile__major"
         )
 
@@ -465,7 +456,7 @@ class ParentListView(UserListView):
     }
 
     def get_queryset(self):
-        return CustomUser.objects.filter(role="parent")
+        return CustomUser.objects.filter(role__name="parent")
 
 
 class AdminDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -614,7 +605,7 @@ class UserCreateView(
     def form_valid(self, form):
         phone = form.cleaned_data.get("phone_number")
         first_name = form.cleaned_data.get("first_name")
-        role = getattr(form.instance, "role", None) or form.cleaned_data.get("role")
+        roles = form.cleaned_data.get("role")  # ManyToMany
 
         if not phone:
             form.add_error("phone_number", "Le numéro de téléphone est requis.")
@@ -623,7 +614,9 @@ class UserCreateView(
         User = get_user_model()
 
         # Bloquer uniquement si un autre utilisateur avec ce numéro existe ET ce n'est pas un parent
-        if User.objects.filter(phone_number=phone).exists() and role != "parent":
+        if User.objects.filter(phone_number=phone).exists() and not (
+            roles and roles.filter(name="parent").exists()
+        ):
             form.add_error("phone_number", "Un utilisateur avec ce numéro existe déjà.")
             return self.form_invalid(form)
 
@@ -640,8 +633,11 @@ class UserCreateView(
         form.instance.set_unusable_password()
 
         try:
-            user = form.save()
-        except Exception as e:
+            user = form.save(commit=False)
+            user.save()
+            if roles:
+                user.role.set(roles)  # assignation ManyToMany
+        except Exception:
             form.add_error(
                 None, "Erreur inattendue lors de la création de l'utilisateur."
             )
@@ -649,7 +645,7 @@ class UserCreateView(
 
         send_custom_message(
             self.request,
-            _(f"{user.role.capitalize()} créé avec succès."),
+            _("Utilisateur créé avec succès."),
             "success",
         )
 
@@ -666,8 +662,26 @@ class AdminCreateView(UserCreateView):
         "cancel_url": success_url,
     }
 
+    def form_valid(self, form):
+        user = super().form_valid(form)  # crée l’utilisateur + roles ManyToMany
+        instance = self.object  # utilisateur créé
+
+        # Vérifier et créer les profils liés aux rôles
+        if instance.role.filter(name="admin").exists():
+            AdminProfile.objects.get_or_create(user=instance)
+
+        if instance.role.filter(name="teacher").exists():
+            TeacherProfile.objects.get_or_create(user=instance)
+
+        if instance.role.filter(name="student").exists():
+            StudentProfile.objects.get_or_create(user=instance)
+
+        if instance.role.filter(name="parent").exists():
+            ParentProfile.objects.get_or_create(user=instance)
+
+        return user
+
     def form_invalid(self, form):
-        # Message d'erreur si le formulaire est invalide
         send_custom_message(
             self.request,
             _(
@@ -821,7 +835,7 @@ class ParentSelectorView(
         parents = CustomUser.objects.none()
         if query:
             parents = (
-                CustomUser.objects.filter(role="parent")
+                CustomUser.objects.filter(role__name="parent")
                 .filter(
                     Q(first_name__icontains=query)
                     | Q(last_name__icontains=query)
