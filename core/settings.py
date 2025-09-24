@@ -214,7 +214,7 @@ TWILIO_WHATSAPP_SANDBOX_NUMBER = os.getenv("TWILIO_WHATSAPP_SANDBOX_NUMBER")
 
 # ========= EMAIL CONFIG DEV =========
 # L’adresse "from" par défaut
-DEFAULT_FROM_EMAIL = "noreply@timelya.com"
+DEFAULT_FROM_EMAIL = "lpinacle229@gmail.com"
 
 # Optionnel : pour tester le file backend au lieu de la console
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
@@ -227,12 +227,17 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 # # ⚠️ Utilise ton adresse Gmail
-EMAIL_HOST_USER = "tonadresse@gmail.com"
+EMAIL_HOST_USER = "lpinacle229@gmail.com"
 
 # # ⚠️ Utilise un "App Password" et PAS ton mot de passe Gmail normal
-EMAIL_HOST_PASSWORD = "xxxxxxxxxxxxxx"
+EMAIL_HOST_PASSWORD = "fjeu vfwj ehnt alpl"
 
 # # Expéditeur par défaut
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"  # Dossier où seront stockés les mails
+
+
+import ssl, certifi
+
+ssl._create_default_https_context = ssl.create_default_context(cafile=certifi.where())

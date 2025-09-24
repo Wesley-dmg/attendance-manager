@@ -62,6 +62,7 @@ from apps.users.forms import (
     TeacherForm,
     TeacherUpdateForm,
     UserUpdateForm,
+    generate_secure_password,
 )
 from apps.home.mixins import AdminTestMixin
 from apps.attendance.utils import get_absence_count, send_whatsapp_message
