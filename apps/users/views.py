@@ -64,17 +64,15 @@ from apps.users.forms import (
     UserUpdateForm,
 )
 from apps.home.mixins import AdminTestMixin
-from apps.attendance.utils import get_absence_count
+from apps.attendance.utils import get_absence_count, send_whatsapp_message
 from apps.home.utils import send_custom_message
-from apps.users.utils import link_callback
+from apps.users.utils import link_callback, send_password_email
 
 
 def generate_password():
     # 6 chiffres (000000-999999). Tu peux remplacer par alphanum si tu veux.
     code = f"{secrets.randbelow(10**6):06d}"
     return code
-
-    Si
 
 
 class RoleLoginView(TemplateView):
@@ -663,10 +661,14 @@ class AdminCreateView(UserCreateView):
     }
 
     def form_valid(self, form):
-        user = super().form_valid(form)  # crée l’utilisateur + roles ManyToMany
+        # Générer mot de passe avant save
+        password = generate_secure_password()
+        form.instance.set_password(password)  # hashé dans DB
+
+        user = super().form_valid(form)  # crée l’utilisateur
         instance = self.object  # utilisateur créé
 
-        # Vérifier et créer les profils liés aux rôles
+        # Profils liés aux rôles
         if instance.role.filter(name="admin").exists():
             AdminProfile.objects.get_or_create(user=instance)
 
@@ -679,6 +681,26 @@ class AdminCreateView(UserCreateView):
         if instance.role.filter(name="parent").exists():
             ParentProfile.objects.get_or_create(user=instance)
 
+        # Envoi du mot de passe
+        message = f"""
+        Bonjour {instance.first_name},
+
+        Votre compte administrateur a été créé.
+
+        Nom d'utilisateur : {instance.username}
+        Mot de passe : {password}
+
+        ⚠️ Pensez à changer ce mot de passe dès votre première connexion.
+        """
+
+        if instance.email:  # priorité mail
+            send_password_email(instance, password)
+        else:  # fallback WhatsApp
+            send_whatsapp_message(instance, message)
+
+        send_custom_message(
+            self.request, _("Administrateur créé avec succès."), "success"
+        )
         return user
 
     def form_invalid(self, form):
@@ -690,6 +712,46 @@ class AdminCreateView(UserCreateView):
             "error",
         )
         return super().form_invalid(form)
+
+
+# class AdminCreateView(UserCreateView):
+#     form_class = AdminForm
+#     permission_required = "users.add_adminprofile"
+#     success_url = reverse_lazy("users:admins_list")
+#     extra_context = {
+#         "role": "admin",
+#         "title": "Ajouter Administrateur",
+#         "cancel_url": success_url,
+#     }
+
+#     def form_valid(self, form):
+#         user = super().form_valid(form)  # crée l’utilisateur + roles ManyToMany
+#         instance = self.object  # utilisateur créé
+
+#         # Vérifier et créer les profils liés aux rôles
+#         if instance.role.filter(name="admin").exists():
+#             AdminProfile.objects.get_or_create(user=instance)
+
+#         if instance.role.filter(name="teacher").exists():
+#             TeacherProfile.objects.get_or_create(user=instance)
+
+#         if instance.role.filter(name="student").exists():
+#             StudentProfile.objects.get_or_create(user=instance)
+
+#         if instance.role.filter(name="parent").exists():
+#             ParentProfile.objects.get_or_create(user=instance)
+
+#         return user
+
+#     def form_invalid(self, form):
+#         send_custom_message(
+#             self.request,
+#             _(
+#                 "Erreur dans le formulaire. Un profil Administrateur pour cet utilisateur existe déjà."
+#             ),
+#             "error",
+#         )
+#         return super().form_invalid(form)
 
 
 class TeacherCreateView(UserCreateView):

@@ -234,3 +234,5 @@ EMAIL_HOST_PASSWORD = "xxxxxxxxxxxxxx"
 
 # # Expéditeur par défaut
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+EMAIL_FILE_PATH = BASE_DIR / "sent_emails"  # Dossier où seront stockés les mails
