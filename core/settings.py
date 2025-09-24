@@ -221,16 +221,16 @@ EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"  # Dossier où seront stockés les mails
 
 # # ========= EMAIL CONFIG PROD (Gmail) =========
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = "smtp.gmail.com"
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
 # # ⚠️ Utilise ton adresse Gmail
-# EMAIL_HOST_USER = "tonadresse@gmail.com"
+EMAIL_HOST_USER = "tonadresse@gmail.com"
 
 # # ⚠️ Utilise un "App Password" et PAS ton mot de passe Gmail normal
-# EMAIL_HOST_PASSWORD = "xxxxxxxxxxxxxx"
+EMAIL_HOST_PASSWORD = "xxxxxxxxxxxxxx"
 
 # # Expéditeur par défaut
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
