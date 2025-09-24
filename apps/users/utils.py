@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.db.models import Q
 
 from django.contrib.auth import get_user_model
+from django.core.mail import EmailMessage
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
@@ -187,38 +188,6 @@ class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
         return JsonResponse({"html": html})
 
 
-# class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
-#     """
-#     Recherche AJAX des parents uniquement. Retourne le partial HTML.
-#     """
-
-#     def get(self, request, *args, **kwargs):
-#         query = request.GET.get("q", "").strip()
-#         student_id = request.GET.get("student_id", "")
-
-#         parents = CustomUser.objects.none()
-#         if query:
-#             parents = (
-#                 CustomUser.objects.filter(role__name="parent")
-#                 .filter(
-#                     Q(first_name__icontains=query)
-#                     | Q(last_name__icontains=query)
-#                     | Q(phone_number__icontains=query)
-#                 )
-#                 .order_by("first_name", "last_name")
-#             )
-
-#         context = {
-#             "parents": parents,
-#             "student_id": student_id,
-#             "query": query,
-#         }
-#         html = render_to_string(
-#             "users/partials/_parent_cards.html", context, request=request
-#         )
-#         return JsonResponse({"html": html})
-
-
 def link_callback(uri, rel):
     """
     Convertit les URI HTML (ex: /static/...) en chemins absolus pour xhtml2pdf
@@ -236,3 +205,19 @@ def link_callback(uri, rel):
 
     # Sinon essaie dans STATIC_ROOT
     return os.path.join(settings.STATIC_ROOT, uri.replace(settings.STATIC_URL, ""))
+
+
+def send_password_email(user, password):
+    subject = "Vos identifiants d’administrateur"
+    message = f"""
+Bonjour {user.first_name},
+
+Votre compte administrateur a été créé avec succès.
+
+Nom d'utilisateur : {user.username}
+Mot de passe : {password}
+
+⚠️ Pensez à changer ce mot de passe dès votre première connexion.
+"""
+    email = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+    email.send(fail_silently=False)
