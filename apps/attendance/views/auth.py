@@ -13,6 +13,12 @@ class RequestOTPView(FormView):
     template_name = "attendance/auth/request_otp.html"
     form_class = RequestOTPForm
 
+    def dispatch(self, request, *args, **kwargs):
+        # Si l'utilisateur est déjà connecté → redirige vers le dashboard
+        if request.user.is_authenticated:
+            return redirect("/teachers/dashboard/")
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         phone = form.cleaned_data["phone"]
 
@@ -32,6 +38,12 @@ class RequestOTPView(FormView):
 class VerifyOTPView(FormView):
     template_name = "attendance/auth/verify_otp.html"
     form_class = VerifyOTPForm
+
+    def dispatch(self, request, *args, **kwargs):
+        # Si l'utilisateur est déjà connecté → redirige vers le dashboard
+        if request.user.is_authenticated:
+            return redirect("/teachers/dashboard/")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_phone(self):
         return self.request.session.get("phone") or self.request.GET.get("phone")

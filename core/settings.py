@@ -70,6 +70,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.users.middleware.RedirectIfAuthenticatedMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -241,3 +242,15 @@ EMAIL_FILE_PATH = BASE_DIR / "sent_emails"  # Dossier où seront stockés les ma
 import ssl, certifi
 
 ssl._create_default_https_context = ssl.create_default_context(cafile=certifi.where())
+
+
+# Durée de session en secondes (24 heures)
+SESSION_COOKIE_AGE = 3 * 24 * 60 * 60
+
+# Actualise l'expiration à chaque requête (optionnel mais pratique)
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Sécurise les cookies (optionnel mais recommandé)
+SESSION_COOKIE_SECURE = False  # True si en HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Ne pas expirer à la fermeture du navigateur
