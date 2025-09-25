@@ -1,7 +1,6 @@
 import random
 from datetime import timedelta
 import re
-
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -9,10 +8,9 @@ from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 
-phone_number_validator = RegexValidator(
-    regex=r"^(\+229\d{8}|\d{8})$",
-    message="Numéro invalide. Format attendu : +22997011234 ou 97011234",
-)
+from phonenumber_field.modelfields import PhoneNumberField
+
+from phonenumbers import parse, format_number, PhoneNumberFormat, NumberParseException
 
 import logging
 
@@ -40,13 +38,13 @@ class CustomUser(AbstractUser):
     ]
     role = models.ManyToManyField(Role, verbose_name=_("Rôle"))
 
-    phone_number = models.CharField(
-        max_length=15,
+    phone_number = PhoneNumberField(
         blank=True,
         unique=True,
-        validators=[phone_number_validator],
+        region=None,  # ← accepte tous les formats internationaux
         verbose_name=_("Numéro de téléphone"),
     )
+
     date_of_birth = models.DateField(
         null=True, blank=True, verbose_name=_("Date de naissance")
     )
@@ -106,32 +104,11 @@ class CustomUser(AbstractUser):
     def clean(self):
         super().clean()
 
-        if self.phone_number:
-            # Supprimer les espaces et normaliser
-            phone = self.phone_number.replace(" ", "")
-
-            # Si déjà format international, on garde
-            if phone.startswith("+229") and len(phone) == 12:
-                self.phone_number = phone
-
-            # Si format local (8 chiffres), on ajoute +229
-            elif re.match(r"^\d{8}$", phone):
-                self.phone_number = f"+229{phone}"
-
-            else:
-                raise ValidationError(
-                    {
-                        "phone_number": "Le numéro doit contenir 8 chiffres avec ou sans préfixe +229."
-                    }
-                )
-
     def save(self, *args, **kwargs):
         self.clean()
         is_new = self._state.adding
 
-        super().save(
-            *args, **kwargs
-        )  # d'abord sauvegarde de base (obligatoire avant M2M)
+        super().save(*args, **kwargs)
 
         if is_new:
             # Forcer le rôle admin si superuser
@@ -143,8 +120,6 @@ class CustomUser(AbstractUser):
                 logger.warning(
                     f"[CustomUser.save] Utilisateur {self} créé sans rôle explicite !"
                 )
-                # student_role, _ = Role.objects.get_or_create(name="student")
-                # self.role.add(student_role)
 
             # Ajouter automatiquement au groupe
             for r in self.role.all():
@@ -172,16 +147,14 @@ class CustomUser(AbstractUser):
 
     @property
     def whatsapp_number(self):
-        """
-        Retourne le numéro formaté pour WhatsApp, par défaut en ajoutant +229 si nécessaire.
-        """
-        phone = self.phone_number.strip().replace(" ", "")
-        if phone.startswith("+229"):
-            return f"whatsapp:{phone}"
-        elif phone.startswith("229"):
-            return f"whatsapp:+{phone}"
-        else:
-            return f"whatsapp:+229{phone}"
+        if not self.phone_number:
+            return None
+        try:
+            # parse le numéro pour obtenir l'objet international
+            pn = parse(str(self.phone_number), None)
+            return f"whatsapp:{format_number(pn, PhoneNumberFormat.E164)}"
+        except NumberParseException:
+            return str(self.phone_number)  # fallback si invalide
 
     def anonymize(self):
         self.first_name = "Anonyme"

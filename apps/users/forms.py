@@ -1,4 +1,11 @@
+import string
+import random
+
+from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth import get_user_model
+
+from django import forms
 from django.contrib.auth.forms import (
     UserCreationForm,
     AuthenticationForm,
@@ -7,21 +14,22 @@ from django.contrib.auth.forms import (
     SetPasswordForm,
     UsernameField,
 )
-from apps.courses.models import DepartmentLevel
-from apps.subjects.models import Subject
 from django_select2.forms import Select2MultipleWidget
-from django.core.cache import cache
-from django import forms
-
-from apps.users.utils import normalize_bj_phone
-from .models import *
-from django.contrib.auth import get_user_model
-from django.utils.text import slugify
-import random
-
-import string
 
 from django.db.models import Q
+from django.utils.text import slugify
+from phonenumber_field.formfields import PhoneNumberField as PhoneNumberFormField
+
+from apps.courses.models import DepartmentLevel
+from apps.subjects.models import Subject
+from apps.users.models import (
+    AdminProfile,
+    CustomUser,
+    ParentProfile,
+    Role,
+    StudentProfile,
+    TeacherProfile,
+)
 
 
 # Formulaire d'inscription pour les administrateurs uniquement
@@ -265,10 +273,14 @@ class BaseUserForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-control"}),
         required=False,
     )
-    phone_number = forms.CharField(
+    phone_number = PhoneNumberFormField(
         required=True,
         widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Téléphone"}
+            attrs={
+                "class": "form-control",
+                "placeholder": "+22912345678",  # placeholder international
+                "inputmode": "numeric",  # clavier numérique mobile
+            }
         ),
         label="Téléphone",
     )
@@ -285,12 +297,14 @@ class BaseUserForm(forms.ModelForm):
         ]
 
     def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
+        phone = self.cleaned_data.get("phone_number")
+        if (
+            phone
+            and CustomUser.objects.exclude(pk=self.instance.pk)
+            .filter(phone_number=phone)
+            .exists()
+        ):
+            raise forms.ValidationError(_("Ce numéro de téléphone est déjà utilisé."))
         return phone
 
 
@@ -384,15 +398,6 @@ class TeacherUpdateForm(BaseUserForm):
             teacher_profile.save()
         return user
 
-    def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
-
 
 # ======================
 # Student
@@ -441,15 +446,6 @@ class StudentUpdateForm(BaseUserForm):
             student_profile.save()
         return user
 
-    def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
-
 
 # ======================
 # Parent
@@ -488,19 +484,6 @@ class ParentForm(BaseUserForm):
                 required=True,
                 label="Enfants",
             )
-
-    def clean_phone_number(self):
-        phone_raw = self.cleaned_data["phone_number"]
-        phone = normalize_bj_phone(phone_raw)
-        self.cleaned_data["phone_number"] = phone
-
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-
-        if qs.exists() and not self.allow_existing_phone:
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -588,17 +571,20 @@ class ParentUpdateForm(BaseUserForm):
             parent_profile.save()
         return user
 
-    def clean_phone_number(self):
-        phone = self.cleaned_data["phone_number"]
-        qs = CustomUser.objects.filter(phone_number=phone)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("Ce numéro de téléphone est déjà utilisé.")
-        return phone
-
 
 class UserUpdateForm(forms.ModelForm):
+    phone_number = PhoneNumberFormField(
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Ex: +229 91234567",
+                "type": "tel",
+                "inputmode": "numeric",
+            }
+        ),
+        label="Numéro de téléphone",
+    )
+
     class Meta:
         model = CustomUser
         fields = [
@@ -613,6 +599,5 @@ class UserUpdateForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"class": "form-control"}),
             "first_name": forms.TextInput(attrs={"class": "form-control"}),
             "last_name": forms.TextInput(attrs={"class": "form-control"}),
-            "phone_number": forms.TextInput(attrs={"class": "form-control"}),
             "address": forms.TextInput(attrs={"class": "form-control"}),
         }

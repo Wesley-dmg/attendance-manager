@@ -600,23 +600,18 @@ class ParentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
 
 
 # Create
+# Create
 class UserCreateView(
     LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, CreateView
 ):
     template_name = "users/admin/user_form.html"
 
     def form_valid(self, form):
-        phone = form.cleaned_data.get("phone_number")
-        first_name = form.cleaned_data.get("first_name")
-        roles = form.cleaned_data.get("role")  # ManyToMany
-
-        if not phone:
-            form.add_error("phone_number", "Le numéro de téléphone est requis.")
-            return self.form_invalid(form)
-
         User = get_user_model()
+        roles = form.cleaned_data.get("role")  # ManyToMany
+        phone = form.cleaned_data.get("phone_number")
 
-        # Bloquer uniquement si un autre utilisateur avec ce numéro existe ET ce n'est pas un parent
+        # Vérifier doublon numéro (sauf pour parent)
         if User.objects.filter(phone_number=phone).exists() and not (
             roles and roles.filter(name="parent").exists()
         ):
@@ -624,6 +619,7 @@ class UserCreateView(
             return self.form_invalid(form)
 
         # Générer un username unique automatiquement à partir du prénom
+        first_name = form.cleaned_data.get("first_name")
         base_username = slugify(first_name) or "user"
         username = base_username
         suffix = random.randint(10, 99)
@@ -700,7 +696,7 @@ class AdminCreateView(UserCreateView):
 
         if instance.email:  # priorité mail
             send_password_email(instance, password)
-        else:  # fallback WhatsApp
+        else:  # fallback WhatsApp (numéro déjà validé et normalisé)
             send_whatsapp_message(instance, message)
 
         send_custom_message(
@@ -717,46 +713,6 @@ class AdminCreateView(UserCreateView):
             "error",
         )
         return super().form_invalid(form)
-
-
-# class AdminCreateView(UserCreateView):
-#     form_class = AdminForm
-#     permission_required = "users.add_adminprofile"
-#     success_url = reverse_lazy("users:admins_list")
-#     extra_context = {
-#         "role": "admin",
-#         "title": "Ajouter Administrateur",
-#         "cancel_url": success_url,
-#     }
-
-#     def form_valid(self, form):
-#         user = super().form_valid(form)  # crée l’utilisateur + roles ManyToMany
-#         instance = self.object  # utilisateur créé
-
-#         # Vérifier et créer les profils liés aux rôles
-#         if instance.role.filter(name="admin").exists():
-#             AdminProfile.objects.get_or_create(user=instance)
-
-#         if instance.role.filter(name="teacher").exists():
-#             TeacherProfile.objects.get_or_create(user=instance)
-
-#         if instance.role.filter(name="student").exists():
-#             StudentProfile.objects.get_or_create(user=instance)
-
-#         if instance.role.filter(name="parent").exists():
-#             ParentProfile.objects.get_or_create(user=instance)
-
-#         return user
-
-#     def form_invalid(self, form):
-#         send_custom_message(
-#             self.request,
-#             _(
-#                 "Erreur dans le formulaire. Un profil Administrateur pour cet utilisateur existe déjà."
-#             ),
-#             "error",
-#         )
-#         return super().form_invalid(form)
 
 
 class TeacherCreateView(UserCreateView):
@@ -798,140 +754,9 @@ class StudentCreateView(UserCreateView):
         return redirect(f"{self.success_url}?student_id={student_profile.pk}")
 
 
-# class ParentCreateView(
-#     LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, CreateView
-# ):
-#     form_class = ParentForm
-#     template_name = "users/admin/user_form.html"
-#     permission_required = "users.add_parentprofile"
-
-#     extra_context = {
-#         "title": "Créer Parent",
-#         "cancel_url": reverse_lazy("users:parents_list"),
-#     }
-
-#     def get_form_kwargs(self):
-#         kwargs = super().get_form_kwargs()
-#         student_id = self.request.GET.get("student_id")
-#         if student_id:
-#             try:
-#                 student = StudentProfile.objects.get(pk=student_id)
-#                 kwargs["student_instance"] = student
-#             except StudentProfile.DoesNotExist:
-#                 pass
-#         # Création pure → on n’autorise pas un numéro déjà utilisé
-#         kwargs["allow_existing_phone"] = False
-#         return kwargs
-
-#     def form_invalid(self, form):
-#         # Si duplication téléphone → renvoyer vers la page intermédiaire avec message
-#         if "phone_number" in form.errors:
-#             student_id = self.request.GET.get("student_id")
-#             q = form.data.get("phone_number", "")
-
-#             send_custom_message(
-#                 self.request,
-#                 _(
-#                     "Un parent avec ce numéro existe déjà. Utilisez la recherche pour l'associer."
-#                 ),
-#                 "error",
-#             )
-
-#             params = {}
-#             if student_id:
-#                 params["student_id"] = student_id
-#             if q:
-#                 params["q"] = q
-
-#             url = reverse("users:parent_selector")
-#             if params:
-#                 url = f"{url}?{urlencode(params)}"
-#             return redirect(url)
-
-#         return super().form_invalid(form)
-
-#     def form_valid(self, form):
-#         try:
-#             user = form.save()
-#             print(">> Parent créé :", user.pk, user.first_name, user.phone_number)
-
-#         except IntegrityError:
-#             student_id = self.request.GET.get("student_id")
-#             q = form.cleaned_data.get("phone_number", "")
-#             send_custom_message(
-#                 self.request,
-#                 _(
-#                     "Ce numéro est déjà utilisé par un parent. Utilisez la recherche pour l'associer."
-#                 ),
-#                 "error",
-#             )
-#             params = {}
-#             if student_id:
-#                 params["student_id"] = student_id
-#             if q:
-#                 params["q"] = q
-#             url = reverse("users:parent_selector")
-#             if params:
-#                 url = f"{url}?{urlencode(params)}"
-#             return redirect(url)
-
-#         except Exception as e:
-#             print("!! Erreur inattendue lors de la création du parent :", str(e))
-#             form.add_error(
-#                 None, _("Erreur inattendue lors de la création du parent : ") + str(e)
-#             )
-#             return self.form_invalid(form)
-
-#         send_custom_message(self.request, _("Parent créé avec succès."), "success")
-
-#         # ✅ Conserver le student_id pour debug + redirection propre
-#         student_id = self.request.GET.get("student_id")
-#         if student_id:
-#             print(">> Redirection avec student_id :", student_id)
-#             return redirect(
-#                 f"{reverse('users:parent_selector')}?student_id={student_id}"
-#             )
-
-#         print(">> Redirection par défaut (pas de student_id)")
-#         return redirect(self.get_success_url())
-
-#     # def form_valid(self, form):
-#     #     try:
-#     #         user = form.save()
-#     #     except IntegrityError:
-#     #         # Filet de sécurité si la contrainte unique du modèle déclenche malgré tout
-#     #         student_id = self.request.GET.get("student_id")
-#     #         q = form.cleaned_data.get("phone_number", "")
-#     #         send_custom_message(
-#     #             self.request,
-#     #             _(
-#     #                 "Ce numéro est déjà utilisé par un parent. Utilisez la recherche pour l'associer."
-#     #             ),
-#     #             "error",
-#     #         )
-#     #         params = {}
-#     #         if student_id:
-#     #             params["student_id"] = student_id
-#     #         if q:
-#     #             params["q"] = q
-#     #         url = reverse("users:parent_selector")
-#     #         if params:
-#     #             url = f"{url}?{urlencode(params)}"
-#     #         return redirect(url)
-#     #     except Exception as e:
-#     #         form.add_error(
-#     #             None, _("Erreur inattendue lors de la création du parent : ") + str(e)
-#     #         )
-#     #         return self.form_invalid(form)
-
-#     #     send_custom_message(self.request, _("Parent créé avec succès."), "success")
-#     #     return redirect(self.get_success_url())
-
-#     def get_success_url(self):
-#         # Tu peux garder ta redirection actuelle
-#         return reverse("users:students_list")
-
-
+# ======================
+# Parent
+# ======================
 class ParentCreateView(
     LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, CreateView
 ):
@@ -959,7 +784,7 @@ class ParentCreateView(
     def form_invalid(self, form):
         if "phone_number" in form.errors:
             student_id = self.request.GET.get("student_id")
-            q = form.data.get("phone_number", "")
+            phone = form.data.get("phone_number", "")
 
             send_custom_message(
                 self.request,
@@ -972,8 +797,8 @@ class ParentCreateView(
             params = {}
             if student_id:
                 params["student_id"] = student_id
-            if q:
-                params["q"] = q
+            if phone:
+                params["q"] = phone
 
             url = reverse("users:parent_selector")
             if params:
@@ -985,10 +810,9 @@ class ParentCreateView(
     def form_valid(self, form):
         try:
             user = form.save()
-            print(">> Parent créé :", user.pk, user.first_name, user.phone_number)
         except IntegrityError:
             student_id = self.request.GET.get("student_id")
-            q = form.cleaned_data.get("phone_number", "")
+            phone = form.cleaned_data.get("phone_number", "")
             send_custom_message(
                 self.request,
                 _(
@@ -999,14 +823,13 @@ class ParentCreateView(
             params = {}
             if student_id:
                 params["student_id"] = student_id
-            if q:
-                params["q"] = q
+            if phone:
+                params["q"] = phone
             url = reverse("users:parent_selector")
             if params:
                 url = f"{url}?{urlencode(params)}"
             return redirect(url)
         except Exception as e:
-            print("!! Erreur inattendue lors de la création du parent :", str(e))
             form.add_error(
                 None, _("Erreur inattendue lors de la création du parent : ") + str(e)
             )
@@ -1014,7 +837,7 @@ class ParentCreateView(
 
         send_custom_message(self.request, _("Parent créé avec succès."), "success")
 
-        # ✅ Si création liée à un élève → retour direct sur liste des étudiants
+        # Si création liée à un élève → retour direct sur liste des étudiants
         student_id = self.request.GET.get("student_id")
         if student_id:
             return redirect("users:students_list")
@@ -1036,15 +859,15 @@ class ParentSelectorView(
         student_id = self.request.GET.get("student_id", "")
         query = self.request.GET.get("q", "").strip()
 
-        # Par défaut : ne rien afficher (QS vide)
         parents = CustomUser.objects.none()
         if query:
+            # Rechercher parents par prénom, nom ou numéro normalisé
             parents = (
                 CustomUser.objects.filter(role__name="parent")
                 .filter(
                     Q(first_name__icontains=query)
                     | Q(last_name__icontains=query)
-                    | Q(phone_number__icontains=query)
+                    | Q(phone_number__icontains=query)  # PhoneNumberField gère E.164
                 )
                 .order_by("first_name", "last_name")
             )
@@ -1059,6 +882,9 @@ class ParentSelectorView(
         return context
 
 
+# ======================
+# User Update
+# ======================
 class UserUpdateView(
     LoginRequiredMixin, PermissionRequiredMixin, AdminTestMixin, UpdateView
 ):
@@ -1081,19 +907,21 @@ class UserUpdateView(
             form.add_error("phone_number", "Le numéro de téléphone est requis.")
             return self.form_invalid(form)
 
+        # Vérification des doublons en ignorant l'utilisateur courant
         User = get_user_model()
         qs = User.objects.filter(phone_number=phone).exclude(pk=self.object.pk)
         if qs.exists():
             form.add_error("phone_number", "Ce numéro est déjà utilisé.")
             return self.form_invalid(form)
 
-        # # Toujours garder username = phone_number
-        # form.instance.username = phone
         return super().form_valid(form)
 
 
+# ======================
+# Admin Update
+# ======================
 class AdminUpdateView(UserUpdateView):
-    form_class = AdminUpdateForm  # Utilisez AdminUpdateForm au lieu de AdminForm
+    form_class = AdminUpdateForm
     permission_required = "users.change_adminprofile"
     extra_context = {
         "title": "Modifier Administrateur",
@@ -1101,8 +929,11 @@ class AdminUpdateView(UserUpdateView):
     }
 
 
+# ======================
+# Teacher Update
+# ======================
 class TeacherUpdateView(UserUpdateView):
-    form_class = TeacherUpdateForm  # Utilisez TeacherUpdateForm au lieu de TeacherForm
+    form_class = TeacherUpdateForm
     permission_required = "users.change_teacherprofile"
     extra_context = {
         "title": "Modifier Professeur",
@@ -1110,16 +941,21 @@ class TeacherUpdateView(UserUpdateView):
     }
 
 
+# ======================
+# Student Update
+# ======================
 class StudentUpdateView(UserUpdateView):
     form_class = StudentUpdateForm
     permission_required = "users.change_studentprofile"
-
     extra_context = {
         "title": "Modifier Élève",
         "cancel_url": reverse_lazy("users:students_list"),
     }
 
 
+# ======================
+# Parent Update
+# ======================
 class ParentUpdateView(UserUpdateView):
     form_class = ParentUpdateForm
     permission_required = "users.change_parentprofile"

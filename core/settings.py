@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_select2",
     "whitenoise.runserver_nostatic",
+    "phonenumber_field",
     "apps.common",  # Application pour gérer les  relations entre filière et matière
     "apps.courses",  # Application pour gérer les filières
     "apps.home",  # Application pour gérer les fonction de base de  l'application comme  les  notification systeme  d'alert et  autre

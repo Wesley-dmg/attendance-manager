@@ -27,24 +27,6 @@ from django.utils.dateformat import format as date_format
 User = get_user_model()
 
 
-def generate_reset_code():
-    code = str(uuid.uuid4()).split("-")[0]  # ex: '5f2b1a'
-    hashed = hashlib.sha256(code.encode()).hexdigest()
-    return code, hashed
-
-
-def generate_unique_username(base_name: str) -> str:
-    base_username = slugify(base_name) or "user"
-    username = base_username
-    suffix = random.randint(10, 99)
-
-    while User.objects.filter(username=username).exists():
-        suffix = random.randint(10, 99)
-        username = f"{base_username}{suffix}"
-
-    return username
-
-
 class UserSearchView(LoginRequiredMixin, AdminTestMixin, View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q", "").strip()
@@ -140,19 +122,6 @@ def check_parent_phone(request):
         )
     except User.DoesNotExist:
         return JsonResponse({"exists": False})
-
-
-def normalize_bj_phone(phone: str) -> str:
-    """Normalise en +229XXXXXXXX (8 chiffres). Accepte 'XXXXXXXX', '+229XXXXXXXX', ou '229XXXXXXXX'."""
-    phone = (phone or "").replace(" ", "")
-    if phone.startswith("+229") and re.fullmatch(r"\+229\d{8}", phone):
-        return phone
-    if re.fullmatch(r"\d{8}", phone):
-        return f"+229{phone}"
-    if phone.startswith("229") and re.fullmatch(r"229\d{8}", phone):
-        return f"+{phone}"
-    # Laisse passer, le model.clean() lèvera une erreur si invalide
-    return phone
 
 
 class ParentSearchView(LoginRequiredMixin, AdminTestMixin, View):
