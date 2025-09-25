@@ -23,7 +23,7 @@ class RequestOTPView(FormView):
         phone = form.cleaned_data["phone"]
 
         try:
-            user = User.objects.get(phone_number=phone, role="teacher")
+            user = User.objects.get(phone_number=phone, role__name="teacher")
         except User.DoesNotExist:
             form.add_error("phone", "Numéro introuvable ou non autorisé.")
             return self.form_invalid(form)
@@ -67,7 +67,7 @@ class VerifyOTPView(FormView):
 
         code = form.cleaned_data["code"]
         user = User.objects.filter(
-            phone_number__endswith=phone[-9:], role="teacher"
+            phone_number__endswith=phone[-9:], role__name="teacher"
         ).first()
 
         if not user:
