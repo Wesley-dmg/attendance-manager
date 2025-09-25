@@ -423,7 +423,6 @@ def import_data_view(request):
 @login_required
 def redirect_after_login(request):
     user = request.user
-    if user.role == "teacher":
+    if user.roles.filter(name="teacher").exists():
         return redirect("teacher:dashboard")
-    else:
-        return redirect("home:index")
+    return redirect("home:index")

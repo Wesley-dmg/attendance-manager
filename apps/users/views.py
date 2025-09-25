@@ -318,10 +318,10 @@ class PasswordResetCodeView(View):
 
 
 def custom_logout(request):
-    # On récupère le rôle avant de supprimer la session
-    role = None
+    roles = []
     if request.user.is_authenticated:
-        role = request.user.role
+        # Récupérer tous les noms de rôles
+        roles = list(request.user.role.values_list("name", flat=True))
 
     # Déconnexion
     logout(request)
@@ -330,13 +330,17 @@ def custom_logout(request):
     send_custom_message(request, _("Vous êtes déconnecté avec succès."), "success")
 
     # Redirection selon le rôle
-    if role == "teacher":
-        return redirect(reverse("attendance:request-otp"))
-    elif role == "student":
-        return redirect(reverse("attendance:request-otp"))
-    elif role == "parent":
-        return redirect(reverse("attendance:request-otp"))
+    if len(roles) == 1:
+        if roles[0] == "teacher":
+            return redirect(reverse("attendance:request-otp"))
+        elif roles[0] == "student":
+            return redirect(reverse("attendance:request-otp"))
+        elif roles[0] == "parent":
+            return redirect(reverse("attendance:request-otp"))
+        elif roles[0] == "admin":
+            return redirect(reverse("users:login"))
     else:
+        # Plusieurs rôles -> redirection par défaut
         return redirect(reverse("users:login"))
 
 
