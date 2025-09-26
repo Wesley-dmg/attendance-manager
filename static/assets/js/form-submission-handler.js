@@ -17,7 +17,7 @@ class FormSubmissionHandler {
 
             // Style de l'overlay
             overlay: {
-                backgroundColor: options.overlayBg || 'rgba(0, 0, 0, 0.2)',
+                backgroundColor: options.overlayBg || 'rgba(0, 0, 0, 0.7)',
                 zIndex: options.overlayZIndex || 9999,
                 spinnerColor: options.spinnerColor || '#ffffff'
             }
@@ -183,7 +183,7 @@ class FormSubmissionHandler {
             .modern-spinner {
                 width: 50px;
                 height: 50px;
-                border: 3px solid rgba(255, 255, 255, 0.7);
+                border: 3px solid rgba(255, 255, 255, 0.3);
                 border-top: 3px solid ${this.config.overlay.spinnerColor};
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
