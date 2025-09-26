@@ -252,6 +252,6 @@ SESSION_COOKIE_AGE = 3 * 24 * 60 * 60
 SESSION_SAVE_EVERY_REQUEST = True
 
 # Sécurise les cookies (optionnel mais recommandé)
-SESSION_COOKIE_SECURE = False  # True si en HTTPS
+SESSION_COOKIE_SECURE = True  # True si en HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Ne pas expirer à la fermeture du navigateur
