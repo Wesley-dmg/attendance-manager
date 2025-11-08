@@ -216,6 +216,7 @@ TWILIO_WHATSAPP_SANDBOX_NUMBER = os.getenv("TWILIO_WHATSAPP_SANDBOX_NUMBER")
 
 # ========= EMAIL CONFIG DEV =========
 # L’adresse "from" par défaut
+
 DEFAULT_FROM_EMAIL = "lpinacle229@gmail.com"
 
 # Optionnel : pour tester le file backend au lieu de la console

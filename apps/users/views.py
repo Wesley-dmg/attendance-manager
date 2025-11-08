@@ -329,19 +329,19 @@ def custom_logout(request):
     # Message
     send_custom_message(request, _("Vous êtes déconnecté avec succès."), "success")
 
-    # Redirection selon le rôle
-    if len(roles) == 1:
-        if roles[0] == "teacher":
-            return redirect(reverse("attendance:request-otp"))
-        elif roles[0] == "student":
-            return redirect(reverse("attendance:request-otp"))
-        elif roles[0] == "parent":
-            return redirect(reverse("attendance:request-otp"))
-        elif roles[0] == "admin":
-            return redirect(reverse("users:login"))
-    else:
-        # Plusieurs rôles -> redirection par défaut
-        return redirect(reverse("users:login"))
+    # # Redirection selon le rôle
+    # if len(roles) == 1:
+    #     if roles[0] == "teacher":
+    #         return redirect(reverse("attendance:request-otp"))
+    #     elif roles[0] == "student":
+    #         return redirect(reverse("attendance:request-otp"))
+    #     elif roles[0] == "parent":
+    #         return redirect(reverse("attendance:request-otp"))
+    #     elif roles[0] == "admin":
+    #         return redirect(reverse("users:login"))
+    # else:
+    #     # Plusieurs rôles -> redirection par défaut
+    return redirect(reverse("users:choose_role"))
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):

@@ -17,7 +17,11 @@
   {% endblock pre_loader %}
   
   {% block sidebar %}
-    {% include 'includes/sidebar.html' %}
+    {% if  user.is_admin %}
+      {% include 'includes/sidebar.html' %}
+    {% else %}
+      {% include 'includes/teach-sidebar.html' %} 
+    {% endif %}
   {% endblock sidebar %}
 
   {% block header %}

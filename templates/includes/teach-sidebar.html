@@ -1,0 +1,35 @@
+{% load i18n static admin_datta %}
+
+<nav class="pcoded-navbar">
+  <div class="navbar-wrapper">
+    <div class="navbar-brand header-logo">
+      <a href="{% if  user.is_admin %} 
+              {% url "home:dashboard" %}
+            {% else %}
+              {% url "attendance:dashboard" %}
+            {% endif %}" class="b-brand">
+        <div class="b-bg">
+          <i class="feather icon-trending-up"></i>
+        </div>
+        <span class="b-title">GestPrésence</span>
+      </a>
+      <a class="mobile-menu" id="mobile-collapse" href="javascript:"><span></span></a>
+    </div>
+    
+    <div class="navbar-content scroll-div">
+      <ul class="nav pcoded-inner-navbar">
+        <li class="nav-item pcoded-menu-caption">
+          <label>Navigation</label>
+        </li>
+
+        <!-- Tableau de bord accessible par tous les utilisateurs -->
+        <li class="nav-item active">
+          <a href="{% url "attendance:dashboard" %}" class="nav-link">
+            <span class="pcoded-micon"><i class="feather icon-home"></i></span>
+            <span class="pcoded-mtext">Tableau de bord</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
