@@ -37,7 +37,7 @@
                     </div>
                     <button class="btn btn-primary shadow-2 mb-4">Se connecter</button>
                     <p class="mb-2 text-muted">Mot de passe oublié ? <a href="{% url 'users:password_reset' %}">Réinitialiser</a></p>
-                    <p class="mb-0 text-muted">Pas de compte ? <a href="{% url 'users:register' %}">S'inscrire</a></p>
+                    {% comment %} <p class="mb-0 text-muted">Pas de compte ? <a href="{% url 'users:register' %}">S'inscrire</a></p> {% endcomment %}
                 </form>
             </div>
         </div>

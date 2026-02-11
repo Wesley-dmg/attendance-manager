@@ -1,9 +1,7 @@
 from xhtml2pdf import pisa
 import random
 import secrets
-
 import hashlib
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 
