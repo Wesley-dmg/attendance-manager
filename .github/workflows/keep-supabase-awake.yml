@@ -1,0 +1,60 @@
+name: 🗄️ Garder Supabase éveillé
+
+on:
+  schedule:
+    # Exécution toutes les 10 minutes (plus fréquent car Supabase peut s'endormir)
+    - cron: '*/10 * * * *'
+    - cron: '*/10 * * * *'  # Oui, deux fois pour être sûr !
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase DB
+    runs-on: ubuntu-latest
+    
+    # Tes identifiants Supabase (à configurer dans les secrets GitHub)
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+    
+    steps:
+      - name: Ping REST API
+        run: |
+          echo "📡 Ping API REST Supabase - $(date)"
+          curl -I "$SUPABASE_URL/rest/v1/" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            --connect-timeout 30 \
+            --max-time 60 \
+            --retry 3 \
+            --fail || echo "⚠️ API REST non accessible directement"
+          
+      - name: Ping via une simple requête
+        run: |
+          echo "🔍 Requête légère sur une table - $(date)"
+          curl -s "$SUPABASE_URL/rest/v1/?select=1&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            --connect-timeout 30 \
+            --max-time 60 \
+            -o /dev/null -w "Status: %{http_code}\n"
+          
+      - name: Ping via l'API d'authentification
+        run: |
+          echo "🔐 Ping Auth API - $(date)"
+          curl -I "$SUPABASE_URL/auth/v1/settings" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            --connect-timeout 30 \
+            --max-time 60 \
+            -o /dev/null -w "Auth Status: %{http_code}\n"
+          
+      - name: Test de connexion simple
+        run: |
+          echo "✅ Test de connexion basique - $(date)"
+          curl -s "$SUPABASE_URL" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            --connect-timeout 10 \
+            --max-time 20 \
+            -o /dev/null -w "Site Status: %{http_code}\n"

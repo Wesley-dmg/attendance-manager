@@ -1,0 +1,50 @@
+name: 🔄 Garder Render éveillé
+
+on:
+  schedule:
+    # Exécution toutes les 12 minutes (Render dort après 15min d'inactivité)
+    - cron: '*/12 * * * *'
+  workflow_dispatch:  # Permet l'exécution manuelle
+
+jobs:
+  ping-render:
+    name: Ping Render App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping site principal
+        run: |
+          echo "🌐 Ping du site principal - $(date)"
+          curl -I https://timelya.onrender.com/ \
+            -A "GitHub-Actions-Keep-Alive/1.0" \
+            --connect-timeout 30 \
+            --max-time 60 \
+            --retry 3 \
+            --retry-delay 5 \
+            --retry-max-time 40 \
+            --fail
+          
+      - name: Ping endpoint health (si tu en as un)
+        run: |
+          echo "🏥 Ping de l'endpoint health - $(date)"
+          curl -I https://timelya.onrender.com/health/ \
+            -A "GitHub-Actions-Keep-Alive/1.0" \
+            --connect-timeout 30 \
+            --max-time 60 \
+            --retry 3 \
+            --retry-delay 5 \
+            --fail || echo "⚠️  Endpoint health non trouvé (normal si pas configuré)"
+          
+      - name: Vérification SSL
+        run: |
+          echo "🔒 Vérification SSL - $(date)"
+          curl -I https://timelya.onrender.com/ \
+            --ssl-reqd \
+            --connect-timeout 30 \
+            -o /dev/null \
+            -s -w "%{http_code}\n"
+          
+      - name: Notifier en cas d'échec
+        if: failure()
+        run: |
+          echo "❌ Échec du ping - Vérifie ton site !"
+          # Ici tu pourras ajouter des notifications (email, Slack, Discord)
