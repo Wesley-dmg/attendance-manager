@@ -2,49 +2,42 @@ name: 🔄 Garder Render éveillé
 
 on:
   schedule:
-    # Exécution toutes les 10 minutes (Render dort après 15min d'inactivité)
-    - cron: '*/10 * * * *'
-  workflow_dispatch:  # Permet l'exécution manuelle
+    - cron: '*/12 * * * *'  # Plus fiable à 12 min
+  workflow_dispatch:
 
 jobs:
-  ping-render:
-    name: Ping Render App
+  wake-up-render:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping site principal
+      - name: Réveil en douceur
         run: |
-          echo "🌐 Ping du site principal - $(date)"
+          echo "🌅 $(date) - Processus de réveil"
+          
+          # Tentative 1 - timeout long
           curl -I https://timelya.onrender.com/ \
-            -A "GitHub-Actions-Keep-Alive/1.0" \
+            --connect-timeout 90 \
+            --max-time 180 \
+            --retry 2 \
+            --retry-delay 10 \
+            --retry-max-time 100 \
+            -A "Render-Waker/1.0" \
+            -o /dev/null \
+            -s -w "Tentative 1: %{http_code}\n" \
+            || echo "Tentative 1: timeout (normal si réveil)"
+          
+          # Attendre que Render finisse de démarrer
+          echo "⏳ Pause de 15 secondes pour finaliser le réveil..."
+          sleep 15
+          
+          # Tentative 2 - vérification
+          echo "✅ $(date) - Vérification post-réveil"
+          curl -I https://timelya.onrender.com/ \
             --connect-timeout 30 \
-            --max-time 120 \
-            --retry 3 \
-            --retry-delay 5 \
-            --retry-max-time 80 \
+            --max-time 30 \
+            -A "Render-Waker/1.0" \
+            -o /dev/null \
+            -s -w "Vérification: %{http_code}\n" \
             --fail
           
-      - name: Ping endpoint health (si tu en as un)
-        run: |
-          echo "🏥 Ping de l'endpoint health - $(date)"
-          curl -I https://timelya.onrender.com/health/ \
-            -A "GitHub-Actions-Keep-Alive/1.0" \
-            --connect-timeout 30 \
-            --max-time 60 \
-            --retry 3 \
-            --retry-delay 5 \
-            --fail || echo "⚠️  Endpoint health non trouvé (normal si pas configuré)"
-          
-      - name: Vérification SSL
-        run: |
-          echo "🔒 Vérification SSL - $(date)"
-          curl -I https://timelya.onrender.com/ \
-            --ssl-reqd \
-            --connect-timeout 30 \
-            -o /dev/null \
-            -s -w "%{http_code}\n"
-          
-      - name: Notifier en cas d'échec
-        if: failure()
-        run: |
-          echo "❌ Échec du ping - Vérifie ton site !"
-          # Ici tu pourras ajouter des notifications (email, Slack, Discord)
+      - name: Status
+        run: echo "🎉 Site réveillé avec succès à $(date)"
