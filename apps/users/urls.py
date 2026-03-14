@@ -39,6 +39,7 @@ from .views import (
     StudentDeleteView,
     ParentDeleteView,
     custom_logout,
+    health_check,
     student_profile_pdf,
 )
 
@@ -107,4 +108,5 @@ urlpatterns = [
     path("search/", UserSearchView.as_view(), name="user_search"),
     path("search/parent/", ParentSearchView.as_view(), name="parent_search"),
     path("select/parent/", ParentSelectorView.as_view(), name="parent_selector"),
+    path("health/", health_check, name="health_check"),
 ]

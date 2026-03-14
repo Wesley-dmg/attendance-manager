@@ -1014,3 +1014,46 @@ class StudentDeleteView(UserDeleteView):
 class ParentDeleteView(UserDeleteView):
     permission_required = "users.delete_parentprofile"
     success_url = reverse_lazy("users:parents_list")
+
+
+from django.http import JsonResponse
+from django.db import connection
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
+import requests
+import os
+
+
+@csrf_exempt
+@require_GET
+def health_check(request):
+    """Endpoint de health check complet"""
+    status = {
+        "status": "ok",
+        "database": "unknown",
+        "supabase": "unknown",
+        "environment": os.getenv("RENDER", "development") and "render" or "local",
+    }
+
+    # Test BDD
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+        status["database"] = "connected"
+    except Exception as e:
+        status["status"] = "error"
+        status["database"] = f"error: {str(e)}"
+
+    # Test Supabase (optionnel)
+    try:
+        supabase_url = "https://vpythidfoyciubozmxaw.supabase.co"
+        response = requests.get(f"{supabase_url}/rest/v1/", timeout=3)
+        if response.status_code == 200:
+            status["supabase"] = "ok"
+    except:
+        status["supabase"] = "no response"
+
+    # Retourne un 200 si tout va bien, 500 sinon
+    http_status = 200 if status["status"] == "ok" else 500
+    return JsonResponse(status, status=http_status)
