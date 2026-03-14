@@ -2,42 +2,124 @@ name: 🔄 Garder Render éveillé
 
 on:
   schedule:
-    - cron: '*/12 * * * *'  # Plus fiable à 12 min
-  workflow_dispatch:
+    - cron: '*/12 * * * *'  # Toutes les 12 minutes (plus fiable que 14 min)
+  workflow_dispatch:  # Permet un lancement manuel
 
 jobs:
   wake-up-render:
+    name: 🌅 Réveil du site Render
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Réveil en douceur
+      - name: 🚀 Début du processus de réveil
+        run: echo "🌅 Démarrage du réveil à $(date)"
+      
+      - name: 📡 Ping de la page d'accueil
+        id: ping_home
+        continue-on-error: true
         run: |
-          echo "🌅 $(date) - Processus de réveil"
-          
-          # Tentative 1 - timeout long
-          curl -I https://timelya.onrender.com/ \
+          echo "📡 Ping de la page d'accueil..."
+          HTTP_CODE=$(curl -I https://timelya.onrender.com/ \
             --connect-timeout 90 \
             --max-time 180 \
-            --retry 2 \
+            --retry 3 \
             --retry-delay 10 \
-            --retry-max-time 100 \
-            -A "Render-Waker/1.0" \
-            -o /dev/null \
-            -s -w "Tentative 1: %{http_code}\n" \
-            || echo "Tentative 1: timeout (normal si réveil)"
+            --retry-max-time 120 \
+            -A "Render-Waker/1.0 (GitHub Actions)" \
+            -H "Cache-Control: no-cache" \
+            -s -o /dev/null \
+            -w "%{http_code}")
           
-          # Attendre que Render finisse de démarrer
-          echo "⏳ Pause de 15 secondes pour finaliser le réveil..."
-          sleep 15
+          echo "home_status=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "✅ Accueil: Code $HTTP_CODE"
           
-          # Tentative 2 - vérification
-          echo "✅ $(date) - Vérification post-réveil"
-          curl -I https://timelya.onrender.com/ \
+          if [ "$HTTP_CODE" = "000" ]; then
+            echo "⚠️ Timeout ou erreur de connexion (normal si réveil en cours)"
+          elif [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+            echo "✅ Accueil répond correctement"
+          else
+            echo "⚠️ Accueil: code inattendu $HTTP_CODE"
+          fi
+      
+      - name: ⏳ Pause pour finaliser le démarrage
+        run: |
+          echo "⏳ Pause de 20 secondes pour laisser Render démarrer complètement..."
+          sleep 20
+      
+      - name: 🏥 Vérification du health check
+        id: ping_health
+        continue-on-error: true
+        run: |
+          echo "🏥 Ping de l'endpoint health check..."
+          HEALTH_CODE=$(curl -I https://timelya.onrender.com/health/ \
             --connect-timeout 30 \
-            --max-time 30 \
-            -A "Render-Waker/1.0" \
-            -o /dev/null \
-            -s -w "Vérification: %{http_code}\n" \
-            --fail
+            --max-time 60 \
+            --retry 2 \
+            --retry-delay 5 \
+            -A "Render-Waker/1.0 (GitHub Actions)" \
+            -H "Cache-Control: no-cache" \
+            -s -o /dev/null \
+            -w "%{http_code}")
           
-      - name: Status
-        run: echo "🎉 Site réveillé avec succès à $(date)"
+          echo "health_status=$HEALTH_CODE" >> $GITHUB_OUTPUT
+          echo "✅ Health check: Code $HEALTH_CODE"
+          
+          if [ "$HEALTH_CODE" = "200" ]; then
+            echo "✅ Health check OK - Base de données accessible"
+          elif [ "$HEALTH_CODE" = "500" ]; then
+            echo "⚠️ Health check: erreur BDD (à vérifier)"
+          else
+            echo "ℹ️ Health check: code $HEALTH_CODE"
+          fi
+      
+      - name: 📊 Vérification alternative (Supabase direct)
+        id: ping_supabase
+        continue-on-error: true
+        run: |
+          echo "☁️ Ping Supabase direct..."
+          SUPABASE_CODE=$(curl -I https://vpythidfoyciubozmxaw.supabase.co \
+            --connect-timeout 10 \
+            --max-time 20 \
+            -s -o /dev/null \
+            -w "%{http_code}")
+          
+          echo "supabase_status=$SUPABASE_CODE" >> $GITHUB_OUTPUT
+          echo "☁️ Supabase: Code $SUPABASE_CODE"
+      
+      - name: 📝 Rapport complet
+        if: always()
+        run: |
+          echo "===================================="
+          echo "📊 RAPPORT DE RÉVEIL - $(date)"
+          echo "===================================="
+          echo "🏠 Page d'accueil: ${{ steps.ping_home.outputs.home_status }}"
+          echo "🏥 Health check:   ${{ steps.ping_health.outputs.health_status }}"
+          echo "☁️ Supabase:       ${{ steps.ping_supabase.outputs.supabase_status }}"
+          echo "===================================="
+          
+          # Alerte si problème
+          if [ "${{ steps.ping_health.outputs.health_status }}" != "200" ] && [ "${{ steps.ping_health.outputs.health_status }}" != "" ]; then
+            echo "⚠️ ATTENTION: Le health check ne répond pas correctement!"
+            exit 1
+          else
+            echo "🎉 Site maintenu éveillé avec succès!"
+          fi
+      
+      - name: 💾 Cache le résultat (optionnel)
+        if: always()
+        run: |
+          # Créer un fichier de log pour historique
+          mkdir -p wake-logs
+          echo "$(date),${{ steps.ping_home.outputs.home_status }},${{ steps.ping_health.outputs.health_status }},${{ steps.ping_supabase.outputs.supabase_status }}" >> wake-logs/history.csv
+          echo "📝 Log ajouté à wake-logs/history.csv"
+          
+          # Garder seulement les 100 dernières entrées
+          tail -n 100 wake-logs/history.csv > wake-logs/history.tmp && mv wake-logs/history.tmp wake-logs/history.csv
+      
+      - name: 🎯 Statut final
+        run: |
+          echo "✅ Site réveillé avec succès à $(date)"
+          echo "🔗 https://timelya.onrender.com/ - https://timelya.onrender.com/health/"
+
+
+          
