@@ -72,20 +72,6 @@ jobs:
             echo "ℹ️ Health check: code $HEALTH_CODE"
           fi
       
-      - name: 📊 Vérification alternative (Supabase direct)
-        id: ping_supabase
-        continue-on-error: true
-        run: |
-          echo "☁️ Ping Supabase direct..."
-          SUPABASE_CODE=$(curl -I https://vpythidfoyciubozmxaw.supabase.co \
-            --connect-timeout 10 \
-            --max-time 20 \
-            -s -o /dev/null \
-            -w "%{http_code}")
-          
-          echo "supabase_status=$SUPABASE_CODE" >> $GITHUB_OUTPUT
-          echo "☁️ Supabase: Code $SUPABASE_CODE"
-      
       - name: 📝 Rapport complet
         if: always()
         run: |
@@ -94,7 +80,7 @@ jobs:
           echo "===================================="
           echo "🏠 Page d'accueil: ${{ steps.ping_home.outputs.home_status }}"
           echo "🏥 Health check:   ${{ steps.ping_health.outputs.health_status }}"
-          echo "☁️ Supabase:       ${{ steps.ping_supabase.outputs.supabase_status }}"
+
           echo "===================================="
           
           # Alerte si problème
@@ -110,7 +96,7 @@ jobs:
         run: |
           # Créer un fichier de log pour historique
           mkdir -p wake-logs
-          echo "$(date),${{ steps.ping_home.outputs.home_status }},${{ steps.ping_health.outputs.health_status }},${{ steps.ping_supabase.outputs.supabase_status }}" >> wake-logs/history.csv
+          echo "$(date),${{ steps.ping_home.outputs.home_status }},${{ steps.ping_health.outputs.health_status }}" >> wake-logs/history.csv
           echo "📝 Log ajouté à wake-logs/history.csv"
           
           # Garder seulement les 100 dernières entrées

@@ -1019,13 +1019,13 @@ class ParentDeleteView(UserDeleteView):
 from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_http_methods
 import requests
 import os
 
 
 @csrf_exempt
-@require_GET
+@require_http_methods(["GET", "HEAD"])
 def health_check(request):
     """Endpoint de health check complet"""
     status = {
