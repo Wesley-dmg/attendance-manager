@@ -1057,3 +1057,13 @@ def health_check(request):
     # Retourne un 200 si tout va bien, 500 sinon
     http_status = 200 if status["status"] == "ok" else 500
     return JsonResponse(status, status=http_status)
+
+
+from django.db import connection
+from django.http import JsonResponse
+
+
+def ping_db(request):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")  # requête simple sur Supabase (PostgreSQL)
+    return JsonResponse({"status": "alive"})
