@@ -4,7 +4,7 @@ from django import forms
 
 class RequestOTPForm(forms.Form):
     phone = forms.CharField(
-        initial="+229",
+        initial="+14193527779",
         label="Numéro de téléphone",
         widget=forms.TextInput(
             attrs={

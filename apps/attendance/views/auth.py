@@ -48,9 +48,29 @@ class VerifyOTPView(FormView):
     def get_phone(self):
         return self.request.session.get("phone") or self.request.GET.get("phone")
 
+    # def get_initial(self):
+    #     initial = super().get_initial()
+    #     initial["phone"] = self.get_phone()
+    #     return initial
+
     def get_initial(self):
         initial = super().get_initial()
-        initial["phone"] = self.get_phone()
+        phone = self.get_phone()
+        initial["phone"] = phone
+
+        # Récupérer l'utilisateur correspondant
+        if phone:
+            user = User.objects.filter(
+                phone_number__endswith=phone[-9:], role__name="teacher"
+            ).first()
+            if (
+                user
+                and hasattr(user, "teacherprofile")
+                and user.teacherprofile.otp_code
+            ):
+                # Pré-remplir le champ code avec l'OTP stocké
+                initial["code"] = user.teacherprofile.otp_code
+
         return initial
 
     def get_context_data(self, **kwargs):

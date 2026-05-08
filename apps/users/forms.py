@@ -90,14 +90,22 @@ class CustomLoginForm(AuthenticationForm):
     username = UsernameField(
         label=_("Nom d'utilisateur"),
         widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Nom d'utilisateur"}
+            attrs={
+                "class": "form-control",
+                "placeholder": "Nom d'utilisateur",
+                "value": "hecm",
+            }
         ),
     )
     password = forms.CharField(
         label=_("Votre mot de passe"),
         strip=False,
         widget=forms.PasswordInput(
-            attrs={"class": "form-control", "placeholder": "Mot de passe"}
+            attrs={
+                "class": "form-control",
+                "placeholder": "Mot de passe",
+                "value": "123",
+            }
         ),
     )
 
